@@ -12,3 +12,5 @@ run-fe:
 run-be:
 	cd backend && go run main.go
 
+run-all:
+	run-fe && run-be
