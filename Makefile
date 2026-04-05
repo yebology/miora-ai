@@ -1,6 +1,6 @@
+SHELL := /bin/bash
 
-
-git-commit:
+commit:
 	@git add .
 	@git status
 	@read -p "Commit message: " msg; \
@@ -13,4 +13,4 @@ run-be:
 	cd backend && go run main.go
 
 run-all:
-	run-fe && run-be
+	@make run-be & make run-fe
