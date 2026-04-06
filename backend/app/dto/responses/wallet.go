@@ -12,4 +12,5 @@ type WalletAnalysis struct {
 	TradeDiscipline   float64 `json:"trade_discipline"`
 	FinalScore        float64 `json:"final_score"`
 	Recommendation    string  `json:"recommendation"`
+	AiInsight         string  `json:"ai_insight,omitempty"`
 }

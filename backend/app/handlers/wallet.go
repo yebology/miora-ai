@@ -72,3 +72,21 @@ func (h *WalletHandler) Analyze(c *fiber.Ctx) error {
 	return output.GetSuccess(c, constants.SuccessGetData, result)
 
 }
+
+// GetWallet handles GET /wallets/:address.
+// Retrieves a previously analyzed wallet from the database.
+func (h *WalletHandler) GetWallet(c *fiber.Ctx) error {
+
+	address := c.Params("address")
+	if address == "" {
+		return output.GetError(c, fiber.StatusBadRequest, constants.AddressRequired)
+	}
+
+	result, appErr := h.service.GetWallet(address)
+	if appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, constants.SuccessGetData, result)
+
+}

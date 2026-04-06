@@ -3,31 +3,43 @@
 ## ✅ Done
 
 - Project structure (clean architecture: handlers, services, repositories, interfaces, entities, dto)
-- Config loader (env-based, shared credentials antara Docker & Go app)
+- Config loader (env-based, shared credentials, no fallbacks, configurable scoring thresholds)
 - Database setup (PostgreSQL via Docker Compose, GORM auto-migrate)
-- Entities: Wallet, Transaction, WalletMetric
-- Alchemy client: EVM (`alchemy_getAssetTransfers`) & Solana (`getSignaturesForAddress`)
+- Entities: Wallet, Transaction (with Direction + ContractAddress), WalletMetric
+- Alchemy client: EVM (incoming + outgoing transfers) & Solana (getSignaturesForAddress)
+- DexScreener client (token liquidity, market cap, pair age, price change)
+- Moralis client (EVM historical token price by block + Solana current price)
+- Birdeye client (Solana historical token price by unix timestamp)
 - Repository layer (CRUD wallet, transactions, metrics)
-- Service layer (fetch → save → score)
-- Scoring system (formula sesuai README, masih placeholder)
+- Service layer (fetch → enrich → FIFO buy-sell matching → PnL → score)
+- Real scoring system (win rate, profit consistency, entry timing, token quality, trade discipline, risk exposure)
+- Scoring thresholds configurable from .env
+- Risk exposure: informational only, not in final score formula
 - Handler + route: `POST /api/wallets/analyze`
 - Health check: `GET /api/health`
-- Error handling (AppError + ErrorResponse)
+- Error handling (AppError constructors + output envelope)
+- Validation (go-playground/validator + ParseAndValidateBody helper)
+- DI container + router pattern (container.go + routes.go)
+- Interfaces with `I` prefix (IWalletService, IWalletRepository)
 - Dockerfile (multi-stage build)
 - Docker Compose (PostgreSQL)
-- Makefile (git-commit, run-fe, run-be, run-all)
+- Makefile (git-commit, run-fe, run-be, run-all, db-reset, db-seed)
+- Migrations (auto-migrate, reset, seed)
 - .gitignore (Node, Next.js, Go, Foundry, Anchor, IDE)
+- Documentation (comments on all files)
 
-## 🔲 Todo
+## 🔲 Todo (Hackathon Priority)
 
-- [ ] Real scoring logic (analisis PnL, win rate, risk dari data transaksi aktual)
-- [ ] Middleware (rate limiting, auth/API key)
-- [ ] WebSocket layer (real-time wallet tracking)
-- [ ] GET endpoint: `/api/wallets/:address` (ambil hasil analisis yang sudah tersimpan)
-- [ ] Pagination untuk transaction history
-- [ ] AI layer integration (LLM untuk generate insight natural language)
-- [ ] Caching (Redis untuk response yang sering diakses)
-- [ ] DEX integration (swap via Jupiter/1inch)
-- [ ] Smart alerts system
-- [ ] Logging & monitoring
-- [ ] Tests
+- [ ] GET endpoint: `/api/wallets/:address` (retrieve stored analysis)
+- [ ] AI layer (LLM for natural language insights + behavior classification)
+- [ ] Tests (minimal)
+
+## 📋 Post-Hackathon
+
+- Middleware (rate limiting, auth/API key)
+- WebSocket (real-time wallet tracking)
+- Pagination for transaction history
+- Caching (Redis)
+- DEX integration (swap via Jupiter/1inch)
+- Smart alerts system
+- Logging & monitoring

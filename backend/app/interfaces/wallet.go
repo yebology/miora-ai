@@ -10,6 +10,7 @@ import (
 // Methods return *pkg.AppError instead of Go's error for structured error handling.
 type IWalletService interface {
 	AnalyzeWallet(address, chain string) (*responses.WalletAnalysis, *pkg.AppError)
+	GetWallet(address string) (*responses.WalletAnalysis, *pkg.AppError)
 }
 
 // IWalletRepository defines the data access contract for wallet operations.

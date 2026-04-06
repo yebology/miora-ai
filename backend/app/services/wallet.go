@@ -29,6 +29,7 @@ type WalletService struct {
 	dexScreener interfaces.IDexScreener
 	moralis     interfaces.IMoralis
 	birdeye     interfaces.IBirdeye
+	ai          *AIService
 	scoring     config.ScoringConfig
 }
 
@@ -40,6 +41,7 @@ func NewWalletService(
 	dexScreener interfaces.IDexScreener,
 	moralis interfaces.IMoralis,
 	birdeye interfaces.IBirdeye,
+	ai *AIService,
 	scoring config.ScoringConfig,
 ) *WalletService {
 
@@ -50,6 +52,7 @@ func NewWalletService(
 		dexScreener: dexScreener,
 		moralis:     moralis,
 		birdeye:     birdeye,
+		ai:          ai,
 		scoring:     scoring,
 	}
 
@@ -84,9 +87,47 @@ func (s *WalletService) AnalyzeWallet(address, chain string) (*responses.WalletA
 		return nil, pkg.ErrInternal()
 	}
 
-	return &responses.WalletAnalysis{
+	result := &responses.WalletAnalysis{
 		Address:           address,
 		Chain:             chain,
+		TotalTransactions: metric.TotalTransactions,
+		ProfitConsistency: metric.ProfitConsistency,
+		WinRate:           metric.WinRate,
+		RiskExposure:      metric.RiskExposure,
+		EntryTiming:       metric.EntryTiming,
+		TokenQuality:      metric.TokenQuality,
+		TradeDiscipline:   metric.TradeDiscipline,
+		FinalScore:        metric.FinalScore,
+		Recommendation:    metric.Recommendation,
+	}
+
+	// Generate AI insight (non-blocking — if it fails, return without insight)
+	if insight, err := s.ai.GenerateInsight(result); err == nil {
+		result.AiInsight = insight
+	} else {
+		log.Printf("AI insight failed: %v", err)
+	}
+
+	return result, nil
+
+}
+
+// GetWallet retrieves a previously analyzed wallet by address.
+func (s *WalletService) GetWallet(address string) (*responses.WalletAnalysis, *pkg.AppError) {
+
+	wallet, err := s.repo.FindByAddress(address)
+	if err != nil {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
+	}
+
+	metric, err := s.repo.GetMetric(wallet.ID)
+	if err != nil {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
+	}
+
+	return &responses.WalletAnalysis{
+		Address:           wallet.Address,
+		Chain:             wallet.Chain,
 		TotalTransactions: metric.TotalTransactions,
 		ProfitConsistency: metric.ProfitConsistency,
 		WinRate:           metric.WinRate,

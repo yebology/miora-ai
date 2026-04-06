@@ -26,5 +26,6 @@ func RegisterWalletPublicRoutes(r fiber.Router, h *handlers.WalletHandler) {
 
 	wallets := r.Group("/wallets")
 	wallets.Post("/analyze", h.Analyze)
+	wallets.Get("/:address", h.GetWallet)
 
 }

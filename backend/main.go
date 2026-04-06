@@ -56,7 +56,7 @@ func main() {
 	}))
 
 	// Wire dependencies (clients, repos, services, handlers) and register routes
-	router.SetUp(app, db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.BirdeyeAPIKey, cfg.Scoring)
+	router.SetUp(app, db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.BirdeyeAPIKey, cfg.GeminiAPIKey, cfg.Scoring)
 
 	log.Fatal(app.Listen(":" + cfg.AppPort))
 
