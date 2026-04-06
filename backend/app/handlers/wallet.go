@@ -1,39 +1,74 @@
+// Package handlers contains HTTP request handlers for each domain.
+//
+// Every handler follows this pattern:
+//  1. Parse + validate request body via utils.ParseAndValidateBody()
+//  2. Extract URL params or user context if needed
+//  3. Call the service layer
+//  4. Return output.GetSuccess() or output.GetError()
+//
+// Handlers never contain business logic — only parse, delegate, and respond.
+// Each handler depends on a service interface (e.g. IWalletService), not a concrete struct.
 package handlers
 
 import (
 	"miora-ai/app/dto/requests"
-	"miora-ai/app/services"
-	"miora-ai/pkg"
+	"miora-ai/app/interfaces"
+	"miora-ai/app/output"
+	"miora-ai/constants"
+	"miora-ai/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+// WalletHandler handles wallet-related HTTP requests.
+// Depends on IWalletService interface — no direct service struct dependency.
 type WalletHandler struct {
-	service *services.WalletService
+	service interfaces.IWalletService
 }
 
-func NewWalletHandler(service *services.WalletService) *WalletHandler {
+// NewWalletHandler creates a new WalletHandler with the given service.
+func NewWalletHandler(service interfaces.IWalletService) *WalletHandler {
+
 	return &WalletHandler{service: service}
+
 }
 
+// Analyze handles POST /wallets/analyze.
+//
+// Request body:
+//
+//	{
+//	  "address": "0x...",   // required — wallet address to analyze
+//	  "chain":   "evm"      // required — must be "evm" or "svm"
+//	}
+//
+// Success response (200):
+//
+//	{
+//	  "status": "success",
+//	  "message": "Data retrieved successfully.",
+//	  "data": { address, chain, total_transactions, scores..., recommendation }
+//	}
+//
+// Error responses:
+//   - 400: invalid request body or validation failed
+//   - 502: failed to fetch data from Alchemy
+//   - 500: internal server error
 func (h *WalletHandler) Analyze(c *fiber.Ctx) error {
+
+	// 1. Parse + validate request body
 	var req requests.AnalyzeWallet
-	if err := c.BodyParser(&req); err != nil {
-		return pkg.ErrorResponse(c, pkg.NewAppError(fiber.StatusBadRequest, "invalid request body"))
+	if appErr := utils.ParseAndValidateBody(c, &req); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	if req.Address == "" || req.Chain == "" {
-		return pkg.ErrorResponse(c, pkg.NewAppError(fiber.StatusBadRequest, "address and chain are required"))
+	// 2. Call service
+	result, appErr := h.service.AnalyzeWallet(req.Address, req.Chain)
+	if appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	if req.Chain != "evm" && req.Chain != "svm" {
-		return pkg.ErrorResponse(c, pkg.NewAppError(fiber.StatusBadRequest, "chain must be 'evm' or 'svm'"))
-	}
+	// 3. Return success
+	return output.GetSuccess(c, constants.SuccessGetData, result)
 
-	result, err := h.service.AnalyzeWallet(req.Address, req.Chain)
-	if err != nil {
-		return pkg.ErrorResponse(c, pkg.NewAppError(fiber.StatusInternalServerError, err.Error()))
-	}
-
-	return c.JSON(result)
 }

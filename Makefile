@@ -14,3 +14,9 @@ run-be:
 
 run-all:
 	@make run-be & make run-fe
+
+db-reset:
+	cd backend && go run cmd/reset/main.go
+
+db-seed:
+	cd backend && go run cmd/seed/main.go

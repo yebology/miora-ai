@@ -144,12 +144,11 @@ Each wallet is evaluated across:
 Each metric is normalized (0–100):
 
 Final Score =
-(0.25 × Profit Consistency) +
-(0.20 × Win Rate) +
+(0.30 × Profit Consistency) +
+(0.30 × Win Rate) +
 (0.15 × Entry Timing) +
 (0.15 × Token Quality) +
-(0.15 × Trade Discipline) -
-(0.10 × Risk Exposure)
+(0.10 × Trade Discipline)
 
 
 ---
