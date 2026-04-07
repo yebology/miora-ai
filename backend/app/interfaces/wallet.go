@@ -9,7 +9,7 @@ import (
 // IWalletService defines the business logic contract for wallet operations.
 // Methods return *pkg.AppError instead of Go's error for structured error handling.
 type IWalletService interface {
-	AnalyzeWallet(address, chain string) (*responses.WalletAnalysis, *pkg.AppError)
+	AnalyzeWallet(address, chain string, limit int) (*responses.WalletAnalysis, *pkg.AppError)
 	GetWallet(address string) (*responses.WalletAnalysis, *pkg.AppError)
 }
 

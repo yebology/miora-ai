@@ -63,7 +63,7 @@ func (h *WalletHandler) Analyze(c *fiber.Ctx) error {
 	}
 
 	// 2. Call service
-	result, appErr := h.service.AnalyzeWallet(req.Address, req.Chain)
+	result, appErr := h.service.AnalyzeWallet(req.Address, req.Chain, req.Limit)
 	if appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}

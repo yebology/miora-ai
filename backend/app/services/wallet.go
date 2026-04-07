@@ -65,19 +65,25 @@ func NewWalletService(
 type tradeResult struct {
 	TokenAddress string
 	BuyPrice     float64
-	ExitPrice    float64 // sell price (realized) or current price (unrealized)
-	PnlPercent   float64 // ((exit - buy) / buy) * 100
+	ExitPrice    float64   // sell price (realized) or current price (unrealized)
+	PnlPercent   float64   // ((exit - buy) / buy) * 100
+	BuyTime      time.Time // when the wallet bought
+	ExitTime     time.Time // when the wallet sold (zero if unrealized)
 }
 
 // AnalyzeWallet orchestrates the full analysis flow and returns scoring.
-func (s *WalletService) AnalyzeWallet(address, chain string) (*responses.WalletAnalysis, *pkg.AppError) {
+func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*responses.WalletAnalysis, *pkg.AppError) {
+
+	if limit <= 0 || limit > 50 {
+		limit = 25
+	}
 
 	wallet, appErr := s.findOrCreateWallet(address, chain)
 	if appErr != nil {
 		return nil, appErr
 	}
 
-	txEntities, appErr := s.fetchAndSaveTransactions(wallet, chain)
+	txEntities, appErr := s.fetchAndSaveTransactions(wallet, chain, limit)
 	if appErr != nil {
 		return nil, appErr
 	}
@@ -171,6 +177,7 @@ func (s *WalletService) calculateTrades(chain string, txs []entities.Transaction
 			}
 
 			exitPrice := 0.0
+			var exitTime time.Time
 
 			// Try to match with next sell (FIFO)
 			if sellIdx < len(group.sells) {
@@ -178,6 +185,7 @@ func (s *WalletService) calculateTrades(chain string, txs []entities.Transaction
 				price := s.getPrice(chain, addr, sell.BlockNumber, sell.Timestamp)
 				if price > 0 {
 					exitPrice = price
+					exitTime = sell.Timestamp
 					sellIdx++
 				}
 			}
@@ -188,6 +196,7 @@ func (s *WalletService) calculateTrades(chain string, txs []entities.Transaction
 				if exitPrice == 0 {
 					continue
 				}
+				// exitTime stays zero — indicates unrealized
 			}
 
 			pnl := ((exitPrice - buyPrice) / buyPrice) * 100
@@ -196,6 +205,8 @@ func (s *WalletService) calculateTrades(chain string, txs []entities.Transaction
 				BuyPrice:     buyPrice,
 				ExitPrice:    exitPrice,
 				PnlPercent:   pnl,
+				BuyTime:      buy.Timestamp,
+				ExitTime:     exitTime,
 			})
 		}
 	}

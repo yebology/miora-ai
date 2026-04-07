@@ -1,5 +1,7 @@
 package responses
 
+import "time"
+
 type WalletAnalysis struct {
 	Address           string        `json:"address"`
 	Chain             string        `json:"chain"`
@@ -19,13 +21,15 @@ type WalletAnalysis struct {
 
 // TradedToken represents a token the wallet traded, with PnL data.
 type TradedToken struct {
-	ContractAddress string  `json:"contract_address"`
-	Symbol          string  `json:"symbol"`
-	Chain           string  `json:"chain"`
-	PnlPercent      float64 `json:"pnl_percent"`
-	BuyPrice        float64 `json:"buy_price"`
-	ExitPrice       float64 `json:"exit_price"`
-	Status          string  `json:"status"`
+	ContractAddress string     `json:"contract_address"`
+	Symbol          string     `json:"symbol"`
+	Chain           string     `json:"chain"`
+	PnlPercent      float64    `json:"pnl_percent"`
+	BuyPrice        float64    `json:"buy_price"`
+	ExitPrice       float64    `json:"exit_price"`
+	BuyTime         time.Time  `json:"buy_time"`
+	ExitTime        *time.Time `json:"exit_time,omitempty"` // nil if unrealized (still holding)
+	Status          string     `json:"status"`
 }
 
 // Condition represents a suggested filter for conditional follow notifications.

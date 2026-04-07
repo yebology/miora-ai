@@ -52,9 +52,11 @@ Swap tokens directly from Miora with best price routing:
 - **EVM** → 1inch (Uniswap, SushiSwap, Curve, Balancer, etc.)
 
 ### 🔔 Smart Alerts & Watchlist
-- Follow wallets and get real-time notifications when they trade
+- Follow wallets and get real-time notifications via WebSocket when they trade
 - Set custom conditions: "Only notify me if token liquidity > $100k and pair age > 6 hours"
-- Email notifications with AI-generated token insights
+- Notifications include trade details: token, amount, direction (buy/sell), timestamp, liquidity, market cap
+- Notification history saved to database — never miss an alert even when offline
+- Email notifications planned (SendGrid/Resend)
 
 ### 🔐 Authentication
 - Google login via Firebase Auth
@@ -130,7 +132,7 @@ Swap tokens directly from Miora with best price routing:
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js, TailwindCSS, TypeScript |
-| Backend | Go, Fiber, GORM |
+| Backend | Go, Fiber, GORM, WebSocket |
 | Database | PostgreSQL |
 | Auth | Firebase Auth (Google) |
 | AI | Google Gemini (gemini-2.0-flash) |
@@ -148,7 +150,7 @@ Swap tokens directly from Miora with best price routing:
 │   ├── app/
 │   │   ├── clients/        # External API clients (Alchemy, DexScreener, Moralis, Birdeye, Gemini, Jupiter, 1inch)
 │   │   ├── dto/            # Data transfer objects (requests, responses, prompts)
-│   │   ├── entities/       # Database models (User, Wallet, Transaction, WalletMetric, Watchlist)
+│   │   ├── entities/       # Database models (User, Wallet, Transaction, WalletMetric, Watchlist, Notification)
 │   │   ├── handlers/       # HTTP request handlers
 │   │   ├── http/           # Route registration per domain
 │   │   ├── interfaces/     # Service & repository contracts
@@ -257,9 +259,14 @@ cd frontend && npm install && npm run dev
 | Method | Endpoint | Description |
 |--------|----------|------------|
 | GET | `/api/auth/me` | Get/create current user |
-| POST | `/api/watchlist/follow` | Follow a wallet |
+| POST | `/api/watchlist/follow` | Follow a wallet with conditions |
 | DELETE | `/api/watchlist/:address` | Unfollow a wallet |
 | GET | `/api/watchlist` | List followed wallets |
+
+### WebSocket
+| Endpoint | Description |
+|----------|------------|
+| `ws://host/ws?user_id=ID` | Real-time trade notifications for followed wallets |
 
 ---
 

@@ -21,6 +21,7 @@ import (
 	"miora-ai/app/handlers"
 	"miora-ai/app/repositories"
 	"miora-ai/app/services"
+	"miora-ai/app/ws"
 	"miora-ai/config"
 
 	"gorm.io/gorm"
@@ -32,11 +33,12 @@ type Container struct {
 	SwapHandler      *handlers.SwapHandler
 	AuthHandler      *handlers.AuthHandler
 	WatchlistHandler *handlers.WatchlistHandler
+	Monitor          *services.MonitorService
 }
 
 // NewContainer creates all dependencies and returns a fully wired Container.
 // Initialization order: clients → repositories → services → handlers.
-func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey string, scoring config.ScoringConfig) *Container {
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey string, scoring config.ScoringConfig, hub *ws.Hub) *Container {
 
 	// Clients
 	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
@@ -52,6 +54,7 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 	walletRepo := repositories.NewWalletRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 	watchlistRepo := repositories.NewWatchlistRepository(db)
+	notifRepo := repositories.NewNotificationRepository(db)
 
 	// Services
 	aiService := services.NewAIService(gemini)
@@ -59,6 +62,9 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 	swapService := services.NewSwapService(jupiter, oneInch)
 	userService := services.NewUserService(userRepo)
 	watchlistService := services.NewWatchlistService(watchlistRepo)
+
+	// Monitor
+	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, evmClient, svmClient, dexScreener, aiService, hub)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)
@@ -71,6 +77,7 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 		SwapHandler:      swapHandler,
 		AuthHandler:      authHandler,
 		WatchlistHandler: watchlistHandler,
+		Monitor:          monitorService,
 	}
 
 }

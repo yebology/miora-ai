@@ -15,6 +15,7 @@ package main
 import (
 	"log"
 
+	"miora-ai/app/ws"
 	"miora-ai/config"
 	"miora-ai/migrations"
 	"miora-ai/router"
@@ -55,8 +56,11 @@ func main() {
 		ExposeHeaders: "Content-Length",
 	}))
 
-	// Wire dependencies (clients, repos, services, handlers) and register routes
-	router.SetUp(app, db, cfg)
+	// Initialize WebSocket hub
+	hub := ws.NewHub()
+
+	// Wire dependencies and register routes (also starts monitor)
+	router.SetUp(app, db, cfg, hub)
 
 	log.Fatal(app.Listen(":" + cfg.AppPort))
 

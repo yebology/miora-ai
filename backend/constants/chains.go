@@ -2,11 +2,12 @@ package constants
 
 // ChainConfig holds API-specific identifiers for each supported chain.
 type ChainConfig struct {
-	Name           string // Display name
-	AlchemyURL     string // Alchemy RPC base URL (without API key)
-	MoralisChainID string // Moralis hex chain ID
-	OneInchChainID string // 1inch numeric chain ID
-	DexScreenerID  string // DexScreener chain identifier
+	Name           string  // Display name
+	AlchemyURL     string  // Alchemy RPC base URL (without API key)
+	MoralisChainID string  // Moralis hex chain ID
+	OneInchChainID string  // 1inch numeric chain ID
+	DexScreenerID  string  // DexScreener chain identifier
+	BlockTimeSec   float64 // Average seconds per block (for timestamp estimation)
 }
 
 // SupportedChains maps chain keys to their API configurations.
@@ -18,6 +19,7 @@ var SupportedChains = map[string]ChainConfig{
 		MoralisChainID: "0x1",
 		OneInchChainID: "1",
 		DexScreenerID:  "ethereum",
+		BlockTimeSec:   12,
 	},
 	"arbitrum": {
 		Name:           "Arbitrum",
@@ -25,6 +27,7 @@ var SupportedChains = map[string]ChainConfig{
 		MoralisChainID: "0xa4b1",
 		OneInchChainID: "42161",
 		DexScreenerID:  "arbitrum",
+		BlockTimeSec:   0.25,
 	},
 	"optimism": {
 		Name:           "Optimism",
@@ -32,6 +35,7 @@ var SupportedChains = map[string]ChainConfig{
 		MoralisChainID: "0xa",
 		OneInchChainID: "10",
 		DexScreenerID:  "optimism",
+		BlockTimeSec:   2,
 	},
 	"base": {
 		Name:           "Base",
@@ -39,6 +43,7 @@ var SupportedChains = map[string]ChainConfig{
 		MoralisChainID: "0x2105",
 		OneInchChainID: "8453",
 		DexScreenerID:  "base",
+		BlockTimeSec:   2,
 	},
 	"polygon": {
 		Name:           "Polygon",
@@ -46,6 +51,7 @@ var SupportedChains = map[string]ChainConfig{
 		MoralisChainID: "0x89",
 		OneInchChainID: "137",
 		DexScreenerID:  "polygon",
+		BlockTimeSec:   2,
 	},
 	"solana": {
 		Name:          "Solana",

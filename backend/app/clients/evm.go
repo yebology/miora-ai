@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 
 	"miora-ai/app/interfaces"
 	"miora-ai/constants"
@@ -30,36 +31,35 @@ func NewAlchemyEVM(apiKey string) *AlchemyEVM {
 
 // alchemyEVMRequest is the JSON-RPC request payload for Alchemy EVM endpoints.
 type alchemyEVMRequest struct {
-	ID      int           `json:"id"`      // JSON-RPC request identifier
-	JSONRPC string        `json:"jsonrpc"` // JSON-RPC version, always "2.0"
-	Method  string        `json:"method"`  // RPC method name
-	Params  []interface{} `json:"params"`  // Method-specific parameters
+	ID      int           `json:"id"`
+	JSONRPC string        `json:"jsonrpc"`
+	Method  string        `json:"method"`
+	Params  []interface{} `json:"params"`
 }
 
 // alchemyTransfer represents a single transfer from the Alchemy response.
 type alchemyTransfer struct {
-	Hash        string  `json:"hash"`     // Transaction hash
-	From        string  `json:"from"`     // Sender address
-	To          string  `json:"to"`       // Receiver address
-	Value       float64 `json:"value"`    // Transfer amount (human-readable, already converted from wei)
-	Asset       string  `json:"asset"`    // Token symbol (e.g. "ETH", "USDC")
-	BlockNum    string  `json:"blockNum"` // Block number in hex (e.g. "0x1a4")
+	Hash        string  `json:"hash"`
+	From        string  `json:"from"`
+	To          string  `json:"to"`
+	Value       float64 `json:"value"`
+	Asset       string  `json:"asset"`
+	BlockNum    string  `json:"blockNum"`
 	RawContract struct {
-		Value   string `json:"value"`   // Raw transfer value in hex (wei for ETH, smallest unit for tokens)
-		Address string `json:"address"` // Token contract address
-	} `json:"rawContract"` // Raw contract data, useful for precise value calculations and token identification
+		Value   string `json:"value"`
+		Address string `json:"address"`
+	} `json:"rawContract"`
 }
 
 // alchemyEVMResponse is the JSON-RPC response from alchemy_getAssetTransfers.
 type alchemyEVMResponse struct {
 	Result struct {
-		Transfers []alchemyTransfer `json:"transfers"` // List of asset transfers
+		Transfers []alchemyTransfer `json:"transfers"`
 	} `json:"result"`
 }
 
 // GetTransfers fetches the last 100 outgoing AND incoming transfers for the given address.
-// chain parameter determines which Alchemy RPC endpoint to use (ethereum, arbitrum, optimism, base, polygon).
-func (a *AlchemyEVM) GetTransfers(address string, chain ...string) ([]interfaces.TransferData, error) {
+func (a *AlchemyEVM) GetTransfers(address string, limit int, chain ...string) ([]interfaces.TransferData, error) {
 
 	chainKey := "ethereum"
 	if len(chain) > 0 && chain[0] != "" {
@@ -71,37 +71,47 @@ func (a *AlchemyEVM) GetTransfers(address string, chain ...string) ([]interfaces
 		return nil, fmt.Errorf("unsupported chain: %s", chainKey)
 	}
 
+	if limit <= 0 || limit > 50 {
+		limit = 25
+	}
+
 	baseURL := cfg.AlchemyURL + a.apiKey
 
-	// Fetch outgoing transfers (wallet sent tokens = sell)
-	outgoing, err := a.fetchTransfers(baseURL, address, "out")
+	// Fetch limit transfers per direction, then merge and take the most recent `limit`
+	outgoing, err := a.fetchTransfers(baseURL, address, "out", limit, cfg.BlockTimeSec)
 	if err != nil {
 		return nil, fmt.Errorf("fetch outgoing: %w", err)
 	}
 
-	// Fetch incoming transfers (wallet received tokens = buy)
-	incoming, err := a.fetchTransfers(baseURL, address, "in")
+	incoming, err := a.fetchTransfers(baseURL, address, "in", limit, cfg.BlockTimeSec)
 	if err != nil {
 		return nil, fmt.Errorf("fetch incoming: %w", err)
 	}
 
-	// Combine both directions
-	transfers := make([]interfaces.TransferData, 0, len(outgoing)+len(incoming))
-	transfers = append(transfers, outgoing...)
-	transfers = append(transfers, incoming...)
+	// Combine, sort by block number descending, take top `limit`
+	all := make([]interfaces.TransferData, 0, len(outgoing)+len(incoming))
+	all = append(all, outgoing...)
+	all = append(all, incoming...)
 
-	return transfers, nil
+	sort.Slice(all, func(i, j int) bool {
+		return all[i].BlockNumber > all[j].BlockNumber
+	})
+
+	if len(all) > limit {
+		all = all[:limit]
+	}
+
+	return all, nil
 
 }
 
 // fetchTransfers makes a single alchemy_getAssetTransfers call for one direction.
-// direction: "in" (toAddress) or "out" (fromAddress).
-func (a *AlchemyEVM) fetchTransfers(baseURL, address, direction string) ([]interfaces.TransferData, error) {
+func (a *AlchemyEVM) fetchTransfers(baseURL, address, direction string, limit int, blockTimeSec float64) ([]interfaces.TransferData, error) {
 
 	params := map[string]interface{}{
 		"category": []string{"external", "erc20", "erc721"},
 		"order":    "desc",
-		"maxCount": "0x64",
+		"maxCount": fmt.Sprintf("0x%x", limit),
 	}
 
 	if direction == "out" {
@@ -140,6 +150,7 @@ func (a *AlchemyEVM) fetchTransfers(baseURL, address, direction string) ([]inter
 
 	transfers := make([]interfaces.TransferData, 0, len(result.Result.Transfers))
 	for _, t := range result.Result.Transfers {
+		blockNum := hexToUint64(t.BlockNum)
 		transfers = append(transfers, interfaces.TransferData{
 			Hash:            t.Hash,
 			From:            t.From,
@@ -147,11 +158,42 @@ func (a *AlchemyEVM) fetchTransfers(baseURL, address, direction string) ([]inter
 			Value:           fmt.Sprintf("%f", t.Value),
 			TokenSymbol:     t.Asset,
 			ContractAddress: t.RawContract.Address,
-			BlockNumber:     hexToUint64(t.BlockNum),
+			BlockNumber:     blockNum,
+			Timestamp:       estimateBlockTimestamp(blockNum, blockTimeSec),
 			Direction:       direction,
 		})
 	}
 
 	return transfers, nil
+
+}
+
+// estimateBlockTimestamp estimates a unix timestamp from a block number.
+// Uses chain-specific block time (seconds per block).
+//
+// For Ethereum mainnet (12s/block): uses The Merge as reference point.
+// For L2s (Arbitrum 0.25s, Optimism/Base/Polygon 2s): uses genesis-based estimation.
+//
+// This is an approximation — not exact, but close enough for display.
+func estimateBlockTimestamp(blockNum uint64, blockTimeSec float64) int64 {
+
+	if blockTimeSec == 0 {
+		return 0
+	}
+
+	// Ethereum mainnet reference point
+	if blockTimeSec == 12 {
+		const mergeBlock uint64 = 15537394
+		const mergeTimestamp int64 = 1663224162 // Sep 15, 2022
+		if blockNum >= mergeBlock {
+			return mergeTimestamp + int64(float64(blockNum-mergeBlock)*blockTimeSec)
+		}
+		return mergeTimestamp - int64(float64(mergeBlock-blockNum)*13)
+	}
+
+	// L2 chains: estimate from block number × block time
+	// Most L2s started relatively recently, so block 0 ≈ chain launch
+	// Arbitrum genesis: Mar 2023, Optimism: Jun 2022, Base: Aug 2023, Polygon: May 2020
+	return int64(float64(blockNum) * blockTimeSec)
 
 }

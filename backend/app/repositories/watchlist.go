@@ -41,7 +41,11 @@ func (r *WatchlistRepository) FindByUser(userID uint) ([]entities.Watchlist, err
 func (r *WatchlistRepository) FindByWallet(walletAddress string) ([]entities.Watchlist, error) {
 
 	var items []entities.Watchlist
-	if err := r.db.Where("wallet_address = ?", walletAddress).Find(&items).Error; err != nil {
+	query := r.db
+	if walletAddress != "" {
+		query = query.Where("wallet_address = ?", walletAddress)
+	}
+	if err := query.Find(&items).Error; err != nil {
 		return nil, err
 	}
 	return items, nil

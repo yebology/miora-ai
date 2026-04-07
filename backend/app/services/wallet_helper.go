@@ -55,14 +55,14 @@ func (s *WalletService) getClient(chain string) (interfaces.BlockchainClient, *p
 }
 
 // fetchAndSaveTransactions fetches transfers from Alchemy and persists them.
-func (s *WalletService) fetchAndSaveTransactions(wallet *entities.Wallet, chain string) ([]entities.Transaction, *pkg.AppError) {
+func (s *WalletService) fetchAndSaveTransactions(wallet *entities.Wallet, chain string, limit int) ([]entities.Transaction, *pkg.AppError) {
 
 	client, appErr := s.getClient(chain)
 	if appErr != nil {
 		return nil, appErr
 	}
 
-	transfers, err := client.GetTransfers(wallet.Address, chain)
+	transfers, err := client.GetTransfers(wallet.Address, limit, chain)
 	if err != nil {
 		return nil, pkg.ErrUnexpected(502, constants.AnalysisFailed)
 	}
@@ -214,10 +214,12 @@ func buildTradedTokens(chain string, trades []tradeResult, txs []entities.Transa
 	tokens := make([]responses.TradedToken, 0, len(trades))
 	for _, t := range trades {
 		status := "unrealized"
-		// If exit price differs from a "current price" fetch, it's realized
-		// For now, we check if there was a matching sell in calculateTrades
-		if t.ExitPrice > 0 && t.BuyPrice > 0 {
+		var exitTime *time.Time
+
+		if !t.ExitTime.IsZero() {
 			status = "realized"
+			et := t.ExitTime
+			exitTime = &et
 		}
 
 		tokens = append(tokens, responses.TradedToken{
@@ -227,6 +229,8 @@ func buildTradedTokens(chain string, trades []tradeResult, txs []entities.Transa
 			PnlPercent:      utils.Round2(t.PnlPercent),
 			BuyPrice:        t.BuyPrice,
 			ExitPrice:       t.ExitPrice,
+			BuyTime:         t.BuyTime,
+			ExitTime:        exitTime,
 			Status:          status,
 		})
 	}
