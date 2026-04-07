@@ -19,9 +19,21 @@ func NewAIService(ai interfaces.IAI) *AIService {
 }
 
 // GenerateInsight takes wallet analysis data and returns a natural language explanation.
-func (s *AIService) GenerateInsight(analysis *responses.WalletAnalysis) (string, error) {
+// Tone defaults to "simple" if empty.
+func (s *AIService) GenerateInsight(analysis *responses.WalletAnalysis, tone string) (string, error) {
 
-	prompt := prompts.BuildWalletInsight(analysis)
+	if tone == "" {
+		tone = "simple"
+	}
+	prompt := prompts.BuildWalletInsight(analysis, tone)
+	return s.ai.Generate(prompt)
+
+}
+
+// GenerateCustomInsight generates an insight using a user-provided custom prompt.
+func (s *AIService) GenerateCustomInsight(analysis *responses.WalletAnalysis, customPrompt string) (string, error) {
+
+	prompt := prompts.BuildWalletInsightCustom(analysis, customPrompt)
 	return s.ai.Generate(prompt)
 
 }

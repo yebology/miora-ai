@@ -90,3 +90,24 @@ func (h *WalletHandler) GetWallet(c *fiber.Ctx) error {
 	return output.GetSuccess(c, constants.SuccessGetData, result)
 
 }
+
+// RegenerateInsight handles POST /wallets/regenerate-insight.
+// Regenerates the AI insight for a previously analyzed wallet with a different tone.
+func (h *WalletHandler) RegenerateInsight(c *fiber.Ctx) error {
+
+	var req requests.RegenerateInsight
+	if appErr := utils.ParseAndValidateBody(c, &req); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	insight, appErr := h.service.RegenerateInsight(req.Address, req.Chain, req.Tone, req.CustomPrompt)
+	if appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, constants.SuccessGetData, fiber.Map{
+		"ai_insight": insight,
+		"tone":       req.Tone,
+	})
+
+}

@@ -13,6 +13,7 @@ export type TradedToken = {
 export type Condition = {
   id: string;
   label: string;
+  description: string;
   type: string;
   field: string;
   operator: string;

@@ -255,12 +255,13 @@ func buildConditions(
 	// If risk exposure is high (> 30%), suggest liquidity filter
 	if riskExposure > 30 {
 		conditions = append(conditions, responses.Condition{
-			ID:       "min_liquidity",
-			Label:    "Token liquidity above $100k",
-			Type:     "number",
-			Field:    "liquidity",
-			Operator: "gte",
-			Value:    100000,
+			ID:          "min_liquidity",
+			Label:       "Token liquidity above $100k",
+			Description: "Only get notified about tokens that have enough money in the market to buy and sell easily. Low liquidity tokens are risky because prices can swing wildly.",
+			Type:        "number",
+			Field:       "liquidity",
+			Operator:    "gte",
+			Value:       100000,
 		})
 	}
 
@@ -268,24 +269,26 @@ func buildConditions(
 	// Early entries are risky — suggest waiting for token to stabilize
 	if entryTiming > 70 {
 		conditions = append(conditions, responses.Condition{
-			ID:       "min_pair_age",
-			Label:    "Token pair older than 6 hours",
-			Type:     "number",
-			Field:    "pair_age_hours",
-			Operator: "gte",
-			Value:    6,
+			ID:          "min_pair_age",
+			Label:       "Token pair older than 6 hours",
+			Description: "Only get notified about tokens that have been trading for at least 6 hours. Brand new tokens are more likely to be scams or crash quickly.",
+			Type:        "number",
+			Field:       "pair_age_hours",
+			Operator:    "gte",
+			Value:       6,
 		})
 	}
 
 	// If token quality is low (< 60), suggest market cap filter
 	if tokenQuality < 60 {
 		conditions = append(conditions, responses.Condition{
-			ID:       "min_mcap",
-			Label:    "Market cap above $500k",
-			Type:     "number",
-			Field:    "market_cap",
-			Operator: "gte",
-			Value:    500000,
+			ID:          "min_mcap",
+			Label:       "Market cap above $500k",
+			Description: "Only get notified about tokens worth at least $500k total. Bigger tokens are generally safer and less likely to disappear overnight.",
+			Type:        "number",
+			Field:       "market_cap",
+			Operator:    "gte",
+			Value:       500000,
 		})
 	}
 
@@ -293,12 +296,13 @@ func buildConditions(
 	// by requiring minimum 24h volume
 	if len(tokenData) > 0 {
 		conditions = append(conditions, responses.Condition{
-			ID:       "min_volume",
-			Label:    "24h trading volume above $50k",
-			Type:     "number",
-			Field:    "volume_h24",
-			Operator: "gte",
-			Value:    50000,
+			ID:          "min_volume",
+			Label:       "24h trading volume above $50k",
+			Description: "Only get notified about tokens that people are actively trading. Low volume means fewer buyers and sellers, making it harder to exit your position.",
+			Type:        "number",
+			Field:       "volume_h24",
+			Operator:    "gte",
+			Value:       50000,
 		})
 	}
 

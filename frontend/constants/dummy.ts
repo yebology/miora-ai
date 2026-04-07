@@ -44,7 +44,8 @@ export const DUMMY_ANALYSIS: WalletAnalysis = {
   conditions: [
     {
       id: "min_liquidity",
-      label: "Minimum liquidity $100k",
+      label: "Token liquidity above $100k",
+      description: "Only get notified about tokens that have enough money in the market to buy and sell easily. Low liquidity tokens are risky because prices can swing wildly.",
       type: "number",
       field: "liquidity",
       operator: "gte",
@@ -52,7 +53,8 @@ export const DUMMY_ANALYSIS: WalletAnalysis = {
     },
     {
       id: "min_mcap",
-      label: "Minimum market cap $500k",
+      label: "Market cap above $500k",
+      description: "Only get notified about tokens worth at least $500k total. Bigger tokens are generally safer and less likely to disappear overnight.",
       type: "number",
       field: "market_cap",
       operator: "gte",
@@ -60,7 +62,8 @@ export const DUMMY_ANALYSIS: WalletAnalysis = {
     },
     {
       id: "min_pair_age",
-      label: "Pair age at least 6 hours",
+      label: "Token pair older than 6 hours",
+      description: "Only get notified about tokens that have been trading for at least 6 hours. Brand new tokens are more likely to be scams or crash quickly.",
       type: "number",
       field: "pair_age_hours",
       operator: "gte",

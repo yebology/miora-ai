@@ -121,7 +121,7 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 	}
 
 	// Generate AI insight (non-blocking — if it fails, return without insight)
-	if insight, err := s.ai.GenerateInsight(result); err == nil {
+	if insight, err := s.ai.GenerateInsight(result, "simple"); err == nil {
 		result.AiInsight = insight
 	} else {
 		log.Printf("AI insight failed: %v", err)
@@ -157,6 +157,32 @@ func (s *WalletService) GetWallet(address string) (*responses.WalletAnalysis, *p
 		FinalScore:        metric.FinalScore,
 		Recommendation:    metric.Recommendation,
 	}, nil
+
+}
+
+// RegenerateInsight regenerates the AI insight for a previously analyzed wallet with a different tone.
+func (s *WalletService) RegenerateInsight(address, chain, tone, customPrompt string) (string, *pkg.AppError) {
+
+	result, appErr := s.GetWallet(address)
+	if appErr != nil {
+		return "", appErr
+	}
+	result.Chain = chain
+
+	var insight string
+	var err error
+
+	if tone == "custom" && customPrompt != "" {
+		insight, err = s.ai.GenerateCustomInsight(result, customPrompt)
+	} else {
+		insight, err = s.ai.GenerateInsight(result, tone)
+	}
+
+	if err != nil {
+		return "", pkg.ErrInternal()
+	}
+
+	return insight, nil
 
 }
 

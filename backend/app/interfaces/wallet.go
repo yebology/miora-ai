@@ -11,6 +11,7 @@ import (
 type IWalletService interface {
 	AnalyzeWallet(address, chain string, limit int) (*responses.WalletAnalysis, *pkg.AppError)
 	GetWallet(address string) (*responses.WalletAnalysis, *pkg.AppError)
+	RegenerateInsight(address, chain, tone, customPrompt string) (string, *pkg.AppError)
 }
 
 // IWalletRepository defines the data access contract for wallet operations.

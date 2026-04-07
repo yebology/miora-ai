@@ -6,7 +6,12 @@ import { ScoreRing } from "@/components/analyze/score-ring";
 import { RecommendationBadge } from "@/components/analyze/recommendation-badge";
 import { MetricBar } from "@/components/analyze/metric-bar";
 import { TradedTokensTable } from "@/components/analyze/traded-tokens-table";
-import { Brain, AlertTriangle } from "lucide-react";
+import { AiInsightCard } from "@/components/analyze/ai-insight-card";
+import { ConditionsCard } from "@/components/analyze/conditions-card";
+import { AlertTriangle, Eye } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 type Props = {
   data: WalletAnalysis;
@@ -53,11 +58,25 @@ export function AnalysisResult({ data }: Props) {
         <CardContent className="flex flex-col items-center gap-6 p-6 sm:flex-row">
           <ScoreRing score={data.final_score} />
           <div className="flex-1 text-center sm:text-left">
-            <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row">
-              <RecommendationBadge recommendation={data.recommendation} />
-              <span className="text-sm text-muted-foreground">
-                {data.total_transactions} transactions on {data.chain}
-              </span>
+            <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+              <div className="flex flex-col items-center gap-2 sm:flex-row">
+                <RecommendationBadge recommendation={data.recommendation} />
+                <span className="text-sm text-muted-foreground">
+                  {data.total_transactions} transactions on {data.chain}
+                </span>
+              </div>
+              {data.recommendation !== "conditional_follow" && (
+                <Link
+                  href="/watchlist"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "gap-1.5"
+                  )}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Follow Wallet
+                </Link>
+              )}
             </div>
             <p className="font-mono text-xs text-muted-foreground break-all">
               {data.address}
@@ -68,14 +87,11 @@ export function AnalysisResult({ data }: Props) {
 
       {/* AI Insight */}
       {data.ai_insight && (
-        <Card>
-          <CardContent className="flex gap-3 p-5">
-            <Brain className="mt-0.5 h-5 w-5 shrink-0 text-purple-400" />
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {data.ai_insight}
-            </p>
-          </CardContent>
-        </Card>
+        <AiInsightCard
+          insight={data.ai_insight}
+          address={data.address}
+          chain={data.chain}
+        />
       )}
 
       {/* Metrics */}
@@ -98,23 +114,13 @@ export function AnalysisResult({ data }: Props) {
         </CardContent>
       </Card>
 
-      {/* Conditions (conditional_follow only) */}
+      {/* Conditions — interactive follow with conditions */}
       {data.conditions && data.conditions.length > 0 && (
-        <Card>
-          <CardContent className="space-y-3 p-5">
-            <h3 className="text-sm font-medium">Suggested Conditions</h3>
-            <div className="flex flex-wrap gap-2">
-              {data.conditions.map((c) => (
-                <span
-                  key={c.id}
-                  className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs text-yellow-400"
-                >
-                  {c.label}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ConditionsCard
+          conditions={data.conditions}
+          address={data.address}
+          chain={data.chain}
+        />
       )}
 
       {/* Traded Tokens */}

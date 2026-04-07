@@ -36,10 +36,11 @@ type TradedToken struct {
 // User can select which conditions to apply — only trades matching all selected
 // conditions will trigger a notification.
 type Condition struct {
-	ID       string      `json:"id"`       // Unique identifier (e.g. "min_liquidity")
-	Label    string      `json:"label"`    // Human-readable description
-	Type     string      `json:"type"`     // Data type: "number"
-	Field    string      `json:"field"`    // DexScreener field to check (e.g. "liquidity", "pair_age_hours", "market_cap")
-	Operator string      `json:"operator"` // Comparison: "gte" (>=), "lte" (<=)
-	Value    interface{} `json:"value"`    // Threshold value
+	ID          string      `json:"id"`
+	Label       string      `json:"label"`
+	Description string      `json:"description"` // Beginner-friendly explanation
+	Type        string      `json:"type"`
+	Field       string      `json:"field"`
+	Operator    string      `json:"operator"`
+	Value       interface{} `json:"value"`
 }

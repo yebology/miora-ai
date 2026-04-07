@@ -7,10 +7,10 @@ type Props = {
   size?: number;
 };
 
-function getScoreColor(score: number) {
-  if (score >= 80) return "#22c55e";
-  if (score >= 40) return "#eab308";
-  return "#ef4444";
+function getGradientId(score: number) {
+  if (score >= 80) return "score-green";
+  if (score >= 40) return "score-yellow";
+  return "score-red";
 }
 
 export function ScoreRing({ score, size = 140 }: Props) {
@@ -19,16 +19,31 @@ export function ScoreRing({ score, size = 140 }: Props) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (animatedScore / 100) * circumference;
-  const color = getScoreColor(score);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedScore(score), 100);
     return () => clearTimeout(timer);
   }, [score]);
 
+  const gradientId = getGradientId(score);
+
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
+        <defs>
+          <linearGradient id="score-green" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22c55e" />
+            <stop offset="100%" stopColor="#4ade80" />
+          </linearGradient>
+          <linearGradient id="score-yellow" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#eab308" />
+          </linearGradient>
+          <linearGradient id="score-red" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ef4444" />
+            <stop offset="100%" stopColor="#f87171" />
+          </linearGradient>
+        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -43,7 +58,7 @@ export function ScoreRing({ score, size = 140 }: Props) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gradientId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -52,9 +67,7 @@ export function ScoreRing({ score, size = 140 }: Props) {
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-3xl font-bold" style={{ color }}>
-          {animatedScore}
-        </span>
+        <span className="text-3xl font-bold">{animatedScore}</span>
         <span className="text-xs text-muted-foreground">/ 100</span>
       </div>
     </div>
