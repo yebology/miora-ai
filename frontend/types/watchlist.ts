@@ -18,6 +18,7 @@ export type Notification = {
   value: string;
   liquidity: number;
   market_cap: number;
+  ai_assessment: string; // AI-generated risk assessment
   read: boolean;
   created_at: string;
 };
