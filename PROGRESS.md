@@ -32,6 +32,7 @@
 - WebSocket hub (manage connections per user, push notifications)
 - Wallet monitor (background polling, detect new trades, check conditions, notify via WebSocket + save to DB)
 - Email notifications wired into monitor service (Resend API client + HTML email template + async dispatch)
+- AI risk assessment per trade notification (Gemini evaluates token data before notifying users)
 - DI container + router pattern (public + protected routes)
 - Interfaces with I prefix (including IEmailClient for Resend)
 - Error handling (AppError + output envelope)
@@ -98,6 +99,6 @@
 ## 🔲 Todo — Hackathon Priority
 
 - [ ] Connect frontend to real backend API (replace dummy data)
-- [ ] Smart contracts — Fee Router (swap fee collection) + On-chain Wallet Score
-- [ ] Wallet connect (Phantom + MetaMask)
+- [ ] Smart contracts — Fee Router (swap fee collection)
+- [ ] Connect frontend to smart contracts (Fee Router integration)
 - [ ] Tests (minimal)

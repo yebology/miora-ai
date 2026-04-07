@@ -352,11 +352,13 @@ websocat ws://localhost:8080/ws?user_id=1
       "traded_at": "2026-04-07T...",
       "liquidity": 150000,
       "market_cap": 500000,
-      "price_change_24h": 12.5
+      "price_change_24h": 12.5,
+      "ai_assessment": "⚠️ This token launched 2 hours ago with $150k liquidity. Moderate risk — liquidity is decent but the token is still very new."
     }
   }
   ```
-- Also check the database: notification is saved in the `notifications` table
+- Verify `ai_assessment` is present and contains a risk emoji (✅, ⚠️, or 🔴) with a beginner-friendly explanation
+- Also check the database: notification is saved in the `notifications` table (including `ai_assessment` column)
 - Monitor polls every 30 seconds (`backend/app/services/monitor.go`)
 
 Related files:
@@ -377,6 +379,7 @@ If `email_notify: true` in watchlist and `RESEND_API_KEY` is set:
 - Subject format: `🔔 0xd8dA...96045 bought PEPE on ethereum`
 - Email is sent async (does not block in-app notifications)
 - If `RESEND_API_KEY` is still a placeholder, email will fail but in-app notifications still work (check log: `Monitor: email failed for user ...`)
+- If `GEMINI_API_KEY` is not set, `ai_assessment` will be empty but notifications still send normally
 
 Related files:
 - Resend client: `backend/app/clients/resend.go`
