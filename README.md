@@ -131,7 +131,7 @@ Swap tokens directly from Miora with best price routing:
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js, TailwindCSS, TypeScript |
+| Frontend | Next.js 16, Tailwind CSS v4, shadcn/ui, TypeScript, next-themes |
 | Backend | Go, Fiber, GORM, WebSocket |
 | Database | PostgreSQL |
 | Auth | Firebase Auth (Google) |
@@ -157,7 +157,7 @@ Swap tokens directly from Miora with best price routing:
 │   │   ├── middleware/      # Firebase auth middleware
 │   │   ├── output/         # Standardized API response (success/error envelope)
 │   │   ├── repositories/   # Database access layer
-│   │   ├── services/       # Business logic (wallet analysis, scoring, AI, swap, watchlist)
+│   │   ├── services/       # Business logic (wallet analysis, scoring, AI, swap, watchlist, monitor)
 │   │   └── ws/             # WebSocket hub
 │   ├── cmd/                # CLI commands (seed, reset)
 │   ├── config/             # Environment config loader
@@ -169,10 +169,27 @@ Swap tokens directly from Miora with best price routing:
 │   ├── main.go             # Entry point
 │   ├── Dockerfile          # Multi-stage Docker build
 │   └── docker-compose.yml  # PostgreSQL
+├── frontend/
+│   ├── app/                # Next.js App Router pages
+│   │   ├── page.tsx        # Landing page
+│   │   ├── analyze/        # Wallet analysis page
+│   │   ├── watchlist/      # Watchlist + detail pages (/watchlist/[chain]/[address])
+│   │   ├── swap/           # Swap page (placeholder)
+│   │   └── login/          # Login page (placeholder)
+│   ├── components/
+│   │   ├── ui/             # shadcn/ui components (button, card, badge, dialog, etc.)
+│   │   ├── layout/         # Navbar, Footer, ThemeToggle
+│   │   ├── landing/        # Landing page sections (hero, features, how-it-works, chains, cta)
+│   │   ├── analyze/        # Analyze page components (score ring, metric bars, conditions, AI insight, tokens table)
+│   │   ├── watchlist/      # Watchlist components (wallet card, notification item)
+│   │   └── providers/      # Theme provider
+│   ├── constants/          # Static data (landing, nav, dummy data)
+│   ├── hooks/              # Custom hooks (useAnimateOnScroll)
+│   ├── types/              # TypeScript types (wallet, watchlist, api)
+│   └── lib/                # Utilities (cn)
 ├── contracts/
 │   ├── svm/                # Solana smart contracts (Anchor)
 │   └── evm/                # EVM smart contracts (Foundry)
-├── frontend/               # Next.js frontend
 ├── Makefile                # Dev commands
 └── README.md
 ```
@@ -191,7 +208,7 @@ Swap tokens directly from Miora with best price routing:
 ### 🔨 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-username/miora-ai.git
+git clone https://github.com/yebology/miora-ai.git
 cd miora-ai
 ```
 
@@ -252,6 +269,7 @@ cd frontend && npm install && npm run dev
 |--------|----------|------------|
 | GET | `/api/health` | Health check |
 | POST | `/api/wallets/analyze` | Analyze a wallet address |
+| POST | `/api/wallets/regenerate-insight` | Regenerate AI insight with different tone |
 | GET | `/api/wallets/:address` | Get stored analysis |
 | POST | `/api/swap/quote` | Get swap quote (Jupiter/1inch) |
 
@@ -260,6 +278,7 @@ cd frontend && npm install && npm run dev
 |--------|----------|------------|
 | GET | `/api/auth/me` | Get/create current user |
 | POST | `/api/watchlist/follow` | Follow a wallet with conditions |
+| PUT | `/api/watchlist/:address` | Update conditions / notification preference |
 | DELETE | `/api/watchlist/:address` | Unfollow a wallet |
 | GET | `/api/watchlist` | List followed wallets |
 

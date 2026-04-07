@@ -59,3 +59,12 @@ func (r *WatchlistRepository) Exists(userID uint, walletAddress string) (bool, e
 	return count > 0, err
 
 }
+
+// Update updates specific fields of a watchlist item.
+func (r *WatchlistRepository) Update(userID uint, walletAddress string, updates map[string]interface{}) error {
+
+	return r.db.Model(&entities.Watchlist{}).
+		Where("user_id = ? AND wallet_address = ?", userID, walletAddress).
+		Updates(updates).Error
+
+}

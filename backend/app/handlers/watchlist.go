@@ -98,3 +98,30 @@ func (h *WatchlistHandler) getUser(c *fiber.Ctx) (*entities.User, *pkg.AppError)
 	return user, nil
 
 }
+
+// Update handles PUT /watchlist/:address.
+// Updates conditions and/or email notification preference for a followed wallet.
+func (h *WatchlistHandler) Update(c *fiber.Ctx) error {
+
+	user, appErr := h.getUser(c)
+	if appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	address := c.Params("address")
+	if address == "" {
+		return output.GetError(c, fiber.StatusBadRequest, constants.AddressRequired)
+	}
+
+	var req requests.UpdateWatchlist
+	if appErr := utils.ParseAndValidateBody(c, &req); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	if appErr := h.service.UpdateConditions(user.ID, address, req.Conditions, req.EmailNotify); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, constants.SuccessUpdateData, nil)
+
+}

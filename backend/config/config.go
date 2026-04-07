@@ -99,3 +99,18 @@ func getEnvFloat(key string) float64 {
 	return val
 
 }
+
+// getEnvFloatDefault parses an environment variable as float64 with a fallback default.
+func getEnvFloatDefault(key string, defaultVal float64) float64 {
+
+	raw := os.Getenv(key)
+	if raw == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return defaultVal
+	}
+	return val
+
+}

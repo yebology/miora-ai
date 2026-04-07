@@ -69,3 +69,37 @@ func (s *WatchlistService) GetUserWatchlist(userID uint) ([]entities.Watchlist, 
 	return items, nil
 
 }
+
+// UpdateConditions updates the selected conditions and/or email notify preference for a watchlist item.
+func (s *WatchlistService) UpdateConditions(userID uint, walletAddress string, conditions []string, emailNotify *bool) *pkg.AppError {
+
+	exists, err := s.repo.Exists(userID, walletAddress)
+	if err != nil {
+		return pkg.ErrInternal()
+	}
+	if !exists {
+		return pkg.ErrNotFound("Not following this wallet.")
+	}
+
+	updates := make(map[string]interface{})
+
+	if conditions != nil {
+		condJSON, _ := json.Marshal(conditions)
+		updates["conditions"] = condJSON
+	}
+
+	if emailNotify != nil {
+		updates["email_notify"] = *emailNotify
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	if err := s.repo.Update(userID, walletAddress, updates); err != nil {
+		return pkg.ErrInternal()
+	}
+
+	return nil
+
+}

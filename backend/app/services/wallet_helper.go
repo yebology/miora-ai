@@ -4,6 +4,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"miora-ai/app/dto"
@@ -253,59 +254,144 @@ func buildConditions(
 	var conditions []responses.Condition
 
 	// If risk exposure is high (> 30%), suggest liquidity filter
+	// Threshold = median liquidity of tokens this wallet traded (rounded to nearest $10k)
 	if riskExposure > 30 {
+		medianLiq := medianValue(tokenData, func(t dto.TokenPairData) float64 { return t.Liquidity })
+		threshold := roundToNearest(medianLiq, 10000)
+		if threshold < 10000 {
+			threshold = 10000 // Floor at $10k
+		}
 		conditions = append(conditions, responses.Condition{
 			ID:          "min_liquidity",
-			Label:       "Token liquidity above $100k",
+			Label:       fmt.Sprintf("Token liquidity above $%s", formatThreshold(threshold)),
 			Description: "Only get notified about tokens that have enough money in the market to buy and sell easily. Low liquidity tokens are risky because prices can swing wildly.",
 			Type:        "number",
 			Field:       "liquidity",
 			Operator:    "gte",
-			Value:       100000,
+			Value:       threshold,
 		})
 	}
 
 	// If entry timing is high (> 70, meaning very early entries), suggest pair age filter
-	// Early entries are risky — suggest waiting for token to stabilize
+	// Threshold = average pair age in hours of tokens this wallet traded (rounded to nearest hour)
 	if entryTiming > 70 {
+		avgAge := averagePairAge(tokenData)
+		threshold := roundToNearest(avgAge, 1)
+		if threshold < 1 {
+			threshold = 1
+		}
 		conditions = append(conditions, responses.Condition{
 			ID:          "min_pair_age",
-			Label:       "Token pair older than 6 hours",
-			Description: "Only get notified about tokens that have been trading for at least 6 hours. Brand new tokens are more likely to be scams or crash quickly.",
+			Label:       fmt.Sprintf("Token pair older than %.0f hours", threshold),
+			Description: fmt.Sprintf("Only get notified about tokens that have been trading for at least %.0f hours. Brand new tokens are more likely to be scams or crash quickly.", threshold),
 			Type:        "number",
 			Field:       "pair_age_hours",
 			Operator:    "gte",
-			Value:       6,
+			Value:       threshold,
 		})
 	}
 
 	// If token quality is low (< 60), suggest market cap filter
+	// Threshold = median mcap of tokens this wallet traded (rounded to nearest $50k)
 	if tokenQuality < 60 {
+		medianMcap := medianValue(tokenData, func(t dto.TokenPairData) float64 { return t.MarketCap })
+		threshold := roundToNearest(medianMcap, 50000)
+		if threshold < 50000 {
+			threshold = 50000
+		}
 		conditions = append(conditions, responses.Condition{
 			ID:          "min_mcap",
-			Label:       "Market cap above $500k",
-			Description: "Only get notified about tokens worth at least $500k total. Bigger tokens are generally safer and less likely to disappear overnight.",
+			Label:       fmt.Sprintf("Market cap above $%s", formatThreshold(threshold)),
+			Description: fmt.Sprintf("Only get notified about tokens worth at least $%s total. Bigger tokens are generally safer and less likely to disappear overnight.", formatThreshold(threshold)),
 			Type:        "number",
 			Field:       "market_cap",
 			Operator:    "gte",
-			Value:       500000,
+			Value:       threshold,
 		})
 	}
 
-	// If win rate is below 60, suggest only following profitable token types
-	// by requiring minimum 24h volume
+	// Suggest volume filter based on median volume of tokens traded
 	if len(tokenData) > 0 {
+		medianVol := medianValue(tokenData, func(t dto.TokenPairData) float64 { return t.VolumeH24 })
+		threshold := roundToNearest(medianVol, 10000)
+		if threshold < 10000 {
+			threshold = 10000
+		}
 		conditions = append(conditions, responses.Condition{
 			ID:          "min_volume",
-			Label:       "24h trading volume above $50k",
+			Label:       fmt.Sprintf("24h trading volume above $%s", formatThreshold(threshold)),
 			Description: "Only get notified about tokens that people are actively trading. Low volume means fewer buyers and sellers, making it harder to exit your position.",
 			Type:        "number",
 			Field:       "volume_h24",
 			Operator:    "gte",
-			Value:       50000,
+			Value:       threshold,
 		})
 	}
 
 	return conditions
 
+}
+
+// medianValue extracts a float field from tokenData and returns the median.
+func medianValue(tokenData map[string]dto.TokenPairData, extract func(dto.TokenPairData) float64) float64 {
+	var vals []float64
+	for _, t := range tokenData {
+		v := extract(t)
+		if v > 0 {
+			vals = append(vals, v)
+		}
+	}
+	if len(vals) == 0 {
+		return 0
+	}
+	// Simple sort for median
+	for i := 0; i < len(vals); i++ {
+		for j := i + 1; j < len(vals); j++ {
+			if vals[j] < vals[i] {
+				vals[i], vals[j] = vals[j], vals[i]
+			}
+		}
+	}
+	mid := len(vals) / 2
+	if len(vals)%2 == 0 {
+		return (vals[mid-1] + vals[mid]) / 2
+	}
+	return vals[mid]
+}
+
+// averagePairAge returns the average pair age in hours from tokenData.
+func averagePairAge(tokenData map[string]dto.TokenPairData) float64 {
+	now := float64(time.Now().UnixMilli())
+	var total float64
+	count := 0
+	for _, t := range tokenData {
+		if t.PairCreatedAt > 0 {
+			ageHours := (now - float64(t.PairCreatedAt)) / 3600000
+			total += ageHours
+			count++
+		}
+	}
+	if count == 0 {
+		return 6 // default
+	}
+	return total / float64(count)
+}
+
+// roundToNearest rounds v to the nearest multiple of unit.
+func roundToNearest(v, unit float64) float64 {
+	if unit <= 0 {
+		return v
+	}
+	return float64(int((v+unit/2)/unit)) * unit
+}
+
+// formatThreshold formats a number like 100000 → "100k", 500000 → "500k", 1000000 → "1M".
+func formatThreshold(v float64) string {
+	if v >= 1000000 {
+		return fmt.Sprintf("%.0fM", v/1000000)
+	}
+	if v >= 1000 {
+		return fmt.Sprintf("%.0fk", v/1000)
+	}
+	return fmt.Sprintf("%.0f", v)
 }

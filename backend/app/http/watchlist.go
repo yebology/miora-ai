@@ -17,6 +17,7 @@ func RegisterWatchlistProtectedRoutes(r fiber.Router, h *handlers.WatchlistHandl
 
 	wl := r.Group("/watchlist")
 	wl.Post("/follow", h.Follow)
+	wl.Put("/:address", h.Update)
 	wl.Delete("/:address", h.Unfollow)
 	wl.Get("/", h.List)
 
