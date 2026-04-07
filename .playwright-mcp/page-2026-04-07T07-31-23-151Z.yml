@@ -1,0 +1,171 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Miora AI" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img [ref=e5]
+        - generic [ref=e13]: Miora AI
+      - navigation [ref=e14]:
+        - link "Analyze" [ref=e15] [cursor=pointer]:
+          - /url: /analyze
+        - link "Swap" [ref=e16] [cursor=pointer]:
+          - /url: /swap
+        - link "Watchlist" [ref=e17] [cursor=pointer]:
+          - /url: /watchlist
+      - generic [ref=e18]:
+        - button "Toggle theme" [disabled]:
+          - img
+          - generic: Toggle theme
+        - link "Launch App" [ref=e19] [cursor=pointer]:
+          - /url: /analyze
+  - main [ref=e20]:
+    - generic [ref=e22]:
+      - paragraph [ref=e23]: 🧠 AI-Powered Wallet Intelligence
+      - heading "See beyond the wallet." [level=1] [ref=e24]
+      - paragraph [ref=e25]: Analyze any blockchain wallet, get smart recommendations, and swap tokens across 6 chains.
+      - generic [ref=e26]:
+        - link "Get Started" [ref=e27] [cursor=pointer]:
+          - /url: /analyze
+          - text: Get Started
+          - img
+        - link "Swap Tokens" [ref=e28] [cursor=pointer]:
+          - /url: /swap
+    - generic [ref=e30]:
+      - heading "Everything you need" [level=2] [ref=e31]
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - img [ref=e34]
+          - heading "AI-Powered Insights" [level=3] [ref=e42]
+          - paragraph [ref=e43]: Understand any wallet's trading behavior in plain language. No charts, no jargon — just clear, actionable analysis.
+        - generic [ref=e44]:
+          - img [ref=e45]
+          - heading "DEX Aggregator" [level=3] [ref=e48]
+          - paragraph [ref=e49]: Swap tokens across Jupiter (Solana) and 1inch (EVM) with best route discovery, all in one place.
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - heading "Smart Recommendations" [level=3] [ref=e53]
+          - paragraph [ref=e54]: Get Full Follow, Conditional Follow, or Avoid ratings with AI-generated conditions for every wallet.
+        - generic [ref=e55]:
+          - img [ref=e56]
+          - heading "Real-Time Alerts" [level=3] [ref=e59]
+          - paragraph [ref=e60]: Follow wallets and get notified instantly when they trade, filtered by your custom conditions.
+        - generic [ref=e61]:
+          - img [ref=e62]
+          - heading "Multi-Chain Support" [level=3] [ref=e65]
+          - paragraph [ref=e66]: Ethereum, Arbitrum, Optimism, Base, Polygon, and Solana — all supported out of the box.
+        - generic [ref=e67]:
+          - img [ref=e68]
+          - heading "Beginner Friendly" [level=3] [ref=e70]
+          - paragraph [ref=e71]: Built for everyone, not just advanced traders. AI translates complex data into simple decisions.
+    - generic [ref=e73]:
+      - heading "How it works" [level=2] [ref=e74]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - text: "01"
+          - heading "Analyze" [level=3] [ref=e77]
+          - paragraph [ref=e78]: Paste any wallet address and select a chain to start.
+        - generic [ref=e79]:
+          - text: "02"
+          - heading "Understand" [level=3] [ref=e80]
+          - paragraph [ref=e81]: Get a multi-factor score with AI-powered insights in plain language.
+        - generic [ref=e82]:
+          - text: "03"
+          - heading "Decide" [level=3] [ref=e83]
+          - paragraph [ref=e84]: Follow the wallet, set alert conditions, or swap tokens directly.
+    - generic [ref=e86]:
+      - heading "6 chains supported" [level=2] [ref=e88]
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - img "Ethereum" [ref=e93]
+            - generic [ref=e94]: Ethereum
+          - generic [ref=e95]:
+            - img "Arbitrum" [ref=e96]
+            - generic [ref=e97]: Arbitrum
+          - generic [ref=e98]:
+            - img "Optimism" [ref=e99]
+            - generic [ref=e100]: Optimism
+          - generic [ref=e101]:
+            - img "Base" [ref=e102]
+            - generic [ref=e103]: Base
+          - generic [ref=e104]:
+            - img "Polygon" [ref=e105]
+            - generic [ref=e106]: Polygon
+          - generic [ref=e107]:
+            - img "Solana" [ref=e108]
+            - generic [ref=e109]: Solana
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - img "Ethereum" [ref=e112]
+            - generic [ref=e113]: Ethereum
+          - generic [ref=e114]:
+            - img "Arbitrum" [ref=e115]
+            - generic [ref=e116]: Arbitrum
+          - generic [ref=e117]:
+            - img "Optimism" [ref=e118]
+            - generic [ref=e119]: Optimism
+          - generic [ref=e120]:
+            - img "Base" [ref=e121]
+            - generic [ref=e122]: Base
+          - generic [ref=e123]:
+            - img "Polygon" [ref=e124]
+            - generic [ref=e125]: Polygon
+          - generic [ref=e126]:
+            - img "Solana" [ref=e127]
+            - generic [ref=e128]: Solana
+        - generic [ref=e129]:
+          - generic [ref=e130]:
+            - img "Ethereum" [ref=e131]
+            - generic [ref=e132]: Ethereum
+          - generic [ref=e133]:
+            - img "Arbitrum" [ref=e134]
+            - generic [ref=e135]: Arbitrum
+          - generic [ref=e136]:
+            - img "Optimism" [ref=e137]
+            - generic [ref=e138]: Optimism
+          - generic [ref=e139]:
+            - img "Base" [ref=e140]
+            - generic [ref=e141]: Base
+          - generic [ref=e142]:
+            - img "Polygon" [ref=e143]
+            - generic [ref=e144]: Polygon
+          - generic [ref=e145]:
+            - img "Solana" [ref=e146]
+            - generic [ref=e147]: Solana
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - img "Ethereum" [ref=e150]
+            - generic [ref=e151]: Ethereum
+          - generic [ref=e152]:
+            - img "Arbitrum" [ref=e153]
+            - generic [ref=e154]: Arbitrum
+          - generic [ref=e155]:
+            - img "Optimism" [ref=e156]
+            - generic [ref=e157]: Optimism
+          - generic [ref=e158]:
+            - img "Base" [ref=e159]
+            - generic [ref=e160]: Base
+          - generic [ref=e161]:
+            - img "Polygon" [ref=e162]
+            - generic [ref=e163]: Polygon
+          - generic [ref=e164]:
+            - img "Solana" [ref=e165]
+            - generic [ref=e166]: Solana
+    - generic [ref=e168]:
+      - heading "Ready to start?" [level=2] [ref=e169]
+      - paragraph [ref=e170]: Analyze wallets and trade smarter — free to use.
+      - link "Launch App" [ref=e171] [cursor=pointer]:
+        - /url: /analyze
+        - text: Launch App
+        - img
+  - contentinfo [ref=e172]:
+    - generic [ref=e173]:
+      - generic [ref=e174]: Miora AI
+      - generic [ref=e175]: Not financial advice. Trade at your own risk.
+      - generic [ref=e176]:
+        - link "GitHub" [ref=e177] [cursor=pointer]:
+          - /url: https://github.com/yebology
+        - link "LinkedIn" [ref=e178] [cursor=pointer]:
+          - /url: https://linkedin.com/in/yobelnathanielfilipus
+  - button "Open Next.js Dev Tools" [ref=e184] [cursor=pointer]:
+    - img [ref=e185]
