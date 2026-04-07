@@ -86,10 +86,9 @@
 //
 // # Recommendation
 //
-//	80–100 → full_follow        (consistent, profitable, low risk)
-//	60–79  → partial_follow     (profitable but some risk)
-//	40–59  → conditional_follow (mixed results, proceed with caution)
-//	< 40   → avoid              (high risk, poor performance)
+//	80–100 → full_follow    (consistent, profitable, low risk)
+//	40–79  → partial_follow (mixed results, follow with caution)
+//	< 40   → avoid          (high risk, poor performance)
 package services
 
 import (
@@ -98,6 +97,7 @@ import (
 
 	"miora-ai/app/dto"
 	"miora-ai/app/entities"
+	"miora-ai/utils"
 )
 
 // calculateMetrics computes wallet scoring from transaction data,
@@ -160,12 +160,12 @@ func (s *WalletService) calculateMetrics(
 			sumPnlSq += t.PnlPercent * t.PnlPercent
 		}
 
-		winRate = clamp((wins / tradeCount) * 100)
+		winRate = utils.Clamp((wins / tradeCount) * 100)
 
 		mean := sumPnl / tradeCount
 		variance := (sumPnlSq / tradeCount) - (mean * mean)
 		stdDev := math.Sqrt(math.Abs(variance))
-		profitConsistency = clamp(100 - stdDev)
+		profitConsistency = utils.Clamp(100 - stdDev)
 
 	} else {
 		// FALLBACK: DexScreener 24h price change (less accurate)
@@ -182,12 +182,12 @@ func (s *WalletService) calculateMetrics(
 			sumChangeSq += t.PriceChangeH24 * t.PriceChangeH24
 		}
 
-		winRate = clamp((wins / tokenCount) * 100)
+		winRate = utils.Clamp((wins / tokenCount) * 100)
 
 		mean := sumChange / tokenCount
 		variance := (sumChangeSq / tokenCount) - (mean * mean)
 		stdDev := math.Sqrt(math.Abs(variance))
-		profitConsistency = clamp(100 - stdDev)
+		profitConsistency = utils.Clamp(100 - stdDev)
 	}
 
 	// --- Risk Exposure ---
@@ -200,7 +200,7 @@ func (s *WalletService) calculateMetrics(
 			lowLiq++
 		}
 	}
-	riskExposure := clamp((lowLiq / tokenCount) * 100)
+	riskExposure := utils.Clamp((lowLiq / tokenCount) * 100)
 
 	// --- Entry Timing ---
 	// Calculate average pair age in hours for all tokens the wallet traded.
@@ -222,7 +222,7 @@ func (s *WalletService) calculateMetrics(
 	entryTiming := 50.0
 	if ageCount > 0 {
 		avgAge := totalAge / ageCount
-		entryTiming = clamp(100 - (avgAge / s.scoring.EntryTimingMaxAge * 100))
+		entryTiming = utils.Clamp(100 - (avgAge / s.scoring.EntryTimingMaxAge * 100))
 	}
 
 	// --- Token Quality ---
@@ -235,7 +235,7 @@ func (s *WalletService) calculateMetrics(
 		totalMcap += t.MarketCap
 	}
 	avgMcap := totalMcap / tokenCount
-	tokenQuality := clamp((math.Log10(math.Max(avgMcap, 1)) / s.scoring.TokenQualityLogBase) * 100)
+	tokenQuality := utils.Clamp((math.Log10(math.Max(avgMcap, 1)) / s.scoring.TokenQualityLogBase) * 100)
 
 	// --- Trade Discipline ---
 	// Measures how focused the wallet is.
@@ -244,7 +244,7 @@ func (s *WalletService) calculateMetrics(
 	// High ratio = trades many different tokens = scattered/unfocused.
 	// Score = (1 - ratio) × 100.
 	ratio := tokenCount / float64(total)
-	tradeDiscipline := clamp((1 - ratio) * 100)
+	tradeDiscipline := utils.Clamp((1 - ratio) * 100)
 
 	// --- Final Score ---
 	// Weighted sum of all metrics. Weights sum to 1.0 for a true 0–100 range.
@@ -260,13 +260,13 @@ func (s *WalletService) calculateMetrics(
 	return &entities.WalletMetric{
 		WalletID:          walletID,
 		TotalTransactions: total,
-		ProfitConsistency: round2(profitConsistency),
-		WinRate:           round2(winRate),
-		RiskExposure:      round2(riskExposure),
-		EntryTiming:       round2(entryTiming),
-		TokenQuality:      round2(tokenQuality),
-		TradeDiscipline:   round2(tradeDiscipline),
-		FinalScore:        round2(finalScore),
+		ProfitConsistency: utils.Round2(profitConsistency),
+		WinRate:           utils.Round2(winRate),
+		RiskExposure:      utils.Round2(riskExposure),
+		EntryTiming:       utils.Round2(entryTiming),
+		TokenQuality:      utils.Round2(tokenQuality),
+		TradeDiscipline:   utils.Round2(tradeDiscipline),
+		FinalScore:        utils.Round2(finalScore),
 		Recommendation:    recommendation,
 	}
 
@@ -275,42 +275,17 @@ func (s *WalletService) calculateMetrics(
 // scoreToRecommendation converts a final score (0–100) to a recommendation label.
 //
 //	80–100 → "full_follow"
-//	60–79  → "partial_follow"
-//	40–59  → "conditional_follow"
+//	40–79  → "partial_follow"
 //	< 40   → "avoid"
 func scoreToRecommendation(score float64) string {
 
 	switch {
 	case score >= 80:
 		return "full_follow"
-	case score >= 60:
-		return "partial_follow"
 	case score >= 40:
-		return "conditional_follow"
+		return "partial_follow"
 	default:
 		return "avoid"
 	}
-
-}
-
-// clamp restricts a value to the 0–100 range.
-// Prevents scores from going negative or exceeding 100.
-func clamp(val float64) float64 {
-
-	if val > 100 {
-		return 100
-	}
-	if val < 0 {
-		return 0
-	}
-	return val
-
-}
-
-// round2 rounds a float to 2 decimal places.
-// Example: 90.6547 → 90.65.
-func round2(val float64) float64 {
-
-	return math.Round(val*100) / 100
 
 }

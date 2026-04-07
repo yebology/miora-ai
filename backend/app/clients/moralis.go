@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"miora-ai/app/dto"
+	"miora-ai/constants"
 	"net/http"
 )
 
@@ -39,22 +40,13 @@ type moralisPriceResponse struct {
 }
 
 // chainToMoralisID maps chain identifiers to Moralis EVM chain hex IDs.
-// Each EVM blockchain has a unique chain ID:
-//   - Ethereum = 1 (0x1)
-//   - BSC = 56 (0x38)
-//   - Polygon = 137 (0x89)
 func chainToMoralisID(chain string) string {
 
-	switch chain {
-	case "evm", "ethereum":
-		return "0x1"
-	case "bsc":
-		return "0x38"
-	case "polygon":
-		return "0x89"
-	default:
-		return "0x1"
+	cfg := constants.GetChainConfig(chain)
+	if cfg != nil && cfg.MoralisChainID != "" {
+		return cfg.MoralisChainID
 	}
+	return "0x1"
 
 }
 

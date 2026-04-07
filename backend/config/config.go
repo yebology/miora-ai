@@ -23,6 +23,7 @@ type Config struct {
 	MoralisAPIKey  string // Moralis API key for historical token prices (MORALIS_API_KEY)
 	BirdeyeAPIKey  string // Birdeye API key for Solana historical prices (BIRDEYE_API_KEY)
 	GeminiAPIKey   string // Google Gemini API key for AI insights (GEMINI_API_KEY)
+	OneInchAPIKey  string // 1inch API key for EVM swap quotes (ONEINCH_API_KEY)
 	AllowedOrigins string // Comma-separated CORS allowed origins (ALLOWED_ORIGINS)
 	Scoring        ScoringConfig
 }
@@ -46,7 +47,7 @@ func LoadConfig() (*Config, error) {
 	required := []string{
 		"APP_PORT", "DB_HOST", "DB_PORT",
 		"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB",
-		"ALCHEMY_API_KEY", "MORALIS_API_KEY", "BIRDEYE_API_KEY", "GEMINI_API_KEY", "ALLOWED_ORIGINS",
+		"ALCHEMY_API_KEY", "MORALIS_API_KEY", "BIRDEYE_API_KEY", "GEMINI_API_KEY", "ONEINCH_API_KEY", "ALLOWED_ORIGINS",
 		"SCORING_LIQUIDITY_THRESHOLD", "SCORING_ENTRY_TIMING_MAX_AGE", "SCORING_TOKEN_QUALITY_LOG_BASE",
 	}
 
@@ -67,6 +68,7 @@ func LoadConfig() (*Config, error) {
 		MoralisAPIKey:  os.Getenv("MORALIS_API_KEY"),
 		BirdeyeAPIKey:  os.Getenv("BIRDEYE_API_KEY"),
 		GeminiAPIKey:   os.Getenv("GEMINI_API_KEY"),
+		OneInchAPIKey:  os.Getenv("ONEINCH_API_KEY"),
 		AllowedOrigins: os.Getenv("ALLOWED_ORIGINS"),
 		Scoring: ScoringConfig{
 			LiquidityThreshold:  getEnvFloat("SCORING_LIQUIDITY_THRESHOLD"),

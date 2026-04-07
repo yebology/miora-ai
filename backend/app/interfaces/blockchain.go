@@ -13,5 +13,5 @@ type TransferData struct {
 }
 
 type BlockchainClient interface {
-	GetTransfers(address string) ([]TransferData, error)
+	GetTransfers(address string, chain ...string) ([]TransferData, error)
 }

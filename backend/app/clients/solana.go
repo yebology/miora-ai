@@ -46,7 +46,7 @@ type solanaRPCResponse struct {
 // signature would need a follow-up getTransaction call.
 //
 // Returns a normalized slice of TransferData with only Hash and Timestamp populated.
-func (a *AlchemySolana) GetTransfers(address string) ([]interfaces.TransferData, error) {
+func (a *AlchemySolana) GetTransfers(address string, chain ...string) ([]interfaces.TransferData, error) {
 
 	url := fmt.Sprintf("https://solana-mainnet.g.alchemy.com/v2/%s", a.apiKey)
 

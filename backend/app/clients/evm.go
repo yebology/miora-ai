@@ -10,9 +10,10 @@ import (
 	"net/http"
 
 	"miora-ai/app/interfaces"
+	"miora-ai/constants"
 )
 
-// AlchemyEVM fetches transaction data from EVM-compatible chains (Ethereum, BSC, etc.)
+// AlchemyEVM fetches transaction data from EVM-compatible chains (Ethereum, Arbitrum, Optimism, Base, Polygon)
 // using Alchemy's alchemy_getAssetTransfers JSON-RPC method.
 //
 // API docs: https://docs.alchemy.com/reference/alchemy-getassettransfers
@@ -57,23 +58,29 @@ type alchemyEVMResponse struct {
 }
 
 // GetTransfers fetches the last 100 outgoing AND incoming transfers for the given address.
-//
-// Makes two Alchemy calls:
-//   - fromAddress: transfers sent by the wallet (direction "out" = sell/send)
-//   - toAddress:   transfers received by the wallet (direction "in" = buy/receive)
-//
-// Categories: "external" (native ETH), "erc20" (tokens), "erc721" (NFTs).
-// Results are ordered descending (newest first), max 100 per direction.
-func (a *AlchemyEVM) GetTransfers(address string) ([]interfaces.TransferData, error) {
+// chain parameter determines which Alchemy RPC endpoint to use (ethereum, arbitrum, optimism, base, polygon).
+func (a *AlchemyEVM) GetTransfers(address string, chain ...string) ([]interfaces.TransferData, error) {
+
+	chainKey := "ethereum"
+	if len(chain) > 0 && chain[0] != "" {
+		chainKey = chain[0]
+	}
+
+	cfg := constants.GetChainConfig(chainKey)
+	if cfg == nil {
+		return nil, fmt.Errorf("unsupported chain: %s", chainKey)
+	}
+
+	baseURL := cfg.AlchemyURL + a.apiKey
 
 	// Fetch outgoing transfers (wallet sent tokens = sell)
-	outgoing, err := a.fetchTransfers(address, "out")
+	outgoing, err := a.fetchTransfers(baseURL, address, "out")
 	if err != nil {
 		return nil, fmt.Errorf("fetch outgoing: %w", err)
 	}
 
 	// Fetch incoming transfers (wallet received tokens = buy)
-	incoming, err := a.fetchTransfers(address, "in")
+	incoming, err := a.fetchTransfers(baseURL, address, "in")
 	if err != nil {
 		return nil, fmt.Errorf("fetch incoming: %w", err)
 	}
@@ -89,9 +96,7 @@ func (a *AlchemyEVM) GetTransfers(address string) ([]interfaces.TransferData, er
 
 // fetchTransfers makes a single alchemy_getAssetTransfers call for one direction.
 // direction: "in" (toAddress) or "out" (fromAddress).
-func (a *AlchemyEVM) fetchTransfers(address, direction string) ([]interfaces.TransferData, error) {
-
-	url := fmt.Sprintf("https://eth-mainnet.g.alchemy.com/v2/%s", a.apiKey)
+func (a *AlchemyEVM) fetchTransfers(baseURL, address, direction string) ([]interfaces.TransferData, error) {
 
 	params := map[string]interface{}{
 		"category": []string{"external", "erc20", "erc721"},
@@ -117,7 +122,7 @@ func (a *AlchemyEVM) fetchTransfers(address, direction string) ([]interfaces.Tra
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	resp, err := http.Post(baseURL, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("alchemy evm request: %w", err)
 	}

@@ -29,11 +29,12 @@ import (
 // Container holds all handler instances, ready to be used by route registration.
 type Container struct {
 	WalletHandler *handlers.WalletHandler
+	SwapHandler   *handlers.SwapHandler
 }
 
 // NewContainer creates all dependencies and returns a fully wired Container.
 // Initialization order: clients → repositories → services → handlers.
-func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey string, scoring config.ScoringConfig) *Container {
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey string, scoring config.ScoringConfig) *Container {
 
 	// Clients
 	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
@@ -42,6 +43,8 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 	moralis := clients.NewMoralis(moralisAPIKey)
 	birdeye := clients.NewBirdeye(birdeyeAPIKey)
 	gemini := clients.NewGemini(geminiAPIKey)
+	jupiter := clients.NewJupiter()
+	oneInch := clients.NewOneInch(oneInchAPIKey)
 
 	// Repositories
 	walletRepo := repositories.NewWalletRepository(db)
@@ -49,12 +52,15 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 	// Services
 	aiService := services.NewAIService(gemini)
 	walletService := services.NewWalletService(walletRepo, evmClient, svmClient, dexScreener, moralis, birdeye, aiService, scoring)
+	swapService := services.NewSwapService(jupiter, oneInch)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)
+	swapHandler := handlers.NewSwapHandler(swapService)
 
 	return &Container{
 		WalletHandler: walletHandler,
+		SwapHandler:   swapHandler,
 	}
 
 }

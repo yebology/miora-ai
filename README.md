@@ -158,8 +158,7 @@ Final Score =
 | Score | Recommendation |
 |------|---------------|
 | 80–100 | Full Follow |
-| 60–79 | Partial Follow |
-| 40–59 | Conditional Follow |
+| 40–79 | Partial Follow |
 | < 40 | Avoid |
 
 ---
