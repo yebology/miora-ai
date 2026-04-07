@@ -9,24 +9,42 @@ import { DUMMY_ANALYSIS } from "@/constants/dummy";
 export default function AnalyzePage() {
   const [result, setResult] = useState<WalletAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async (address: string, chain: string) => {
     setLoading(true);
     setResult(null);
+    setError(null);
 
-    // TODO: Replace with real API call
-    // const res = await fetch(`${API_URL}/api/wallets/analyze`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ address, chain }),
-    // });
-    // const json = await res.json();
-    // setResult(json.data);
+    try {
+      // TODO: Replace with real API call
+      // const res = await fetch(`${API_URL}/api/wallets/analyze`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ address, chain }),
+      // });
+      // const json = await res.json();
+      // if (json.status === "error") throw new Error(json.message);
+      // setResult(json.data);
 
-    // Simulate loading with dummy data
-    await new Promise((r) => setTimeout(r, 1500));
-    setResult({ ...DUMMY_ANALYSIS, address, chain });
-    setLoading(false);
+      // Simulate loading with dummy data
+      await new Promise((r) => setTimeout(r, 1500));
+
+      // Type "error" to simulate error state (for testing)
+      if (address.toLowerCase() === "error") {
+        throw new Error("Wallet not found. Please check the address and try again.");
+      }
+
+      setResult({ ...DUMMY_ANALYSIS, address, chain });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to analyze wallet. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,7 +60,11 @@ export default function AnalyzePage() {
           </p>
         </div>
 
-        <AnalyzeForm onAnalyze={handleAnalyze} loading={loading} />
+        <AnalyzeForm
+          onAnalyze={handleAnalyze}
+          loading={loading}
+          error={error}
+        />
 
         {loading && (
           <div className="mt-12 flex flex-col items-center gap-3">

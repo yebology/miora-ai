@@ -13,11 +13,36 @@ type Props = {
 };
 
 const METRICS = [
-  { key: "win_rate", label: "Win Rate" },
-  { key: "profit_consistency", label: "Profit Consistency" },
-  { key: "entry_timing", label: "Entry Timing" },
-  { key: "token_quality", label: "Token Quality" },
-  { key: "trade_discipline", label: "Trade Discipline" },
+  {
+    key: "win_rate",
+    label: "Win Rate",
+    tooltip:
+      "Percentage of trades where the wallet made a profit. Calculated from actual PnL (buy vs sell price) using FIFO matching.",
+  },
+  {
+    key: "profit_consistency",
+    label: "Profit Consistency",
+    tooltip:
+      "How stable the profits are across trades. Uses standard deviation of PnL — lower spread means more consistent returns. Formula: 100 - stdDev(PnL).",
+  },
+  {
+    key: "entry_timing",
+    label: "Entry Timing",
+    tooltip:
+      "How early the wallet enters new tokens after launch. Based on average pair age when traded. Younger pairs = higher score (sniper behavior).",
+  },
+  {
+    key: "token_quality",
+    label: "Token Quality",
+    tooltip:
+      "Average market cap of tokens traded, on a logarithmic scale. Higher market cap = more established tokens. log10($10M) = score 100.",
+  },
+  {
+    key: "trade_discipline",
+    label: "Trade Discipline",
+    tooltip:
+      "How focused the wallet is. Ratio of unique tokens vs total transactions. Few tokens traded many times = disciplined. Many tokens traded once = scattered.",
+  },
 ] as const;
 
 export function AnalysisResult({ data }: Props) {
@@ -54,7 +79,7 @@ export function AnalysisResult({ data }: Props) {
       )}
 
       {/* Metrics */}
-      <Card>
+      <Card className="overflow-visible">
         <CardContent className="space-y-4 p-5">
           <h3 className="text-sm font-medium">Scoring Breakdown</h3>
           {METRICS.map((m, i) => (
@@ -63,6 +88,7 @@ export function AnalysisResult({ data }: Props) {
               label={m.label}
               value={data[m.key]}
               delay={i * 100}
+              tooltip={m.tooltip}
             />
           ))}
           <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
