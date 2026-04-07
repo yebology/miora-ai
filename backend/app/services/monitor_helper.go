@@ -112,6 +112,24 @@ func (m *MonitorService) notifyFollowers(walletAddress, chain string, tx interfa
 		tokenInfo = &pairs[0]
 	}
 
+	// Generate AI risk assessment for this trade (once, reuse for all followers)
+	aiAssessment := ""
+	if m.ai != nil && tokenInfo != nil {
+		pairAgeHours := float64(0)
+		if tokenInfo.PairCreatedAt > 0 {
+			pairAgeHours = float64(time.Now().UnixMilli()-tokenInfo.PairCreatedAt) / 3600000
+		}
+		assessment, err := m.ai.GenerateTradeAssessment(
+			walletAddress, chain, tx.TokenSymbol, tx.Direction,
+			tokenInfo.Liquidity, tokenInfo.MarketCap, tokenInfo.PriceChangeH24, pairAgeHours,
+		)
+		if err == nil {
+			aiAssessment = assessment
+		} else {
+			log.Printf("Monitor: AI assessment failed for %s: %v", tx.TokenSymbol, err)
+		}
+	}
+
 	for _, follower := range followers {
 		// Check if token meets user's conditions
 		if !m.meetsConditions(follower, tokenInfo) {
@@ -132,6 +150,7 @@ func (m *MonitorService) notifyFollowers(walletAddress, chain string, tx interfa
 				"liquidity":        getTokenLiquidity(tokenInfo),
 				"market_cap":       getTokenMcap(tokenInfo),
 				"price_change_24h": getTokenPriceChange(tokenInfo),
+				"ai_assessment":    aiAssessment,
 			},
 		}
 
@@ -149,6 +168,7 @@ func (m *MonitorService) notifyFollowers(walletAddress, chain string, tx interfa
 			Value:         tx.Value,
 			Liquidity:     getTokenLiquidity(tokenInfo),
 			MarketCap:     getTokenMcap(tokenInfo),
+			AiAssessment:  aiAssessment,
 		})
 
 		log.Printf("Monitor: notified user %d about %s trading %s", follower.UserID, walletAddress, tx.TokenSymbol)

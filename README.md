@@ -2,9 +2,9 @@
 
 > **"See beyond the wallet."**
 
-**Miora AI** is an AI-powered DEX aggregator with wallet intelligence — helping users understand blockchain wallet activity, get actionable trading recommendations, and swap tokens across multiple chains, all in one platform.
+**Miora AI** is an AI-powered DEX aggregator with wallet intelligence — helping users analyze blockchain wallets, get smart follow/avoid recommendations, receive AI-assessed trade alerts, and swap tokens across 6 chains through a single interface.
 
-Instead of presenting raw on-chain data, Miora AI transforms complex blockchain activity into human-readable insights and decision support powered by AI.
+Instead of presenting raw on-chain data, Miora AI transforms complex blockchain activity into beginner-friendly insights and actionable decision support. Analyze any wallet, follow the good ones, get notified when they trade (with AI risk assessment), and act — all without leaving the platform.
 
 ---
 
@@ -34,8 +34,13 @@ Analyze any wallet address across EVM and Solana chains. Get a comprehensive sco
 ### 🤖 AI-Powered Insights
 The backend performs all the heavy analysis — fetching on-chain data, calculating PnL with FIFO buy-sell matching, and computing multi-factor scoring. The AI layer (Google Gemini) then takes these computed results and translates them into beginner-friendly, plain language explanations. AI does not analyze data itself — it narrates what the backend already calculated.
 
-Example:
+AI is also used to generate real-time risk assessments for trade notifications. When a followed wallet makes a trade, Gemini evaluates the token's market data (liquidity, market cap, pair age, price change) and provides a short risk opinion — helping users decide whether to act on the alert.
+
+Example wallet insight:
 > "This wallet is a disciplined trader that focuses on 3-4 tokens with consistent 20-30% gains. Safe to follow."
+
+Example trade assessment:
+> "⚠️ This token launched 45 minutes ago with only $8k liquidity. High risk entry — only follow if you're comfortable with potential loss."
 
 ### 🎯 Smart Recommendations
 Three-tier recommendation system based on wallet score (0-100):
@@ -51,12 +56,15 @@ Swap tokens directly from Miora with best price routing:
 - **Solana** → Jupiter (Raydium, Orca, Meteora, Lifinity, etc.)
 - **EVM** → 1inch (Uniswap, SushiSwap, Curve, Balancer, etc.)
 
+Users don't need to choose between Jupiter or 1inch — Miora automatically routes to the right aggregator based on the selected chain. One interface for all chains, no context switching between different DEX frontends.
+
 ### 🔔 Smart Alerts & Watchlist
 - Follow wallets and get real-time notifications via WebSocket when they trade
+- Each notification includes an AI risk assessment — Gemini evaluates the token and tells you if it's safe, risky, or dangerous
 - Set custom conditions: "Only notify me if token liquidity > $100k and pair age > 6 hours"
 - Notifications include trade details: token, amount, direction (buy/sell), timestamp, liquidity, market cap
 - Notification history saved to database — never miss an alert even when offline
-- Email notifications planned (SendGrid/Resend)
+- Email notifications via Resend (async, non-blocking)
 
 ### 🔐 Authentication
 - Google login via Firebase Auth
@@ -71,8 +79,8 @@ Swap tokens directly from Miora with best price routing:
 3. 🤖 **Insight** — AI generates a beginner-friendly explanation of the wallet's trading behavior
 4. 🎯 **Recommend** — System outputs Full Follow, Conditional Follow, or Avoid
 5. 👀 **Follow** — User can follow the wallet with custom notification conditions
-6. 🔔 **Notify** — When the followed wallet trades, user gets notified (WebSocket + email) with token analysis
-7. 🔄 **Trade** — User can swap tokens directly from Miora via DEX aggregator
+6. 🔔 **Notify** — When the followed wallet trades, user gets notified (in-app + email) with AI risk assessment
+7. 🔄 **Trade** — User can swap tokens directly from Miora via the unified DEX aggregator
 
 ---
 

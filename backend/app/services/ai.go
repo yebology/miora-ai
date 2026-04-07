@@ -37,3 +37,11 @@ func (s *AIService) GenerateCustomInsight(analysis *responses.WalletAnalysis, cu
 	return s.ai.Generate(prompt)
 
 }
+
+// GenerateTradeAssessment generates a short AI risk assessment for a new trade notification.
+func (s *AIService) GenerateTradeAssessment(walletAddress, chain, tokenSymbol, direction string, liquidity, marketCap, priceChange24h, pairAgeHours float64) (string, error) {
+
+	prompt := prompts.BuildTradeAssessment(walletAddress, chain, tokenSymbol, direction, liquidity, marketCap, priceChange24h, pairAgeHours)
+	return s.ai.Generate(prompt)
+
+}

@@ -101,3 +101,39 @@ Instructions:
 	)
 
 }
+
+// BuildTradeAssessment constructs the LLM prompt for assessing a new trade notification.
+// Takes token market data and the trade direction to generate a short risk assessment.
+func BuildTradeAssessment(walletAddress, chain, tokenSymbol, direction string, liquidity, marketCap, priceChange24h, pairAgeHours float64) string {
+
+	action := "bought"
+	if direction == "out" {
+		action = "sold"
+	}
+
+	return fmt.Sprintf(`You are Miora AI, a blockchain trade analyst.
+
+A watched wallet just made a trade. Assess this trade in 1-2 sentences for a beginner user who is deciding whether to copy this trade.
+
+Trade Details:
+- Wallet: %s
+- Token: %s
+- Chain: %s
+- Action: %s %s
+- Token Liquidity: $%.0f
+- Token Market Cap: $%.0f
+- 24h Price Change: %.2f%%
+- Token Pair Age: %.1f hours
+
+Instructions:
+- Start with a risk emoji: ✅ (low risk), ⚠️ (medium risk), or 🔴 (high risk)
+- Mention the key risk factor (liquidity, age, price volatility, etc.)
+- Keep it to 1-2 sentences, plain text, no markdown
+- Use simple everyday language — no crypto jargon, explain as if the reader has never traded before
+- Be direct — tell the user if this looks safe, risky, or dangerous
+- If the token is very new (< 2 hours) or very low liquidity (< $10k), emphasize the risk`,
+		walletAddress, tokenSymbol, chain, action, tokenSymbol,
+		liquidity, marketCap, priceChange24h, pairAgeHours,
+	)
+
+}

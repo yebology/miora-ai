@@ -14,6 +14,7 @@ type Notification struct {
 	Value         string    `json:"value"`     // Amount traded (human-readable)
 	Liquidity     float64   `json:"liquidity"`
 	MarketCap     float64   `json:"market_cap"`
+	AiAssessment  string    `json:"ai_assessment"` // AI-generated risk assessment for this trade
 	Read          bool      `gorm:"default:false" json:"read"`
 	CreatedAt     time.Time `json:"created_at"`
 }
