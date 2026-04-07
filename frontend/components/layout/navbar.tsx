@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Brain, Menu, X, LogOut, Loader2 } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { Brain, Menu, X, LogOut, Loader2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { NAV_LINKS } from "@/constants/nav";
 import { useAuth } from "@/components/providers/auth-provider";
-import { cn } from "@/lib/utils";
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import { GoogleIcon } from "@/components/icons/google";
+
+function shortenAddress(addr: string) {
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
 
 function UserMenu({
   user,
@@ -30,10 +34,7 @@ function UserMenu({
 
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border bg-popover p-1 shadow-lg">
             <div className="px-3 py-2">
               <p className="text-sm font-medium">{user.name}</p>
@@ -54,6 +55,30 @@ function UserMenu({
         </>
       )}
     </div>
+  );
+}
+
+function ConnectWalletButton() {
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
+
+  if (isConnected && address) {
+    return (
+      <button
+        onClick={() => open()}
+        className="flex h-8 items-center gap-1.5 rounded-lg border bg-card px-2.5 text-xs font-mono transition-colors hover:bg-muted/50"
+      >
+        <Wallet className="h-3 w-3 text-green-400" />
+        {shortenAddress(address)}
+      </button>
+    );
+  }
+
+  return (
+    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => open()}>
+      <Wallet className="h-3.5 w-3.5" />
+      Connect
+    </Button>
   );
 }
 
@@ -84,14 +109,18 @@ export function Navbar() {
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
+          <ConnectWalletButton />
           {user ? (
             <UserMenu user={user} onSignOut={signOut} />
           ) : (
-            <Button size="sm" onClick={signIn} disabled={loading}>
+            <Button size="sm" onClick={signIn} disabled={loading} className="gap-1.5">
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                "Sign In"
+                <>
+                  <GoogleIcon className="h-3.5 w-3.5" />
+                  Sign In
+                </>
               )}
             </Button>
           )}
@@ -127,8 +156,11 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <div className="mt-2">
+              <ConnectWalletButton />
+            </div>
             {user ? (
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+              <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
                     {user.avatar}
@@ -151,14 +183,21 @@ export function Navbar() {
             ) : (
               <Button
                 size="sm"
-                className="mt-2 w-full"
+                className="w-full gap-1.5"
                 onClick={() => {
                   signIn();
                   setOpen(false);
                 }}
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <GoogleIcon className="h-3.5 w-3.5" />
+                    Sign In
+                  </>
+                )}
               </Button>
             )}
           </div>
