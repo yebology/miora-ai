@@ -10,6 +10,7 @@ import (
 	"miora-ai/app/dto/responses"
 	"miora-ai/app/entities"
 	"miora-ai/app/interfaces"
+	"miora-ai/config"
 	"miora-ai/constants"
 	"miora-ai/pkg"
 	"miora-ai/utils"
@@ -231,5 +232,72 @@ func buildTradedTokens(chain string, trades []tradeResult, txs []entities.Transa
 	}
 
 	return tokens
+
+}
+
+// --- Condition generators ---
+
+// buildConditions generates suggested follow conditions based on scoring data.
+// Only generated for "conditional_follow" recommendations.
+// Conditions are based on the wallet's weak scoring areas.
+func buildConditions(
+	tokenData map[string]dto.TokenPairData,
+	riskExposure, entryTiming, tokenQuality float64,
+	scoringCfg config.ScoringConfig,
+) []responses.Condition {
+
+	var conditions []responses.Condition
+
+	// If risk exposure is high (> 30%), suggest liquidity filter
+	if riskExposure > 30 {
+		conditions = append(conditions, responses.Condition{
+			ID:       "min_liquidity",
+			Label:    "Token liquidity above $100k",
+			Type:     "number",
+			Field:    "liquidity",
+			Operator: "gte",
+			Value:    100000,
+		})
+	}
+
+	// If entry timing is high (> 70, meaning very early entries), suggest pair age filter
+	// Early entries are risky — suggest waiting for token to stabilize
+	if entryTiming > 70 {
+		conditions = append(conditions, responses.Condition{
+			ID:       "min_pair_age",
+			Label:    "Token pair older than 6 hours",
+			Type:     "number",
+			Field:    "pair_age_hours",
+			Operator: "gte",
+			Value:    6,
+		})
+	}
+
+	// If token quality is low (< 60), suggest market cap filter
+	if tokenQuality < 60 {
+		conditions = append(conditions, responses.Condition{
+			ID:       "min_mcap",
+			Label:    "Market cap above $500k",
+			Type:     "number",
+			Field:    "market_cap",
+			Operator: "gte",
+			Value:    500000,
+		})
+	}
+
+	// If win rate is below 60, suggest only following profitable token types
+	// by requiring minimum 24h volume
+	if len(tokenData) > 0 {
+		conditions = append(conditions, responses.Condition{
+			ID:       "min_volume",
+			Label:    "24h trading volume above $50k",
+			Type:     "number",
+			Field:    "volume_h24",
+			Operator: "gte",
+			Value:    50000,
+		})
+	}
+
+	return conditions
 
 }

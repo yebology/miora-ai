@@ -1,240 +1,292 @@
-# Miora AI
+# 🧠 Miora AI
 
-> See beyond the wallet.
+> **"See beyond the wallet."**
 
-**Miora AI** is an AI-powered platform that helps users understand blockchain wallet activity in a simple, clear, and actionable way.
+**Miora AI** is an AI-powered DEX aggregator with wallet intelligence — helping users understand blockchain wallet activity, get actionable trading recommendations, and swap tokens across multiple chains, all in one platform.
 
-Instead of presenting raw on-chain data, Miora AI transforms complex blockchain activity into human-readable insights and decision support.
-
----
-
-## 🧠 Problem
-
-Blockchain is transparent, but:
-
-- Data is complex and noisy  
-- Difficult to identify "smart money" vs random wallets  
-- Existing tools are built for advanced users  
-- No explanation *why* a wallet is profitable or risky  
-
-Result:
-> Users rely on guesswork instead of understanding.
+Instead of presenting raw on-chain data, Miora AI transforms complex blockchain activity into human-readable insights and decision support powered by AI.
 
 ---
 
-## 💡 Solution
+## ✨ Overview
 
-Miora AI simplifies blockchain data into:
+Blockchain data is transparent but overwhelming. Existing tools are built for advanced users — charts, numbers, and jargon that beginners can't understand. Miora AI solves this by combining:
 
-- AI-generated insights  
-- Natural language explanations  
-- Wallet behavior analysis  
-- Actionable decision recommendations  
-
----
-
-## 🚀 Core Features
-
-### 🔍 1. Wallet Intelligence
-
-- Transaction history parsing  
-- Token interaction analysis  
-- Profit & Loss estimation  
-- Trading frequency & behavior  
+- 🧠 **AI-Powered Wallet Intelligence** — Analyze any wallet, get a score, and understand trading behavior in plain language
+- � **DEX Aggregator** — Swap tokens across Jupiter (Solana) and 1inch (EVM) with best route discovery
+- 📊 **Smart Recommendations** — Full Follow, Conditional Follow, or Avoid — with AI-generated conditions
+- 🔔 **Smart Alerts** — Follow wallets and get notified when they trade, filtered by your conditions
+- 🌐 **Multi-Chain** — Ethereum, Arbitrum, Optimism, Base, Polygon, and Solana
 
 ---
 
-### 🧠 2. AI-Powered Explanation
+## � Features
 
-Miora AI explains wallet behavior in plain language.
+### 🔍 Wallet Intelligence
+Analyze any wallet address across EVM and Solana chains. Get a comprehensive scoring based on:
+- **Win Rate** — Percentage of profitable trades (realized + unrealized PnL)
+- **Profit Consistency** — How stable the profits are across trades (standard deviation)
+- **Entry Timing** — How early the wallet enters new tokens after launch
+- **Token Quality** — Average market cap of tokens traded (logarithmic scale)
+- **Trade Discipline** — How focused the wallet is (unique tokens vs total transactions)
+- **Risk Exposure** — Percentage of low-liquidity tokens traded (informational)
 
-**Example:**
-> "This wallet frequently enters newly launched tokens within minutes, indicating a high-risk, high-reward trading strategy."
+### 🤖 AI-Powered Insights
+The backend performs all the heavy analysis — fetching on-chain data, calculating PnL with FIFO buy-sell matching, and computing multi-factor scoring. The AI layer (Google Gemini) then takes these computed results and translates them into beginner-friendly, plain language explanations. AI does not analyze data itself — it narrates what the backend already calculated.
 
----
+Example:
+> "This wallet is a disciplined trader that focuses on 3-4 tokens with consistent 20-30% gains. Safe to follow."
 
-### 📊 3. Behavior Classification
+### 🎯 Smart Recommendations
+Three-tier recommendation system based on wallet score (0-100):
 
-- ⚡ Sniper (early entry)  
-- 🎯 Swing trader  
-- 🐳 Whale  
-- 🎲 High-risk trader  
+| Score | Recommendation | Action |
+|-------|---------------|--------|
+| 80-100 | ✅ Full Follow | Safe to follow — all trades shown with Buy button |
+| 40-79 | ⚠️ Conditional Follow | Follow with conditions — AI suggests filters (liquidity, pair age, mcap) |
+| < 40 | 🔴 Avoid | Do not follow — warning displayed |
 
----
+### 🔄 DEX Aggregator
+Swap tokens directly from Miora with best price routing:
+- **Solana** → Jupiter (Raydium, Orca, Meteora, Lifinity, etc.)
+- **EVM** → 1inch (Uniswap, SushiSwap, Curve, Balancer, etc.)
 
-### ⚠️ 4. Risk Detection Engine
+### 🔔 Smart Alerts & Watchlist
+- Follow wallets and get real-time notifications when they trade
+- Set custom conditions: "Only notify me if token liquidity > $100k and pair age > 6 hours"
+- Email notifications with AI-generated token insights
 
-- Scam token interaction  
-- Rug pull patterns  
-- High volatility exposure  
-- Suspicious trading behavior  
-
----
-
-### 🎯 5. Actionable Insights
-
-- Should you follow this wallet?  
-- When does it typically enter trades?  
-- Risk vs reward profile  
-
----
-
-### 🔔 6. Smart Alerts (Planned)
-
-- Wallet activity notifications  
-- Condition-based alerts  
-- AI-driven signals  
-
----
-
-## 🤖 7. AI Decision Recommendation
-
-Miora AI provides **actionable decision guidance**:
-
-> *"Should I follow this wallet, and how?"*
+### 🔐 Authentication
+- Google login via Firebase Auth
+- Wallet connect (Phantom for Solana, MetaMask for EVM)
 
 ---
 
-### 🎯 Recommendation Types
+## 📋 How It Works
 
-#### ✅ Full Follow
-- Consistent profitability  
-- Controlled risk  
-- Clear strategy  
-
-#### ⚖️ Partial Follow
-- Profitable but high-risk  
-- Inconsistent patterns  
-
-#### 🎯 Conditional Follow
-- Follow only under specific conditions:
-  - Early entry timing  
-  - Liquidity thresholds  
-  - Volume conditions  
-
-#### ⚠️ Avoid
-- High-risk or scam behavior  
-- Poor performance consistency  
-
----
-
-## 🧠 AI Scoring System
-
-To ensure reliable recommendations, Miora AI uses a **multi-factor scoring system**.
-
----
-
-### 📊 Core Metrics
-
-Each wallet is evaluated across:
-
-| Metric | Description |
-|------|--------|
-| Profit Consistency | Stability of gains over time |
-| Win Rate | % of profitable trades |
-| Risk Exposure | Interaction with risky tokens |
-| Entry Timing | Early vs late entries |
-| Token Quality | Quality of tokens traded |
-| Trade Discipline | Frequency & behavior |
-
----
-
-### ⚖️ Score Calculation (Example)
-
-Each metric is normalized (0–100):
-
-Final Score =
-(0.30 × Profit Consistency) +
-(0.30 × Win Rate) +
-(0.15 × Entry Timing) +
-(0.15 × Token Quality) +
-(0.10 × Trade Discipline)
-
-
----
-
-### 🏷️ Score Interpretation
-
-| Score | Recommendation |
-|------|---------------|
-| 80–100 | Full Follow |
-| 40–79 | Partial Follow |
-| < 40 | Avoid |
-
----
-
-### 🧠 AI Layer
-
-- Uses scoring + rules  
-- Generates explanation  
-- Adds reasoning & context  
-
----
-
-## 🔄 Decision Flow
-
-1. User inputs wallet address  
-2. Backend fetches blockchain data  
-3. Data is processed & analyzed  
-4. Metrics are calculated  
-5. Score is generated  
-6. AI produces explanation + recommendation  
-7. Results displayed in UI  
+1. 🔍 **Analyze** — User inputs a wallet address and selects a chain
+2. 📊 **Score** — Backend fetches on-chain data (Alchemy), enriches with market data (DexScreener), calculates PnL (Moralis/Birdeye), and generates a multi-factor score
+3. 🤖 **Insight** — AI generates a beginner-friendly explanation of the wallet's trading behavior
+4. 🎯 **Recommend** — System outputs Full Follow, Conditional Follow, or Avoid
+5. 👀 **Follow** — User can follow the wallet with custom notification conditions
+6. 🔔 **Notify** — When the followed wallet trades, user gets notified (WebSocket + email) with token analysis
+7. 🔄 **Trade** — User can swap tokens directly from Miora via DEX aggregator
 
 ---
 
 ## 🧩 System Architecture
 
-### Frontend
-- Dashboard UI  
-- Wallet input  
-- Visualization & insights  
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Frontend (Next.js)                  │
+│  Wallet Input → Dashboard → Swap UI → Notifications     │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Backend (Go + Fiber)                   │
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
+│  │ Wallet   │  │ Swap     │  │ Auth     │  │Watchlist│ │
+│  │ Analysis │  │ Quotes   │  │ Firebase │  │ + Alerts│ │
+│  └────┬─────┘  └────┬─────┘  └──────────┘  └─────────┘ │
+│       │              │                                   │
+│  ┌────▼──────────────▼──────────────────────────────┐   │
+│  │              External APIs                        │   │
+│  │  Alchemy · DexScreener · Moralis · Birdeye       │   │
+│  │  Jupiter · 1inch · Gemini AI                     │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Smart Contracts                      │   │
+│  │  Fee Router (swap fees) · On-chain Score          │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Database (PostgreSQL)                 │   │
+│  │  Users · Wallets · Transactions · Metrics ·       │   │
+│  │  Watchlist                                        │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-### Backend (Core Intelligence)
+## 🌐 Supported Chains
 
-- Blockchain data ingestion  
-- Transaction parsing  
-- Metrics calculation  
-- AI inference  
-- API layer  
+| Chain | Wallet Analysis | Swap Quotes | Historical Price |
+|-------|:-:|:-:|:-:|
+| Ethereum | ✅ | ✅ (1inch) | ✅ (Moralis) |
+| Arbitrum | ✅ | ✅ (1inch) | ✅ (Moralis) |
+| Optimism | ✅ | ✅ (1inch) | ✅ (Moralis) |
+| Base | ✅ | ✅ (1inch) | ✅ (Moralis) |
+| Polygon | ✅ | ✅ (1inch) | ✅ (Moralis) |
+| Solana | ✅ | ✅ (Jupiter) | ✅ (Birdeye) |
 
 ---
 
-### AI Layer
+## ⚙️ Tech Stack
 
-- Rule-based system (accuracy)  
-- LLM (explanation)  
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js, TailwindCSS, TypeScript |
+| Backend | Go, Fiber, GORM |
+| Database | PostgreSQL |
+| Auth | Firebase Auth (Google) |
+| AI | Google Gemini (gemini-2.0-flash) |
+| Blockchain Data | Alchemy, DexScreener, Moralis, Birdeye |
+| DEX Aggregation | Jupiter (Solana), 1inch (EVM) |
+| Smart Contracts | Anchor (Solana), Foundry (EVM) |
+| Infra | Docker, Docker Compose |
 
+---
+
+## 🧩 Project Structure
+
+```
+├── backend/
+│   ├── app/
+│   │   ├── clients/        # External API clients (Alchemy, DexScreener, Moralis, Birdeye, Gemini, Jupiter, 1inch)
+│   │   ├── dto/            # Data transfer objects (requests, responses, prompts)
+│   │   ├── entities/       # Database models (User, Wallet, Transaction, WalletMetric, Watchlist)
+│   │   ├── handlers/       # HTTP request handlers
+│   │   ├── http/           # Route registration per domain
+│   │   ├── interfaces/     # Service & repository contracts
+│   │   ├── middleware/      # Firebase auth middleware
+│   │   ├── output/         # Standardized API response (success/error envelope)
+│   │   ├── repositories/   # Database access layer
+│   │   ├── services/       # Business logic (wallet analysis, scoring, AI, swap, watchlist)
+│   │   └── ws/             # WebSocket hub
+│   ├── cmd/                # CLI commands (seed, reset)
+│   ├── config/             # Environment config loader
+│   ├── constants/          # Constants (chains, errors, success messages)
+│   ├── migrations/         # Database migrations (auto-migrate, reset, seed)
+│   ├── router/             # DI container + route setup
+│   ├── utils/              # Shared utilities (validator, math, helpers)
+│   ├── pkg/                # Shared packages (AppError)
+│   ├── main.go             # Entry point
+│   ├── Dockerfile          # Multi-stage Docker build
+│   └── docker-compose.yml  # PostgreSQL
+├── contracts/
+│   ├── svm/                # Solana smart contracts (Anchor)
+│   └── evm/                # EVM smart contracts (Foundry)
+├── frontend/               # Next.js frontend
+├── Makefile                # Dev commands
+└── README.md
+```
+
+---
+
+## 🧭 How to Run
+
+### 📦 Prerequisites
+- Go 1.25+
+- Docker & Docker Compose
+- Node.js 18+ (for frontend)
+- Alchemy, Moralis, Birdeye, Gemini, 1inch API keys
+- Firebase project with Google sign-in enabled
+
+### 🔨 1. Clone Repository
+
+```bash
+git clone https://github.com/your-username/miora-ai.git
+cd miora-ai
+```
+
+### 🔐 2. Configure Environment
+
+```bash
+cp backend/.env.example backend/.env
+# Fill in all API keys and Firebase credentials
+```
+
+### 🐘 3. Start Database
+
+```bash
+cd backend && docker compose up -d
+```
+
+### 🚀 4. Run Backend
+
+```bash
+cd backend && go run main.go
+```
+
+### 🌐 5. Run Frontend
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+---
+
+## 🔑 Environment Variables
+
+| Variable | Description |
+|----------|------------|
+| `APP_PORT` | Backend server port |
+| `POSTGRES_USER` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | PostgreSQL password |
+| `POSTGRES_DB` | PostgreSQL database name |
+| `DB_HOST` | Database host |
+| `DB_PORT` | Database port |
+| `ALCHEMY_API_KEY` | Alchemy API key (EVM + Solana RPC) |
+| `MORALIS_API_KEY` | Moralis API key (EVM historical prices) |
+| `BIRDEYE_API_KEY` | Birdeye API key (Solana historical prices) |
+| `GEMINI_API_KEY` | Google Gemini API key (AI insights) |
+| `ONEINCH_API_KEY` | 1inch API key (EVM swap quotes) |
+| `FIREBASE_CREDENTIALS` | Path to Firebase service account JSON |
+| `ALLOWED_ORIGINS` | CORS allowed origins |
+| `SCORING_LIQUIDITY_THRESHOLD` | Min liquidity for risk exposure (USD) |
+| `SCORING_ENTRY_TIMING_MAX_AGE` | Max pair age for entry timing (hours) |
+| `SCORING_TOKEN_QUALITY_LOG_BASE` | Log base for token quality score |
+
+---
+
+## 📡 API Endpoints
+
+### Public
+| Method | Endpoint | Description |
+|--------|----------|------------|
+| GET | `/api/health` | Health check |
+| POST | `/api/wallets/analyze` | Analyze a wallet address |
+| GET | `/api/wallets/:address` | Get stored analysis |
+| POST | `/api/swap/quote` | Get swap quote (Jupiter/1inch) |
+
+### Protected (Firebase Auth)
+| Method | Endpoint | Description |
+|--------|----------|------------|
+| GET | `/api/auth/me` | Get/create current user |
+| POST | `/api/watchlist/follow` | Follow a wallet |
+| DELETE | `/api/watchlist/:address` | Unfollow a wallet |
+| GET | `/api/watchlist` | List followed wallets |
+
+---
 
 ## 🔥 Key Differentiation
 
 | Existing Tools | Miora AI |
 |------|--------|
-| Data-heavy | Insight-driven |
-| Complex UI | Beginner-friendly |
-| Charts | Natural language |
-| For pros | For everyone |
+| Data-heavy dashboards | AI-powered natural language insights |
+| Charts & numbers | Beginner-friendly explanations |
+| Analytics only | Analytics + DEX trading in one platform |
+| No recommendations | Smart Follow/Avoid recommendations with conditions |
+| For advanced traders | For everyone |
 
 ---
 
-## ✨ Vision
+## 🤝 Contributors
 
-> Making blockchain understandable for everyone.
-
----
-
-## 📌 Tagline
-
-**"See beyond the wallet."**
+🧑 **Yobel Nathaniel Filipus**
+- 🐙 Github: [@yebology](https://github.com/yebology)
+- 💼 LinkedIn: [View Profile](https://linkedin.com/in/yobelnathanielfilipus)
+- � Email: yobelnathaniel12@gmail.com
 
 ---
 
 ## ⚠️ Disclaimer
 
-Miora AI provides informational insights only and does not constitute financial advice.
-Users are responsible for their own decisions.
+Miora AI provides informational insights only and does not constitute financial advice. Users are responsible for their own trading decisions.
 
 ---
 

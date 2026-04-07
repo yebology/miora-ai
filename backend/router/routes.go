@@ -2,6 +2,7 @@ package router
 
 import (
 	apphttp "miora-ai/app/http"
+	"miora-ai/app/middleware"
 	"miora-ai/config"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,16 +14,15 @@ import (
 // Route structure:
 //
 //	/api
-//	  GET  /health              → health check
-//	  POST /wallets/analyze     → analyze a wallet address
-//
-// To add a new route group:
-//  1. Create app/http/xxx.go with RegisterXxxRoutes(r fiber.Router, h *handler)
-//  2. Call it here with the appropriate handler from container
-func SetUp(app *fiber.App, db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey string, scoring config.ScoringConfig) {
+//	  GET  /health              → health check (public)
+//	  POST /wallets/analyze     → analyze wallet (public)
+//	  GET  /wallets/:address    → get stored analysis (public)
+//	  POST /swap/quote          → get swap quote (public)
+//	  GET  /auth/me             → get/create user (protected, Firebase)
+func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config) {
 
 	api := app.Group("/api")
-	container := NewContainer(db, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey, scoring)
+	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.BirdeyeAPIKey, cfg.GeminiAPIKey, cfg.OneInchAPIKey, cfg.Scoring)
 
 	// Health
 	api.Get("/health", func(c *fiber.Ctx) error {
@@ -32,5 +32,10 @@ func SetUp(app *fiber.App, db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPI
 	// Public routes
 	apphttp.RegisterWalletPublicRoutes(api, container.WalletHandler)
 	apphttp.RegisterSwapPublicRoutes(api, container.SwapHandler)
+
+	// Protected routes (Firebase auth required)
+	protected := api.Group("", middleware.FirebaseAuth(cfg.FirebaseCreds))
+	apphttp.RegisterAuthProtectedRoutes(protected, container.AuthHandler)
+	apphttp.RegisterWatchlistProtectedRoutes(protected, container.WatchlistHandler)
 
 }

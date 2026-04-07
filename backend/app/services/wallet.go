@@ -105,6 +105,15 @@ func (s *WalletService) AnalyzeWallet(address, chain string) (*responses.WalletA
 		TradedTokens:      buildTradedTokens(chain, trades, txEntities),
 	}
 
+	// Generate conditions for conditional_follow recommendations
+	if metric.Recommendation == "conditional_follow" {
+		result.Conditions = buildConditions(
+			tokenData,
+			metric.RiskExposure, metric.EntryTiming, metric.TokenQuality,
+			s.scoring,
+		)
+	}
+
 	// Generate AI insight (non-blocking — if it fails, return without insight)
 	if insight, err := s.ai.GenerateInsight(result); err == nil {
 		result.AiInsight = insight

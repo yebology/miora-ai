@@ -20,9 +20,11 @@ import (
 func RunMigrations(db *gorm.DB) error {
 
 	return db.AutoMigrate(
+		&entities.User{},
 		&entities.Wallet{},
 		&entities.Transaction{},
 		&entities.WalletMetric{},
+		&entities.Watchlist{},
 	)
 
 }

@@ -8,4 +8,5 @@ const (
 	UnsupportedChain = "Chain must be 'evm' or 'svm'."
 	AddressRequired  = "Address and chain are required."
 	AnalysisFailed   = "Failed to analyze wallet."
+	Unauthorized     = "Unauthorized. Please provide a valid token."
 )

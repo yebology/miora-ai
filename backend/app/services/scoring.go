@@ -86,9 +86,9 @@
 //
 // # Recommendation
 //
-//	80–100 → full_follow    (consistent, profitable, low risk)
-//	40–79  → partial_follow (mixed results, follow with caution)
-//	< 40   → avoid          (high risk, poor performance)
+//	80–100 → full_follow        (consistent, profitable, low risk)
+//	40–79  → conditional_follow (mixed results, follow with caution)
+//	< 40   → avoid              (high risk, poor performance)
 package services
 
 import (
@@ -275,7 +275,7 @@ func (s *WalletService) calculateMetrics(
 // scoreToRecommendation converts a final score (0–100) to a recommendation label.
 //
 //	80–100 → "full_follow"
-//	40–79  → "partial_follow"
+//	40–79  → "conditional_follow"
 //	< 40   → "avoid"
 func scoreToRecommendation(score float64) string {
 
@@ -283,7 +283,7 @@ func scoreToRecommendation(score float64) string {
 	case score >= 80:
 		return "full_follow"
 	case score >= 40:
-		return "partial_follow"
+		return "conditional_follow"
 	default:
 		return "avoid"
 	}

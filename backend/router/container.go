@@ -28,8 +28,10 @@ import (
 
 // Container holds all handler instances, ready to be used by route registration.
 type Container struct {
-	WalletHandler *handlers.WalletHandler
-	SwapHandler   *handlers.SwapHandler
+	WalletHandler    *handlers.WalletHandler
+	SwapHandler      *handlers.SwapHandler
+	AuthHandler      *handlers.AuthHandler
+	WatchlistHandler *handlers.WatchlistHandler
 }
 
 // NewContainer creates all dependencies and returns a fully wired Container.
@@ -48,19 +50,27 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 
 	// Repositories
 	walletRepo := repositories.NewWalletRepository(db)
+	userRepo := repositories.NewUserRepository(db)
+	watchlistRepo := repositories.NewWatchlistRepository(db)
 
 	// Services
 	aiService := services.NewAIService(gemini)
 	walletService := services.NewWalletService(walletRepo, evmClient, svmClient, dexScreener, moralis, birdeye, aiService, scoring)
 	swapService := services.NewSwapService(jupiter, oneInch)
+	userService := services.NewUserService(userRepo)
+	watchlistService := services.NewWatchlistService(watchlistRepo)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)
 	swapHandler := handlers.NewSwapHandler(swapService)
+	authHandler := handlers.NewAuthHandler(userService)
+	watchlistHandler := handlers.NewWatchlistHandler(watchlistService, userService)
 
 	return &Container{
-		WalletHandler: walletHandler,
-		SwapHandler:   swapHandler,
+		WalletHandler:    walletHandler,
+		SwapHandler:      swapHandler,
+		AuthHandler:      authHandler,
+		WatchlistHandler: watchlistHandler,
 	}
 
 }

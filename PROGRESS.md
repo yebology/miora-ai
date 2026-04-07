@@ -1,45 +1,53 @@
-# Miora AI — Backend Progress
+# Miora AI — Progress
 
-## ✅ Done
+## ✅ Backend Done
 
-- Project structure (clean architecture: handlers, services, repositories, interfaces, entities, dto)
-- Config loader (env-based, shared credentials, no fallbacks, configurable scoring thresholds)
-- Database setup (PostgreSQL via Docker Compose, GORM auto-migrate)
-- Entities: Wallet, Transaction (with Direction + ContractAddress), WalletMetric
-- Alchemy client: EVM (incoming + outgoing transfers) & Solana (getSignaturesForAddress)
-- DexScreener client (token liquidity, market cap, pair age, price change)
-- Moralis client (EVM historical token price by block + Solana current price)
-- Birdeye client (Solana historical token price by unix timestamp)
-- Repository layer (CRUD wallet, transactions, metrics)
-- Service layer (fetch → enrich → FIFO buy-sell matching → PnL → score)
-- Real scoring system (win rate, profit consistency, entry timing, token quality, trade discipline, risk exposure)
-- Scoring thresholds configurable from .env
-- Risk exposure: informational only, not in final score formula
-- Handler + route: `POST /api/wallets/analyze`
-- Health check: `GET /api/health`
-- Error handling (AppError constructors + output envelope)
-- Validation (go-playground/validator + ParseAndValidateBody helper)
-- DI container + router pattern (container.go + routes.go)
-- Interfaces with `I` prefix (IWalletService, IWalletRepository)
-- Dockerfile (multi-stage build)
-- Docker Compose (PostgreSQL)
-- Makefile (git-commit, run-fe, run-be, run-all, db-reset, db-seed)
+- Clean architecture (handlers, services, repositories, interfaces, entities, dto)
+- Config loader (env-based, no fallbacks, configurable scoring thresholds)
+- Database (PostgreSQL via Docker Compose, GORM auto-migrate)
+- Entities: User, Wallet, Transaction, WalletMetric, Watchlist
+- Alchemy client: EVM (incoming + outgoing transfers) & Solana
+- DexScreener client (liquidity, mcap, pair age, price change)
+- Moralis client (EVM historical price by block + Solana current price)
+- Birdeye client (Solana historical price by unix timestamp)
+- Gemini AI client (natural language wallet insights)
+- Jupiter client (Solana swap quotes)
+- 1inch client (EVM swap quotes)
+- Multi-chain support: Ethereum, Arbitrum, Optimism, Base, Polygon, Solana
+- Chain registry (constants/chains.go)
+- Real scoring: win rate, profit consistency, entry timing, token quality, trade discipline
+- Risk exposure (informational only, not in score formula)
+- FIFO buy-sell matching for PnL (realized + unrealized)
+- 3-tier recommendations: full_follow, conditional_follow, avoid
+- Conditional follow with AI-generated conditions (liquidity, pair age, mcap, volume)
+- Traded tokens in response (contract address, symbol, PnL, status)
+- AI insight (Gemini, beginner-friendly)
+- Firebase Auth (Google login, backend token verification middleware)
+- User system (entity, repository, service, find-or-create from Firebase)
+- Watchlist (follow/unfollow wallet, conditions, email preference)
+- DI container + router pattern (public + protected routes)
+- Interfaces with I prefix
+- Error handling (AppError + output envelope)
+- Validation (go-playground/validator + ParseAndValidateBody)
+- Dockerfile, Docker Compose, Makefile, .gitignore
 - Migrations (auto-migrate, reset, seed)
-- .gitignore (Node, Next.js, Go, Foundry, Anchor, IDE)
 - Documentation (comments on all files)
 
-## 🔲 Todo (Hackathon Priority)
+## 🔲 Todo — Hackathon Priority
 
-- [ ] GET endpoint: `/api/wallets/:address` (retrieve stored analysis)
-- [ ] AI layer (LLM for natural language insights + behavior classification)
+- [ ] WebSocket hub (manage connections per user, push notifications)
+- [ ] Wallet monitor (background job: poll blockchain, detect new trades, check conditions, notify)
+- [ ] Email notification service (SendGrid/Resend)
+- [ ] Smart contracts — Fee Router (swap fee collection) + On-chain Wallet Score (verifiable scoring)
+- [ ] Frontend (Next.js: wallet input, scoring dashboard, swap UI, follow button, notifications)
+- [ ] Wallet connect (Phantom + MetaMask)
 - [ ] Tests (minimal)
 
 ## 📋 Post-Hackathon
 
-- Middleware (rate limiting, auth/API key)
-- WebSocket (real-time wallet tracking)
-- Pagination for transaction history
+- Auto copy-trade (execute swap on behalf of user)
+- Smart contract fee router
+- Rate limiting
 - Caching (Redis)
-- DEX integration (swap via Jupiter/1inch)
-- Smart alerts system
+- Pagination for transaction history
 - Logging & monitoring
