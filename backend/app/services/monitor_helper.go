@@ -152,6 +152,22 @@ func (m *MonitorService) notifyFollowers(walletAddress, chain string, tx interfa
 		})
 
 		log.Printf("Monitor: notified user %d about %s trading %s", follower.UserID, walletAddress, tx.TokenSymbol)
+
+		// Send email notification if enabled
+		if follower.EmailNotify && m.emailClient != nil {
+			user, err := m.userRepo.FindByID(follower.UserID)
+			if err == nil && user.Email != "" {
+				go func(email string) {
+					if err := m.emailClient.SendTradeAlert(
+						email, walletAddress, chain,
+						tx.TokenSymbol, tx.Direction, tx.Value,
+						getTokenLiquidity(tokenInfo), getTokenMcap(tokenInfo),
+					); err != nil {
+						log.Printf("Monitor: email failed for user %s: %v", email, err)
+					}
+				}(user.Email)
+			}
+		}
 	}
 
 }

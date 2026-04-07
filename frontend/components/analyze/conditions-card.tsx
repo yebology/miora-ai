@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import type { Condition } from "@/types/wallet";
+import { useAuth } from "@/components/providers/auth-provider";
+import { AuthGuardModal } from "@/components/ui/auth-guard-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, Check, ShieldAlert } from "lucide-react";
+import { Eye, Check, ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -18,6 +20,8 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
     new Set(conditions.map((c) => c.id))
   );
   const [followed, setFollowed] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -29,17 +33,12 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
   };
 
   const handleFollow = async () => {
-    // TODO: Replace with real API call
-    // await fetch(`${API_URL}/api/watchlist/follow`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    //   body: JSON.stringify({
-    //     wallet_address: address,
-    //     chain,
-    //     conditions: Array.from(selected),
-    //   }),
-    // });
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
 
+    // TODO: Replace with real API call
     setFollowed(true);
   };
 
@@ -49,6 +48,12 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
         <div className="mb-4 flex items-center gap-2">
           <ShieldAlert className="h-5 w-5 text-yellow-400" />
           <h3 className="text-sm font-medium">Follow with Conditions</h3>
+          <span className="group relative">
+            <Info className="h-4 w-4 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
+            <span className="absolute top-full left-0 z-50 mt-2 hidden w-72 rounded-lg border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-lg group-hover:block">
+              Follow this wallet to get notified when it trades — but only for tokens that match your selected conditions. This filters out risky trades so you only see the ones worth acting on.
+            </span>
+          </span>
         </div>
 
         <p className="mb-4 text-xs text-muted-foreground">
@@ -118,6 +123,7 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
             )}
           </Button>
         )}
+        <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />
       </CardContent>
     </Card>
   );

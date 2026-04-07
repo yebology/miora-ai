@@ -15,6 +15,9 @@
 - 1inch client (EVM swap quotes)
 - Multi-chain support: Ethereum, Arbitrum, Optimism, Base, Polygon, Solana
 - Chain registry (constants/chains.go)
+- Configurable transaction fetch limits per chain type (constants/limits.go)
+  - EVM: 10, 25, 50, 100 (default 10)
+  - Solana: 20, 50, 100, 200 (default 20)
 - Real scoring: win rate, profit consistency, entry timing, token quality, trade discipline
 - Risk exposure (informational only, not in score formula)
 - FIFO buy-sell matching for PnL (realized + unrealized)
@@ -28,13 +31,16 @@
 - Watchlist CRUD (follow, unfollow, update conditions, list)
 - WebSocket hub (manage connections per user, push notifications)
 - Wallet monitor (background polling, detect new trades, check conditions, notify via WebSocket + save to DB)
+- Email notifications wired into monitor service (Resend API client + HTML email template + async dispatch)
 - DI container + router pattern (public + protected routes)
-- Interfaces with I prefix
+- Interfaces with I prefix (including IEmailClient for Resend)
 - Error handling (AppError + output envelope)
 - Validation (go-playground/validator + ParseAndValidateBody)
 - Dockerfile, Docker Compose, Makefile, .gitignore
 - Migrations (auto-migrate, reset, seed)
 - Documentation (comments on all files)
+- Bruno API test collection (api-docs/) for all endpoints
+- API Testing Flow guide (API_TESTING_FLOW.md)
 
 ## ✅ Frontend Done
 
@@ -74,16 +80,6 @@
 - Types matching backend response shapes
 - Dummy data for all pages
 
-## 🔲 Todo — Hackathon Priority
-
-- [ ] Swap page UI (token pair selector, amount input, quote display)
-- [ ] Login page (Firebase Google sign-in)
-- [ ] Connect frontend to real backend API (replace dummy data)
-- [ ] Email notification service (SendGrid/Resend)
-- [ ] Smart contracts — Fee Router (swap fee collection) + On-chain Wallet Score
-- [ ] Wallet connect (Phantom + MetaMask)
-- [ ] Tests (minimal)
-
 ## 📋 Post-Hackathon
 
 - Auto copy-trade (execute swap on behalf of user)
@@ -92,3 +88,16 @@
 - Caching (Redis)
 - Pagination for transaction history
 - Logging & monitoring
+- Auth guard modal (sign in required for follow, watchlist)
+- Wallet connect guard modal (connect wallet required for swap)
+- Dynamic transaction limit selector per chain (EVM vs Solana options)
+- Follow CTA with auth check for full_follow (in analysis header)
+- Info tooltips on Follow buttons explaining what follow does
+- Dummy data for all 3 recommendation tiers (full_follow, conditional_follow, avoid)
+
+## 🔲 Todo — Hackathon Priority
+
+- [ ] Connect frontend to real backend API (replace dummy data)
+- [ ] Smart contracts — Fee Router (swap fee collection) + On-chain Wallet Score
+- [ ] Wallet connect (Phantom + MetaMask)
+- [ ] Tests (minimal)

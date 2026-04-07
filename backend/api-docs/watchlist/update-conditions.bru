@@ -1,0 +1,18 @@
+meta {
+  name: Update Conditions
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/watchlist/{{walletAddress}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "conditions": ["min_liquidity", "min_mcap", "min_volume"],
+    "email_notify": false
+  }
+}

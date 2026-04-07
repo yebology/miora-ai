@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { WalletAnalysis } from "@/types/wallet";
+import { useAuth } from "@/components/providers/auth-provider";
+import { AuthGuardModal } from "@/components/ui/auth-guard-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScoreRing } from "@/components/analyze/score-ring";
 import { RecommendationBadge } from "@/components/analyze/recommendation-badge";
@@ -8,9 +11,8 @@ import { MetricBar } from "@/components/analyze/metric-bar";
 import { TradedTokensTable } from "@/components/analyze/traded-tokens-table";
 import { AiInsightCard } from "@/components/analyze/ai-insight-card";
 import { ConditionsCard } from "@/components/analyze/conditions-card";
-import { AlertTriangle, Eye } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
+import { AlertTriangle, Eye, Check, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -51,6 +53,19 @@ const METRICS = [
 ] as const;
 
 export function AnalysisResult({ data }: Props) {
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [followed, setFollowed] = useState(false);
+
+  const handleFollow = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    // TODO: POST /api/watchlist/follow
+    setFollowed(true);
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Header: Score + Recommendation */}
@@ -65,17 +80,26 @@ export function AnalysisResult({ data }: Props) {
                   {data.total_transactions} transactions on {data.chain}
                 </span>
               </div>
-              {data.recommendation !== "conditional_follow" && (
-                <Link
-                  href="/watchlist"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "gap-1.5"
-                  )}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Follow Wallet
-                </Link>
+              {data.recommendation === "full_follow" && (
+                followed ? (
+                  <div className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 text-sm text-green-400">
+                    <Check className="h-3.5 w-3.5" />
+                    Following
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="group relative">
+                      <Info className="h-4 w-4 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
+                      <span className="absolute top-full right-0 z-50 mt-2 hidden w-64 rounded-lg border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-lg group-hover:block">
+                        Follow this wallet to get real-time notifications when it makes a trade. You&apos;ll be alerted in-app and via email so you can act fast.
+                      </span>
+                    </span>
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={handleFollow}>
+                      <Eye className="h-3.5 w-3.5" />
+                      Follow Wallet
+                    </Button>
+                  </div>
+                )
               )}
             </div>
             <p className="font-mono text-xs text-muted-foreground break-all">
@@ -132,6 +156,8 @@ export function AnalysisResult({ data }: Props) {
           </CardContent>
         </Card>
       )}
+
+      <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />
     </div>
   );
 }

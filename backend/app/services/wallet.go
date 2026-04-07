@@ -74,8 +74,8 @@ type tradeResult struct {
 // AnalyzeWallet orchestrates the full analysis flow and returns scoring.
 func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*responses.WalletAnalysis, *pkg.AppError) {
 
-	if limit <= 0 || limit > 50 {
-		limit = 25
+	if !constants.IsValidTransactionLimit(chain, limit) {
+		limit = constants.GetTransactionLimits(chain).Default
 	}
 
 	wallet, appErr := s.findOrCreateWallet(address, chain)

@@ -19,6 +19,7 @@ import {
   Loader2,
   CheckCircle,
   AlertTriangle,
+  Info,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +40,7 @@ export default function WatchlistDetailPage() {
   const [reanalyzing, setReanalyzing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [reanalyzeLimit, setReanalyzeLimit] = useState(20);
   const [tab, setTab] = useState<"analysis" | "activity">("analysis");
 
   useEffect(() => {
@@ -191,6 +193,38 @@ export default function WatchlistDetailPage() {
                 )}
               </DialogDescription>
             </DialogHeader>
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Transactions:</span>
+              <span className="group relative">
+                <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
+                <span className="absolute bottom-full left-1/2 z-50 mb-2 hidden w-56 -translate-x-1/2 rounded-lg border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-lg group-hover:block">
+                  How many recent transactions to analyze. More transactions = more accurate scoring, but takes longer.
+                </span>
+              </span>
+              {[
+                { value: 20, enabled: true },
+                { value: 50, enabled: false },
+                { value: 100, enabled: false },
+                { value: 200, enabled: false },
+              ].map((l) => (
+                <button
+                  key={l.value}
+                  type="button"
+                  disabled={!l.enabled}
+                  onClick={() => l.enabled && setReanalyzeLimit(l.value)}
+                  className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+                    reanalyzeLimit === l.value
+                      ? "bg-primary text-primary-foreground"
+                      : l.enabled
+                        ? "bg-muted text-muted-foreground hover:text-foreground"
+                        : "cursor-not-allowed bg-muted/50 text-muted-foreground/30 line-through"
+                  }`}
+                >
+                  {l.value}
+                  {!l.enabled && " 🔒"}
+                </button>
+              ))}
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"

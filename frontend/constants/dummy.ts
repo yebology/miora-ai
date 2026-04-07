@@ -80,3 +80,51 @@ export const DUMMY_ANALYSIS: WalletAnalysis = {
     },
   ],
 };
+
+export const DUMMY_FULL_FOLLOW: WalletAnalysis = {
+  address: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+  chain: "ethereum",
+  total_transactions: 82,
+  profit_consistency: 88.4,
+  win_rate: 85.0,
+  risk_exposure: 5.2,
+  entry_timing: 74.6,
+  token_quality: 91.3,
+  trade_discipline: 89.1,
+  final_score: 88,
+  recommendation: "full_follow",
+  ai_insight:
+    "This is a highly disciplined wallet with an 85% win rate across 82 transactions. It trades mostly large-cap tokens with strong liquidity, keeping risk exposure under 6%. Profit consistency is excellent — this wallet rarely takes big losses. Safe to follow without conditions.",
+  traded_tokens: [
+    { contract_address: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", symbol: "WBTC", chain: "ethereum", pnl_percent: 12.3, buy_price: 41000, exit_price: 46043, buy_time: "2025-12-01T10:00:00Z", exit_time: "2025-12-10T14:00:00Z", status: "realized" },
+    { contract_address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", symbol: "WETH", chain: "ethereum", pnl_percent: 8.7, buy_price: 2200, exit_price: 2391.4, buy_time: "2025-12-05T09:00:00Z", exit_time: "2025-12-12T11:00:00Z", status: "realized" },
+    { contract_address: "0x514910771af9ca656af840dff83e8264ecf986ca", symbol: "LINK", chain: "ethereum", pnl_percent: 18.5, buy_price: 14.0, exit_price: 16.59, buy_time: "2025-11-28T08:00:00Z", exit_time: "2025-12-06T16:00:00Z", status: "realized" },
+    { contract_address: "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9", symbol: "AAVE", chain: "ethereum", pnl_percent: 15.1, buy_price: 88.0, exit_price: 101.29, buy_time: "2025-12-02T12:00:00Z", exit_time: "2025-12-09T10:00:00Z", status: "realized" },
+    { contract_address: "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", symbol: "UNI", chain: "ethereum", pnl_percent: 6.2, buy_price: 6.5, exit_price: 6.903, buy_time: "2025-12-08T14:00:00Z", status: "unrealized" },
+  ],
+  conditions: [],
+};
+
+export const DUMMY_AVOID: WalletAnalysis = {
+  address: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+  chain: "ethereum",
+  total_transactions: 156,
+  profit_consistency: 18.2,
+  win_rate: 22.0,
+  risk_exposure: 78.5,
+  entry_timing: 92.1,
+  token_quality: 12.4,
+  trade_discipline: 15.8,
+  final_score: 25,
+  recommendation: "avoid",
+  ai_insight:
+    "This wallet is extremely risky. It trades mostly micro-cap tokens with very low liquidity — 78% of trades involve tokens under $10k liquidity. Win rate is only 22% with massive losses on most trades. The wallet enters tokens very early (within minutes of launch) which suggests high-risk degen trading. Avoid following this wallet.",
+  traded_tokens: [
+    { contract_address: "0x0000000000000000000000000000000000001337", symbol: "RUGPULL", chain: "ethereum", pnl_percent: -95.2, buy_price: 0.0000082, exit_price: 0.000000394, buy_time: "2025-12-10T03:00:00Z", exit_time: "2025-12-10T04:30:00Z", status: "realized" },
+    { contract_address: "0x0000000000000000000000000000000000002222", symbol: "SCAM69", chain: "ethereum", pnl_percent: -88.0, buy_price: 0.000045, exit_price: 0.0000054, buy_time: "2025-12-11T01:00:00Z", exit_time: "2025-12-11T02:00:00Z", status: "realized" },
+    { contract_address: "0x0000000000000000000000000000000000003333", symbol: "MOON", chain: "ethereum", pnl_percent: 450.0, buy_price: 0.0000001, exit_price: 0.00000055, buy_time: "2025-12-09T05:00:00Z", exit_time: "2025-12-09T06:00:00Z", status: "realized" },
+    { contract_address: "0x0000000000000000000000000000000000004444", symbol: "PUMP", chain: "ethereum", pnl_percent: -72.3, buy_price: 0.00012, exit_price: 0.00003324, buy_time: "2025-12-12T02:00:00Z", exit_time: "2025-12-12T03:00:00Z", status: "realized" },
+    { contract_address: "0x0000000000000000000000000000000000005555", symbol: "YOLO", chain: "ethereum", pnl_percent: -100.0, buy_price: 0.000008, exit_price: 0, buy_time: "2025-12-13T04:00:00Z", exit_time: "2025-12-13T05:00:00Z", status: "realized" },
+  ],
+  conditions: [],
+};

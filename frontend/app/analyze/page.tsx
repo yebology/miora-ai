@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { WalletAnalysis } from "@/types/wallet";
 import { AnalyzeForm } from "@/components/analyze/analyze-form";
 import { AnalysisResult } from "@/components/analyze/analysis-result";
-import { DUMMY_ANALYSIS } from "@/constants/dummy";
+import { DUMMY_ANALYSIS, DUMMY_FULL_FOLLOW, DUMMY_AVOID } from "@/constants/dummy";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -25,7 +25,7 @@ export default function AnalyzePage() {
     chain: string;
   } | null>(null);
 
-  const checkAndAnalyze = async (address: string, chain: string) => {
+  const checkAndAnalyze = async (address: string, chain: string, limit: number) => {
     setError(null);
     setResult(null);
 
@@ -65,7 +65,12 @@ export default function AnalyzePage() {
         );
       }
 
-      setResult({ ...DUMMY_ANALYSIS, address, chain });
+      // Pick dummy data based on input for demo
+      let dummy = DUMMY_ANALYSIS; // default: conditional_follow
+      if (address.toLowerCase() === "c") dummy = DUMMY_FULL_FOLLOW;
+      else if (address.toLowerCase() === "d") dummy = DUMMY_AVOID;
+
+      setResult({ ...dummy, address, chain });
     } catch (err) {
       setError(
         err instanceof Error

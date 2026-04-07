@@ -17,10 +17,12 @@ import (
 type MonitorService struct {
 	watchlistRepo interfaces.IWatchlistRepository
 	notifRepo     interfaces.INotificationRepository
+	userRepo      interfaces.IUserRepository
 	evmClient     interfaces.BlockchainClient
 	svmClient     interfaces.BlockchainClient
 	dexScreener   interfaces.IDexScreener
 	ai            *AIService
+	emailClient   interfaces.IEmailClient
 	hub           *ws.Hub
 	interval      time.Duration
 	lastTxCount   map[string]int
@@ -30,20 +32,24 @@ type MonitorService struct {
 func NewMonitorService(
 	watchlistRepo interfaces.IWatchlistRepository,
 	notifRepo interfaces.INotificationRepository,
+	userRepo interfaces.IUserRepository,
 	evmClient interfaces.BlockchainClient,
 	svmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
 	ai *AIService,
+	emailClient interfaces.IEmailClient,
 	hub *ws.Hub,
 ) *MonitorService {
 
 	return &MonitorService{
 		watchlistRepo: watchlistRepo,
 		notifRepo:     notifRepo,
+		userRepo:      userRepo,
 		evmClient:     evmClient,
 		svmClient:     svmClient,
 		dexScreener:   dexScreener,
 		ai:            ai,
+		emailClient:   emailClient,
 		hub:           hub,
 		interval:      30 * time.Second,
 		lastTxCount:   make(map[string]int),

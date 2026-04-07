@@ -26,6 +26,8 @@ type Config struct {
 	OneInchAPIKey  string // 1inch API key for EVM swap quotes (ONEINCH_API_KEY)
 	FirebaseCreds  string // Path to Firebase service account JSON (FIREBASE_CREDENTIALS)
 	AllowedOrigins string // Comma-separated CORS allowed origins (ALLOWED_ORIGINS)
+	ResendAPIKey   string // Resend API key for email notifications (RESEND_API_KEY)
+	ResendFrom     string // Sender email for Resend (RESEND_FROM_EMAIL)
 	Scoring        ScoringConfig
 }
 
@@ -72,6 +74,8 @@ func LoadConfig() (*Config, error) {
 		OneInchAPIKey:  os.Getenv("ONEINCH_API_KEY"),
 		FirebaseCreds:  os.Getenv("FIREBASE_CREDENTIALS"),
 		AllowedOrigins: os.Getenv("ALLOWED_ORIGINS"),
+		ResendAPIKey:   os.Getenv("RESEND_API_KEY"),
+		ResendFrom:     getEnvDefault("RESEND_FROM_EMAIL", "Miora AI <onboarding@resend.dev>"),
 		Scoring: ScoringConfig{
 			LiquidityThreshold:  getEnvFloat("SCORING_LIQUIDITY_THRESHOLD"),
 			EntryTimingMaxAge:   getEnvFloat("SCORING_ENTRY_TIMING_MAX_AGE"),
@@ -96,6 +100,17 @@ func (c *Config) DSN() string {
 func getEnvFloat(key string) float64 {
 
 	val, _ := strconv.ParseFloat(os.Getenv(key), 64)
+	return val
+
+}
+
+// getEnvDefault returns the env value or a default string if not set.
+func getEnvDefault(key, defaultVal string) string {
+
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultVal
+	}
 	return val
 
 }

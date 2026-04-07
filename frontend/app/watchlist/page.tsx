@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import type { WatchlistItem, Notification } from "@/types/watchlist";
+import { useAuth } from "@/components/providers/auth-provider";
+import { AuthGuardModal } from "@/components/ui/auth-guard-modal";
 import { DUMMY_WATCHLIST, DUMMY_NOTIFICATIONS } from "@/constants/dummy-watchlist";
 import { WatchlistCard } from "@/components/watchlist/watchlist-card";
 import { NotificationItem } from "@/components/watchlist/notification-item";
 import { Eye, Bell } from "lucide-react";
 
 export default function WatchlistPage() {
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(DUMMY_WATCHLIST);
   const [notifications] = useState<Notification[]>(DUMMY_NOTIFICATIONS);
   const [tab, setTab] = useState<"wallets" | "notifications">("wallets");
@@ -38,6 +42,24 @@ export default function WatchlistPage() {
           </p>
         </div>
 
+        {!user ? (
+          <>
+            <div className="py-16 text-center">
+              <Eye className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
+              <p className="mb-4 text-sm text-muted-foreground">
+                Sign in to view your watchlist and trade notifications.
+              </p>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Sign in
+              </button>
+            </div>
+            <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+          </>
+        ) : (
+        <>
         {/* Tabs */}
         <div className="mb-6 flex gap-1 rounded-lg bg-muted/50 p-1">
           <button
@@ -107,6 +129,8 @@ export default function WatchlistPage() {
               ))
             )}
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

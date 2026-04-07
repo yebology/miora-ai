@@ -26,6 +26,16 @@ func (r *UserRepository) FindByFirebaseUID(firebaseUID string) (*entities.User, 
 
 }
 
+func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
+
+	var user entities.User
+	if err := r.db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+
+}
+
 func (r *UserRepository) Create(user *entities.User) error {
 
 	return r.db.Create(user).Error

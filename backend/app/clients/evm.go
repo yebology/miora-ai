@@ -71,8 +71,8 @@ func (a *AlchemyEVM) GetTransfers(address string, limit int, chain ...string) ([
 		return nil, fmt.Errorf("unsupported chain: %s", chainKey)
 	}
 
-	if limit <= 0 || limit > 50 {
-		limit = 25
+	if !constants.IsValidTransactionLimit(chainKey, limit) {
+		limit = constants.GetTransactionLimits(chainKey).Default
 	}
 
 	baseURL := cfg.AlchemyURL + a.apiKey

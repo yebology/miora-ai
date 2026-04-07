@@ -38,7 +38,7 @@ type Container struct {
 
 // NewContainer creates all dependencies and returns a fully wired Container.
 // Initialization order: clients → repositories → services → handlers.
-func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey string, scoring config.ScoringConfig, hub *ws.Hub) *Container {
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey, resendAPIKey, resendFrom string, scoring config.ScoringConfig, hub *ws.Hub) *Container {
 
 	// Clients
 	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
@@ -64,7 +64,8 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 	watchlistService := services.NewWatchlistService(watchlistRepo)
 
 	// Monitor
-	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, evmClient, svmClient, dexScreener, aiService, hub)
+	resendClient := clients.NewResend(resendAPIKey, resendFrom)
+	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, svmClient, dexScreener, aiService, resendClient, hub)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)

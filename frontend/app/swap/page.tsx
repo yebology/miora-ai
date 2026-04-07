@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAppKitAccount } from "@reown/appkit/react";
 import type { SwapQuote } from "@/types/swap";
+import { WalletGuardModal } from "@/components/ui/wallet-guard-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ export default function SwapPage() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState<SwapQuote | null>(null);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const tokens = getTokensForChain(chain);
   const [inputMint, setInputMint] = useState(tokens[0]?.address || "");
@@ -88,6 +90,10 @@ export default function SwapPage() {
   const outputToken = tokens.find((t) => t.address === outputMint);
 
   const handleGetQuote = async () => {
+    if (!isConnected) {
+      setShowWalletModal(true);
+      return;
+    }
     if (!amount || !inputMint || !outputMint) return;
     setLoading(true);
     setQuote(null);
@@ -212,18 +218,14 @@ export default function SwapPage() {
             <Button
               className="w-full gap-2"
               onClick={handleGetQuote}
-              disabled={loading || !amount || parseFloat(amount) <= 0 || !isConnected}
+              disabled={loading || !amount || parseFloat(amount) <= 0}
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Zap className="h-4 w-4" />
               )}
-              {!isConnected
-                ? "Connect Wallet First"
-                : loading
-                  ? "Getting quote..."
-                  : "Get Quote"}
+              {loading ? "Getting quote..." : "Get Quote"}
             </Button>
 
             {/* Quote details */}
@@ -255,6 +257,7 @@ export default function SwapPage() {
             )}
           </CardContent>
         </Card>
+        <WalletGuardModal open={showWalletModal} onOpenChange={setShowWalletModal} />
       </div>
     </div>
   );

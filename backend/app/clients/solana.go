@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"miora-ai/app/interfaces"
+	"miora-ai/constants"
 )
 
 // AlchemySolana fetches transaction data from Solana mainnet.
@@ -65,8 +66,8 @@ func (a *AlchemySolana) GetTransfers(address string, limit int, chain ...string)
 
 	url := fmt.Sprintf("https://solana-mainnet.g.alchemy.com/v2/%s", a.apiKey)
 
-	if limit <= 0 || limit > 50 {
-		limit = 25
+	if !constants.IsValidTransactionLimit("solana", limit) {
+		limit = constants.GetTransactionLimits("solana").Default
 	}
 
 	// Step 1: Get signatures

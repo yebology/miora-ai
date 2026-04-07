@@ -1,0 +1,19 @@
+meta {
+  name: Regenerate Insight
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/wallets/regenerate-insight
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "address": "{{walletAddress}}",
+    "chain": "{{chain}}",
+    "tone": "eli5"
+  }
+}

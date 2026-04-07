@@ -140,6 +140,8 @@ Swap tokens directly from Miora with best price routing:
 | DEX Aggregation | Jupiter (Solana), 1inch (EVM) |
 | Smart Contracts | Anchor (Solana), Foundry (EVM) |
 | Infra | Docker, Docker Compose |
+| Email | Resend |
+| API Testing | Bruno |
 
 ---
 
@@ -259,6 +261,8 @@ cd frontend && npm install && npm run dev
 | `SCORING_LIQUIDITY_THRESHOLD` | Min liquidity for risk exposure (USD) |
 | `SCORING_ENTRY_TIMING_MAX_AGE` | Max pair age for entry timing (hours) |
 | `SCORING_TOKEN_QUALITY_LOG_BASE` | Log base for token quality score |
+| `RESEND_API_KEY` | Resend API key for email notifications (optional) |
+| `RESEND_FROM_EMAIL` | Sender email for Resend (default: onboarding@resend.dev) |
 
 ---
 
@@ -286,6 +290,32 @@ cd frontend && npm install && npm run dev
 | Endpoint | Description |
 |----------|------------|
 | `ws://host/ws?user_id=ID` | Real-time trade notifications for followed wallets |
+
+---
+
+---
+
+## 🧪 API Testing
+
+API documentation and test collection is in `api-docs/` using [Bruno](https://www.usebruno.com/) format.
+
+### Setup
+1. Install Bruno: https://www.usebruno.com/
+2. Open Bruno → Import Collection → select `api-docs/` folder
+3. Update variables in `collection.bru` (baseUrl, walletAddress, firebaseToken)
+4. Run requests
+
+### Collection Structure
+```
+api-docs/
+├── bruno.json              → Collection metadata
+├── collection.bru          → Shared variables + auth config
+├── health/                 → Health check
+├── wallets/                → Analyze, Get Stored, Regenerate Insight
+├── swap/                   → Quote (Solana + EVM)
+├── auth/                   → Get current user (protected)
+└── watchlist/              → Follow, Update, List, Unfollow (protected)
+```
 
 ---
 

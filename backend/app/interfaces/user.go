@@ -14,6 +14,7 @@ type IUserService interface {
 // IUserRepository defines the data access contract for user operations.
 type IUserRepository interface {
 	FindByFirebaseUID(firebaseUID string) (*entities.User, error)
+	FindByID(id uint) (*entities.User, error)
 	Create(user *entities.User) error
 	Update(user *entities.User) error
 }

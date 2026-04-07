@@ -1,0 +1,11 @@
+meta {
+  name: Unfollow Wallet
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/watchlist/{{walletAddress}}
+  body: none
+  auth: inherit
+}

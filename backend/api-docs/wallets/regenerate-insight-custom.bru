@@ -1,0 +1,20 @@
+meta {
+  name: Regenerate Insight (Custom)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/wallets/regenerate-insight
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "address": "{{walletAddress}}",
+    "chain": "{{chain}}",
+    "tone": "custom",
+    "custom_prompt": "Focus on the risk analysis and tell me if this wallet is safe to follow"
+  }
+}
