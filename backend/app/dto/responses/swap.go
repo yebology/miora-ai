@@ -5,16 +5,16 @@ package responses
 // Example response:
 //
 //	{
-//	  "chain": "svm",
-//	  "input_mint": "So11111111111111111111111111111111111111112",
-//	  "output_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-//	  "input_amount": "100000000",
-//	  "output_amount": "14523000",
+//	  "chain": "base",
+//	  "input_mint": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+//	  "output_mint": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+//	  "input_amount": "1000000000000000000",
+//	  "output_amount": "1847500000",
 //	  "price_impact": "0.01",
-//	  "route": "Raydium → Orca"
+//	  "route": "Uniswap V3 → SushiSwap"
 //	}
 type SwapQuote struct {
-	Chain        string `json:"chain"`                  // Blockchain used: "evm" or "svm"
+	Chain        string `json:"chain"`                  // EVM chain name
 	InputMint    string `json:"input_mint"`             // Token address being sold
 	OutputMint   string `json:"output_mint"`            // Token address being bought
 	InputAmount  string `json:"input_amount"`           // Amount being sold (smallest unit)

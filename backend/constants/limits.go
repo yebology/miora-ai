@@ -13,17 +13,8 @@ var EVMTransactionLimits = TransactionLimitConfig{
 	Default: 10,
 }
 
-// SVMTransactionLimits defines fetch limits for Solana.
-var SVMTransactionLimits = TransactionLimitConfig{
-	Options: []int{20, 50, 100, 200},
-	Default: 20,
-}
-
-// GetTransactionLimits returns the transaction limit config based on chain key.
+// GetTransactionLimits returns the transaction limit config for the given chain.
 func GetTransactionLimits(chain string) TransactionLimitConfig {
-	if IsSolana(chain) {
-		return SVMTransactionLimits
-	}
 	return EVMTransactionLimits
 }
 

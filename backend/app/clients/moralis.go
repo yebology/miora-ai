@@ -1,15 +1,13 @@
 // Moralis client for fetching token prices.
 //
-// Supports two chains:
-//   - EVM (Ethereum, BSC, Polygon): historical price at specific block + current price
-//   - Solana: current price only (no historical block support)
+// Supports EVM chains (Ethereum, Arbitrum, Optimism, Base, Polygon):
+// historical price at specific block + current price.
 //
 // Requires API key (free tier available).
 // Used to calculate PnL per trade (buy price vs current price).
 //
 // API docs:
-//   - EVM:    https://docs.moralis.com/data-api/evm/price/overview
-//   - Solana: https://docs.moralis.com/web3-data-api/solana/reference/price/get-multiple-token-prices
+//   - EVM: https://docs.moralis.com/data-api/evm/price/overview
 package clients
 
 import (
@@ -56,15 +54,7 @@ func chainToMoralisID(chain string) string {
 //   - If block > 0, fetches the historical price at that block.
 //   - If block == 0, fetches the current price.
 //   - Endpoint: GET https://deep-index.moralis.io/api/v2.2/erc20/{address}/price
-//
-// For Solana:
-//   - Always fetches the current price (no historical block support).
-//   - Endpoint: GET https://solana-gateway.moralis.io/token/mainnet/{address}/price
 func (m *Moralis) GetTokenPrice(chain, tokenAddress string, block uint64) (*dto.TokenPriceData, error) {
-
-	if chain == "svm" || chain == "solana" {
-		return m.getSolanaTokenPrice(tokenAddress)
-	}
 
 	return m.getEVMTokenPrice(chain, tokenAddress, block)
 
@@ -92,28 +82,6 @@ func (m *Moralis) getEVMTokenPrice(chain, tokenAddress string, block uint64) (*d
 		TokenAddress: tokenAddress,
 		UsdPrice:     result.UsdPrice,
 		BlockNumber:  block,
-	}, nil
-
-}
-
-// getSolanaTokenPrice fetches current token price from the Moralis Solana API.
-// Note: Solana does not support historical price by block/slot via Moralis.
-func (m *Moralis) getSolanaTokenPrice(tokenAddress string) (*dto.TokenPriceData, error) {
-
-	url := fmt.Sprintf(
-		"https://solana-gateway.moralis.io/token/mainnet/%s/price",
-		tokenAddress,
-	)
-
-	result, err := m.doRequest(url)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dto.TokenPriceData{
-		TokenAddress: tokenAddress,
-		UsdPrice:     result.UsdPrice,
-		BlockNumber:  0,
 	}, nil
 
 }

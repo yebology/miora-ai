@@ -52,14 +52,11 @@ func (m *MonitorService) getUniqueWatchedWallets() []entities.Watchlist {
 // checkWallet fetches latest transactions and detects new ones.
 func (m *MonitorService) checkWallet(address, chain string) {
 
-	var client interfaces.BlockchainClient
-	if constants.IsEVM(chain) {
-		client = m.evmClient
-	} else if constants.IsSolana(chain) {
-		client = m.svmClient
-	} else {
+	if !constants.IsEVM(chain) {
 		return
 	}
+
+	client := m.evmClient
 
 	transfers, err := client.GetTransfers(address, 100, chain)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 //
 // Routes:
 //
-//	POST /swap/quote — get a swap quote from Jupiter (Solana) or 1inch (EVM)
+//	POST /swap/quote — get a swap quote from 1inch (EVM)
 func RegisterSwapPublicRoutes(r fiber.Router, h *handlers.SwapHandler) {
 
 	swap := r.Group("/swap")

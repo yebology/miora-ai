@@ -11,7 +11,7 @@ type ChainConfig struct {
 }
 
 // SupportedChains maps chain keys to their API configurations.
-// Supports Ethereum mainnet, L2s (Arbitrum, Optimism, Base, Polygon), and Solana.
+// Supports Ethereum mainnet and L2s (Arbitrum, Optimism, Base, Polygon).
 var SupportedChains = map[string]ChainConfig{
 	"ethereum": {
 		Name:           "Ethereum",
@@ -53,23 +53,15 @@ var SupportedChains = map[string]ChainConfig{
 		DexScreenerID:  "polygon",
 		BlockTimeSec:   2,
 	},
-	"solana": {
-		Name:          "Solana",
-		AlchemyURL:    "https://solana-mainnet.g.alchemy.com/v2/",
-		DexScreenerID: "solana",
-	},
 }
 
 // GetChainConfig returns the config for a chain key.
 // Returns nil if the chain is not supported.
 func GetChainConfig(chain string) *ChainConfig {
 
-	// Map legacy keys
-	switch chain {
-	case "evm":
+	// Map legacy key
+	if chain == "evm" {
 		chain = "ethereum"
-	case "svm":
-		chain = "solana"
 	}
 
 	if cfg, ok := SupportedChains[chain]; ok {
@@ -88,12 +80,5 @@ func IsEVM(chain string) bool {
 	default:
 		return false
 	}
-
-}
-
-// IsSolana returns true if the chain is Solana.
-func IsSolana(chain string) bool {
-
-	return chain == "svm" || chain == "solana"
 
 }

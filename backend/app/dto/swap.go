@@ -9,5 +9,5 @@ type SwapQuote struct {
 	PriceImpact string `json:"price_impact,omitempty"`
 	SlippageBps int    `json:"slippage_bps"`
 	Chain       string `json:"chain"`
-	Dex         string `json:"dex"` // "jupiter" or "1inch"
+	Dex         string `json:"dex"` // "1inch"
 }

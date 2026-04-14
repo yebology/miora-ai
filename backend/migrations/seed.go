@@ -15,7 +15,6 @@ func Seed(db *gorm.DB) error {
 	wallets := []entities.Wallet{
 		{Address: "0x0000000000000000000000000000000000000001", Chain: "evm"},
 		{Address: "0x0000000000000000000000000000000000000002", Chain: "evm"},
-		{Address: "So11111111111111111111111111111111111111112", Chain: "svm"},
 	}
 
 	for _, w := range wallets {

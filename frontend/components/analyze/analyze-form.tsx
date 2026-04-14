@@ -11,7 +11,6 @@ const CHAINS = [
   { value: "optimism", label: "Optimism" },
   { value: "base", label: "Base" },
   { value: "polygon", label: "Polygon" },
-  { value: "solana", label: "Solana" },
 ];
 
 const EVM_LIMITS = [
@@ -21,21 +20,12 @@ const EVM_LIMITS = [
   { value: 100, label: "100 txs", enabled: false },
 ];
 
-const SVM_LIMITS = [
-  { value: 20, label: "20 txs", enabled: true },
-  { value: 50, label: "50 txs", enabled: false },
-  { value: 100, label: "100 txs", enabled: false },
-  { value: 200, label: "200 txs", enabled: false },
-];
-
-const EVM_CHAINS = ["ethereum", "arbitrum", "optimism", "base", "polygon"];
-
 function getLimits(chain: string) {
-  return EVM_CHAINS.includes(chain) ? EVM_LIMITS : SVM_LIMITS;
+  return EVM_LIMITS;
 }
 
 function getDefaultLimit(chain: string) {
-  return EVM_CHAINS.includes(chain) ? 10 : 20;
+  return 10;
 }
 
 type Props = {

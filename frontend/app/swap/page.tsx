@@ -21,7 +21,6 @@ const CHAINS = [
   { value: "optimism", label: "Optimism" },
   { value: "base", label: "Base" },
   { value: "polygon", label: "Polygon" },
-  { value: "solana", label: "Solana" },
 ];
 
 function TokenSelect({
@@ -115,10 +114,7 @@ export default function SwapPage() {
         input_amount: rawAmount,
         output_amount: outputAmt,
         price_impact: "0.03",
-        route:
-          chain === "solana"
-            ? "Raydium → Orca"
-            : "Uniswap V3 → SushiSwap",
+        route: "Uniswap V3 → SushiSwap",
       });
     } finally {
       setLoading(false);
@@ -131,7 +127,7 @@ export default function SwapPage() {
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold tracking-tight">Swap Tokens</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Best price routing across Jupiter and 1inch.
+            Best price routing via 1inch on Base.
           </p>
         </div>
 
@@ -249,9 +245,7 @@ export default function SwapPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Provider</span>
-                  <span className="font-medium">
-                    {chain === "solana" ? "Jupiter" : "1inch"}
-                  </span>
+                  <span className="font-medium">1inch</span>
                 </div>
               </div>
             )}

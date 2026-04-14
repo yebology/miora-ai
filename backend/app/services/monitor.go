@@ -19,7 +19,6 @@ type MonitorService struct {
 	notifRepo     interfaces.INotificationRepository
 	userRepo      interfaces.IUserRepository
 	evmClient     interfaces.BlockchainClient
-	svmClient     interfaces.BlockchainClient
 	dexScreener   interfaces.IDexScreener
 	ai            *AIService
 	emailClient   interfaces.IEmailClient
@@ -34,7 +33,6 @@ func NewMonitorService(
 	notifRepo interfaces.INotificationRepository,
 	userRepo interfaces.IUserRepository,
 	evmClient interfaces.BlockchainClient,
-	svmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
 	ai *AIService,
 	emailClient interfaces.IEmailClient,
@@ -46,7 +44,6 @@ func NewMonitorService(
 		notifRepo:     notifRepo,
 		userRepo:      userRepo,
 		evmClient:     evmClient,
-		svmClient:     svmClient,
 		dexScreener:   dexScreener,
 		ai:            ai,
 		emailClient:   emailClient,

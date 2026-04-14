@@ -1,104 +1,358 @@
-# Miora AI — Progress
+# Miora AI — Progress Tracker
 
-## ✅ Backend Done
+## 🔄 Pivot: V1 → V2
 
-- Clean architecture (handlers, services, repositories, interfaces, entities, dto)
-- Config loader (env-based, no fallbacks, configurable scoring thresholds)
-- Database (PostgreSQL via Docker Compose, GORM auto-migrate)
-- Entities: User, Wallet, Transaction, WalletMetric, Watchlist, Notification
-- Alchemy client: EVM (incoming + outgoing transfers) & Solana
-- DexScreener client (liquidity, mcap, pair age, price change)
-- Moralis client (EVM historical price by block + Solana current price)
-- Birdeye client (Solana historical price by unix timestamp)
-- Gemini AI client (natural language wallet insights)
-- Jupiter client (Solana swap quotes)
-- 1inch client (EVM swap quotes)
-- Multi-chain support: Ethereum, Arbitrum, Optimism, Base, Polygon, Solana
-- Chain registry (constants/chains.go)
-- Configurable transaction fetch limits per chain type (constants/limits.go)
-  - EVM: 10, 25, 50, 100 (default 10)
-  - Solana: 20, 50, 100, 200 (default 20)
-- Real scoring: win rate, profit consistency, entry timing, token quality, trade discipline
-- Risk exposure (informational only, not in score formula)
-- FIFO buy-sell matching for PnL (realized + unrealized)
-- 3-tier recommendations: full_follow, conditional_follow, avoid
-- Conditional follow with dynamic thresholds (computed from wallet's token data — median liquidity, mcap, volume, avg pair age)
-- Traded tokens in response (contract address, symbol, PnL, status)
-- AI insight with tone support (simple, eli5, custom prompt)
-- Regenerate insight endpoint (POST /wallets/regenerate-insight)
-- Firebase Auth (Google login, backend token verification middleware)
-- User system (entity, repository, service, find-or-create from Firebase)
-- Watchlist CRUD (follow, unfollow, update conditions, list)
-- WebSocket hub (manage connections per user, push notifications)
-- Wallet monitor (background polling, detect new trades, check conditions, notify via WebSocket + save to DB)
-- Email notifications wired into monitor service (Resend API client + HTML email template + async dispatch)
-- AI risk assessment per trade notification (Gemini evaluates token data before notifying users)
-- DI container + router pattern (public + protected routes)
-- Interfaces with I prefix (including IEmailClient for Resend)
-- Error handling (AppError + output envelope)
-- Validation (go-playground/validator + ParseAndValidateBody)
-- Dockerfile, Docker Compose, Makefile, .gitignore
-- Migrations (auto-migrate, reset, seed)
-- Documentation (comments on all files)
-- Bruno API test collection (api-docs/) for all endpoints
-- API Testing Flow guide (API_TESTING_FLOW.md)
+Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a **Trading Reputation Protocol on Base** (V2).
 
-## ✅ Frontend Done
+- **V1**: Analytics tool — analyze wallet, follow, get alerts, swap manually (off-chain only)
+- **V2**: Infrastructure protocol — publish trading scores on-chain via EAS, autonomous AI agent trading via AgentKit, monetize reputation API via x402
 
-- Next.js 16 + Tailwind v4 + shadcn/ui + TypeScript
-- Dark/light mode (next-themes, default dark)
-- Space Grotesk font
-- Responsive navbar with mobile hamburger menu
-- Landing page:
-  - Hero section (gradient orbs background, shimmer text animation, CTA buttons)
-  - Features section (6 cards with hover pop + glow effect)
-  - How It Works (3 steps with icons, animated connector line, pulse rings)
-  - Chains section (infinite marquee with logos, hover brand color glow)
-  - CTA section
-  - Footer
-  - Scroll-triggered fade-in animations
-- Analyze page:
-  - Wallet address input + chain selector
-  - Score ring with gradient color per tier
-  - Recommendation badge (Full Follow / Conditional Follow / Avoid)
-  - AI Insight card with regenerate (Simple / ELI5 / Custom prompt)
-  - Scoring breakdown with animated bars + info tooltips (formula explanations)
-  - Interactive conditions card (toggle checkboxes, descriptions, Follow CTA)
-  - Trade summary stats (tokens traded, avg PnL, win/loss, realized)
-  - Sortable traded tokens table with scrollable container
-  - Error state + loading state
-  - "Wallet already exists" confirmation modal
-- Watchlist page:
-  - Tabs: Wallets / Notifications (with unread badge)
-  - Wallet cards (address, chain, recommendation, conditions, notify toggle, unfollow)
-  - Notification items (buy/sell icon, token, amount, liquidity, mcap, time ago)
-  - Empty states
-- Watchlist detail page (/watchlist/[chain]/[address]):
-  - Stored analysis view (reuses AnalysisResult component)
-  - Activity tab (notification history per wallet)
-  - Re-analyze in-place (confirmation modal + success modal)
-- Placeholder pages: /swap, /login
-- Types matching backend response shapes
-- Dummy data for all pages
+### Why Pivot
+- V1 was an iterative improvement on existing tools (Nansen, Arkham, Cielo)
+- V2 creates a new primitive: on-chain trading reputation that other protocols can build on
+- V2 deeply integrates with Base ecosystem (EAS, AgentKit, x402)
+- V2 aligns with Base 2026 strategy: global markets, stablecoin payments, home for builders/agents
 
-## 📋 Post-Hackathon
+---
 
-- Auto copy-trade (execute swap on behalf of user)
-- Smart contract fee router
-- Rate limiting
-- Caching (Redis)
-- Pagination for transaction history
-- Logging & monitoring
-- Auth guard modal (sign in required for follow, watchlist)
-- Wallet connect guard modal (connect wallet required for swap)
-- Dynamic transaction limit selector per chain (EVM vs Solana options)
-- Follow CTA with auth check for full_follow (in analysis header)
-- Info tooltips on Follow buttons explaining what follow does
-- Dummy data for all 3 recommendation tiers (full_follow, conditional_follow, avoid)
+## 🏗️ BACKEND (Go + Fiber + GORM)
 
-## 🔲 Todo — Hackathon Priority
+### ✅ Core Scoring Engine — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `services/scoring.go` | ✅ Done | Multi-factor scoring (0-100): win rate, profit consistency, entry timing, token quality, trade discipline, risk exposure |
+| `services/wallet.go` | ✅ Done | Full analysis orchestration: fetch txs → enrich data → calculate PnL → score → recommend → AI insight |
+| `services/wallet_helper.go` | ✅ Done | FIFO buy-sell matching for PnL, token data fetching, condition generation, price helpers |
+| — | ✅ Done | 3-tier recommendations: `full_follow` (80-100), `conditional_follow` (40-79), `avoid` (<40) |
+| — | ✅ Done | Dynamic conditional thresholds computed from wallet's own token data (median liquidity, mcap, volume, avg pair age) |
 
-- [ ] Connect frontend to real backend API (replace dummy data)
-- [ ] Smart contracts — Fee Router (swap fee collection)
-- [ ] Connect frontend to smart contracts (Fee Router integration)
-- [ ] Tests (minimal)
+### ✅ AI Layer — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `services/ai.go` | ✅ Done | Gemini-powered insight generation (simple, eli5, custom tone) + trade risk assessment |
+| `clients/gemini.go` | ✅ Done | Google Gemini API client (gemini-2.0-flash) |
+| `dto/prompts/wallet.go` | ✅ Done | Prompt templates for wallet insights and trade assessments |
+
+### ✅ Wallet Monitoring & Alerts — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `services/monitor.go` | ✅ Done | Background polling of watched wallets, new trade detection |
+| `services/monitor_helper.go` | ✅ Done | Condition checking, notification dispatch logic |
+| `ws/hub.go` | ✅ Done | WebSocket connection hub (broadcast trade notifications) |
+| `ws/handler.go` | ✅ Done | WebSocket upgrade and connection handlers |
+| `clients/resend.go` | ✅ Done | Email notifications via Resend (async, non-blocking) |
+| — | ✅ Done | AI risk assessment per trade notification (Gemini evaluates token before notifying) |
+
+### ✅ Watchlist System — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `services/watchlist.go` | ✅ Done | Follow/unfollow, update conditions, list watchlist |
+| `handlers/watchlist.go` | ✅ Done | CRUD endpoints: POST /follow, DELETE /:address, GET /, PUT /:address |
+| `repositories/watchlist.go` | ✅ Done | Create, Delete, Exists, FindByUser, Update |
+| `entities/watchlist.go` | ✅ Done | UserID, WalletAddress, Chain, Recommendation, Conditions (JSON), EmailNotify |
+
+### ✅ Auth & User System — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `services/user.go` | ✅ Done | Find-or-create from Firebase UID |
+| `handlers/auth.go` | ✅ Done | GET /auth/me endpoint |
+| `middleware/firebase.go` | ✅ Done | Firebase token verification middleware |
+| `repositories/user.go` | ✅ Done | FindByFirebaseUID, Create, Update |
+| `entities/user.go` | ✅ Done | ID, FirebaseUID, Email, Name, Avatar |
+
+### ✅ Swap System — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `services/swap.go` | ✅ Done | 1inch swap quote service |
+| `handlers/swap.go` | ✅ Done | POST /swap/quote endpoint |
+| `clients/oneinch.go` | ✅ Done | 1inch API client for EVM swap quotes |
+
+### ✅ Data Clients — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `clients/evm.go` | ✅ Done | Alchemy EVM client (Base, Ethereum, Arbitrum, Optimism, Polygon) |
+| `clients/dexscreener.go` | ✅ Done | Token pair data (liquidity, mcap, pair age, price change) |
+| `clients/moralis.go` | ✅ Done | EVM historical token prices by block |
+| `clients/helpers.go` | ✅ Done | Shared HTTP client helpers |
+
+### ✅ Entities (Database Models) — DONE, Needs V2 Additions
+| File | Status | Description |
+|------|--------|-------------|
+| `entities/user.go` | ✅ Done | ID, FirebaseUID, Email, Name, Avatar |
+| `entities/wallet.go` | ✅ Done | ID, Address, Chain |
+| `entities/transaction.go` | ✅ Done | ID, WalletID, Hash, Chain, From, To, Value, TokenSymbol, ContractAddress, Direction, BlockNumber, Timestamp |
+| `entities/wallet_metric.go` | ✅ Done | ID, WalletID, TotalTransactions, 6 scoring metrics, FinalScore, Recommendation |
+| `entities/watchlist.go` | ✅ Done | ID, UserID, WalletAddress, Chain, Recommendation, Conditions (JSON), EmailNotify |
+| `entities/notification.go` | ✅ Done | ID, UserID, WalletAddress, Chain, TokenAddress, TokenSymbol, Direction, Value, Liquidity, MarketCap, AiAssessment, Read |
+
+### ✅ Infrastructure — DONE, No Changes Needed
+| File | Status | Description |
+|------|--------|-------------|
+| `router/container.go` | ✅ Done | DI container: Clients → Repos → Services → Handlers |
+| `router/routes.go` | ✅ Done | Route registration + middleware setup |
+| `config/config.go` | ✅ Done | Environment config loader (all required keys) |
+| `constants/chains.go` | ✅ Done | Chain registry with Base support |
+| `constants/limits.go` | ✅ Done | Configurable transaction limits per chain |
+| `constants/error.go` | ✅ Done | Error message constants |
+| `constants/success.go` | ✅ Done | Success message constants |
+| `pkg/error.go` | ✅ Done | AppError struct for structured error handling |
+| `utils/helper.go` | ✅ Done | General helpers (clamp, round, etc.) |
+| `utils/math.go` | ✅ Done | Math utilities (stdDev, median) |
+| `utils/utils.go` | ✅ Done | Validation, parsing, response helpers |
+| `migrations/migrations.go` | ✅ Done | Auto-migrate all entities |
+| `migrations/reset.go` | ✅ Done | Drop all tables and re-apply |
+| `migrations/seed.go` | ✅ Done | Seed development data |
+| `Dockerfile` | ✅ Done | Docker image for backend |
+| `docker-compose.yml` | ✅ Done | PostgreSQL + backend services |
+| `main.go` | ✅ Done | Entry point: config → DB → migrations → Fiber → routes |
+
+### ✅ Solana/V1 Cleanup — DONE
+- [x] Removed all Solana-specific code: `clients/solana.go`, `clients/birdeye.go`, `clients/jupiter.go`, `interfaces/birdeye.go`
+- [x] Removed Solana references from config, constants, services, router, DTOs, migrations, seed
+- [x] Backend compiles clean
+
+### 🆕 V2 Backend — Layer 1: EAS Attestation (On-chain Reputation)
+- [ ] Research EAS SDK for Go (or use direct contract call via go-ethereum/abigen)
+- [ ] Add `AttestationUID` field to `entities/wallet_metric.go`
+- [ ] Add `SchemaUID` to config (env var: `EAS_SCHEMA_UID`)
+- [ ] Add `EAS_CONTRACT_ADDRESS` to config (Base Sepolia EAS contract)
+- [ ] Add `BASE_RPC_URL` to config (Base Sepolia RPC endpoint)
+- [ ] Add `ATTESTER_PRIVATE_KEY` to config (wallet private key for signing attestations)
+- [ ] Create `clients/eas.go` — EAS client: create attestation, query attestation by UID
+- [ ] Create `interfaces/eas.go` — `IEASClient` interface
+- [ ] Update `services/wallet.go` — after scoring, call EAS client to publish attestation on-chain
+- [ ] Create `handlers/reputation.go` — GET /reputation/:address (return attestation data + on-chain proof)
+- [ ] Create `http/reputation.go` — register reputation routes (public)
+- [ ] Create `dto/responses/reputation.go` — reputation response DTO (score, recommendation, attestation UID, txn hash, timestamp)
+- [ ] Wire EAS client into `router/container.go`
+- [ ] Register reputation routes in `router/routes.go`
+- [ ] Update `migrations/migrations.go` to auto-migrate updated WalletMetric
+
+### 🆕 V2 Backend — Layer 2: x402 Reputation API (Monetization)
+- [ ] Research x402 protocol integration for Go (HTTP middleware pattern)
+- [ ] Create `middleware/x402.go` — x402 payment verification middleware
+- [ ] Add `X402_PAYMENT_ADDRESS` to config (USDC receiving address)
+- [ ] Add `X402_PRICE` to config (price per query in USDC)
+- [ ] Create `handlers/reputation_query.go` — GET /reputation/query?address=0x... (x402-protected)
+- [ ] Create `http/reputation_query.go` — register x402-protected reputation routes
+- [ ] Create `dto/responses/reputation_query.go` — query response DTO
+- [ ] Wire x402 middleware into `router/routes.go`
+
+### 🆕 V2 Backend — Layer 3: AI Trading Agent (AgentKit)
+- [ ] Research Coinbase AgentKit SDK for Go (or TypeScript sidecar service)
+- [ ] Create `entities/agent_config.go` — AgentConfig entity: UserID, Budget, MaxPerTrade, RiskTolerance, Conditions (JSON), Status (active/paused/stopped), AgentWalletAddress, CreatedAt, UpdatedAt
+- [ ] Create `entities/agent_trade.go` — AgentTrade entity: AgentConfigID, WalletAddress (source), TokenAddress, TokenSymbol, Amount, TxHash, Status, Reason, CreatedAt
+- [ ] Create `repositories/agent.go` — AgentConfig + AgentTrade CRUD
+- [ ] Create `interfaces/agent.go` — `IAgentRepository`, `IAgentService`
+- [ ] Create `clients/agentkit.go` — AgentKit client: create agentic wallet, execute swap, get balance
+- [ ] Create `interfaces/agentkit.go` — `IAgentKitClient` interface
+- [ ] Create `services/agent.go` — Agent service: start, pause, resume, update config, monitor top wallets → evaluate → execute
+- [ ] Create `handlers/agent.go` — POST /agent/start, PUT /agent/config, POST /agent/pause, GET /agent/status, GET /agent/trades
+- [ ] Create `http/agent.go` — register agent routes (protected, Firebase auth)
+- [ ] Create `dto/requests/agent.go` — agent config request DTO
+- [ ] Create `dto/responses/agent.go` — agent status + trade history response DTO
+- [ ] Wire agent service + handler into `router/container.go`
+- [ ] Register agent routes in `router/routes.go`
+- [ ] Update `migrations/migrations.go` to auto-migrate AgentConfig + AgentTrade
+
+---
+
+## 🎨 FRONTEND (Next.js 16 + Tailwind v4 + shadcn/ui)
+
+### ✅ Tech Stack — DONE
+- Next.js 16 + Tailwind CSS v4 + shadcn/ui + TypeScript
+- next-themes (dark/light mode, default dark), Space Grotesk font
+- wagmi + viem + @reown/appkit (wallet connect — MetaMask, WalletConnect)
+- @tanstack/react-query (installed, not yet used — ready for API integration)
+- @coinbase/cdp-sdk (NOT installed in package.json — needs to be added for AgentKit)
+
+### ✅ Pages — DONE, Needs V2 Additions
+| Page | Status | Description |
+|------|--------|-------------|
+| `app/page.tsx` (Landing) | ✅ Done | V2 hero + narrative (reputation protocol + AI agent) |
+| `app/analyze/page.tsx` | ✅ Done | Wallet analysis page — currently uses dummy data |
+| `app/watchlist/page.tsx` | ✅ Done | Watchlist dashboard — currently uses dummy data |
+| `app/watchlist/[chain]/[address]/page.tsx` | ✅ Done | Watchlist detail page — currently uses dummy data |
+| `app/swap/page.tsx` | ⚠️ Placeholder | De-prioritized — agent replaces manual swap |
+| `app/login/page.tsx` | ⚠️ Placeholder | Login page skeleton |
+| `app/agent/page.tsx` | ❌ To build | Agent setup + dashboard page (V2 new) |
+
+### ✅ Components — DONE, Needs V2 Additions
+| Directory | Files | Status |
+|-----------|-------|--------|
+| `components/analyze/` | analyze-form, analysis-result, score-ring, metric-bar, ai-insight-card, conditions-card, traded-tokens-table, recommendation-badge | ✅ Done — all use dummy data, have TODO comments for real API |
+| `components/watchlist/` | watchlist-card, notification-item | ✅ Done — uses dummy data |
+| `components/landing/` | hero-section, hero-background, features-section, how-it-works-section, chains-section, cta-section | ✅ Done — V2 narrative applied |
+| `components/layout/` | navbar, footer, theme-toggle | ✅ Done — needs "Agent" nav item |
+| `components/providers/` | auth-provider, theme-provider, web3-provider | ✅ Done — auth-provider uses simulated login |
+| `components/ui/` | button, card, badge, dialog, input, label, progress, select, sheet, auth-guard-modal, wallet-guard-modal | ✅ Done |
+| `components/icons/` | google | ✅ Done |
+| `components/agent/` | — | ❌ To build (V2 new) |
+
+### ✅ Data Layer — DONE, Needs Real API Connection
+| File | Status | Description |
+|------|--------|-------------|
+| `lib/api.ts` | ✅ Done | API client with all endpoints defined (analyzeWallet, getWallet, regenerateInsight, getSwapQuote, getWatchlist, followWallet, unfollowWallet, updateWatchlist, getMe) |
+| `constants/dummy.ts` | ⚠️ Dummy | 3 dummy wallet analyses (conditional_follow, full_follow, avoid) — to be replaced |
+| `constants/dummy-watchlist.ts` | ⚠️ Dummy | 3 dummy watchlist items + 4 dummy notifications — to be replaced |
+| `constants/landing.ts` | ✅ Done | Landing page copy (V2 narrative, Solana removed) |
+| `constants/nav.ts` | ✅ Done | Navigation items — needs "Agent" added |
+| `constants/tokens.ts` | ✅ Done | Token list for swap (Base, Ethereum, etc.) |
+| `types/wallet.ts` | ✅ Done | WalletAnalysis, TradedToken, Condition types |
+| `types/watchlist.ts` | ✅ Done | WatchlistItem, Notification types |
+| `types/api.ts` | ✅ Done | ApiResponse envelope type |
+| `types/swap.ts` | ✅ Done | SwapQuote type |
+| `hooks/use-animate-on-scroll.ts` | ✅ Done | Scroll animation hook |
+| `lib/utils.ts` | ✅ Done | cn() utility for conditional classnames |
+
+### ✅ Solana/V1 Cleanup — DONE
+- [x] Removed Solana from frontend: chain selectors, tokens, dummy data, landing page, swap page
+- [x] Deleted `solana.svg`
+- [x] Updated hero section + README tagline to V2 narrative
+- [x] Frontend builds clean
+
+### 🔌 Connect Frontend to Backend API (Replace Dummy Data)
+#### Analyze Page (`app/analyze/page.tsx`)
+- [ ] Replace dummy data simulation with real `analyzeWallet()` call from `lib/api.ts`
+- [ ] Replace dummy "wallet exists" check with real `getWallet()` call
+- [ ] Remove `DUMMY_ANALYSIS`, `DUMMY_FULL_FOLLOW`, `DUMMY_AVOID` imports
+- [ ] Handle loading, error, and empty states from real API responses
+
+#### AI Insight Card (`components/analyze/ai-insight-card.tsx`)
+- [ ] Replace dummy insight regeneration with real `regenerateInsight()` call from `lib/api.ts`
+- [ ] Remove hardcoded `dummyInsights` object
+
+#### Conditions Card (`components/analyze/conditions-card.tsx`)
+- [ ] Replace dummy follow action with real `followWallet()` call from `lib/api.ts`
+- [ ] Pass Firebase auth token from `useAuth()` context
+
+#### Analysis Result (`components/analyze/analysis-result.tsx`)
+- [ ] Replace dummy "Follow Wallet" action with real `followWallet()` call
+- [ ] Pass Firebase auth token from `useAuth()` context
+
+#### Watchlist Page (`app/watchlist/page.tsx`)
+- [ ] Replace `DUMMY_WATCHLIST` with real `getWatchlist()` call from `lib/api.ts`
+- [ ] Replace `DUMMY_NOTIFICATIONS` with real notification data (WebSocket or polling)
+- [ ] Replace dummy unfollow with real `unfollowWallet()` call
+- [ ] Replace dummy toggle notify with real `updateWatchlist()` call
+- [ ] Pass Firebase auth token from `useAuth()` context
+
+#### Watchlist Detail Page (`app/watchlist/[chain]/[address]/page.tsx`)
+- [ ] Replace `DUMMY_ANALYSIS` with real `getWallet()` call from `lib/api.ts`
+- [ ] Replace `DUMMY_NOTIFICATIONS` with real notification data filtered by wallet
+- [ ] Replace dummy re-analyze with real `analyzeWallet()` call
+- [ ] Remove all dummy data imports
+
+#### Auth Provider (`components/providers/auth-provider.tsx`)
+- [ ] Replace simulated sign-in with real Firebase Google sign-in (`signInWithPopup`, `GoogleAuthProvider`)
+- [ ] Store Firebase ID token for API calls
+- [ ] Call `getMe()` after sign-in to sync user with backend
+- [ ] Replace simulated sign-out with real Firebase sign-out
+- [ ] Add `getToken()` method to auth context for components to use
+
+### 🆕 V2 Frontend — Agent Page & Components
+- [ ] Add "Agent" to `constants/nav.ts` navigation items
+- [ ] Create `app/agent/page.tsx` — Agent setup + dashboard page
+- [ ] Create `types/agent.ts` — AgentConfig, AgentTrade, AgentStatus types
+- [ ] Add agent API functions to `lib/api.ts` — startAgent, pauseAgent, getAgentStatus, updateAgentConfig, getAgentTrades
+- [ ] Create `components/agent/agent-config-form.tsx` — Budget, max per trade, risk tolerance, conditions form
+- [ ] Create `components/agent/agent-status-card.tsx` — Agent status (active/paused/stopped), wallet balance, total trades
+- [ ] Create `components/agent/agent-trade-history.tsx` — Table of agent's executed trades with PnL
+- [ ] Create `components/agent/agent-wallet-card.tsx` — Agentic wallet address, balance, deposit/withdraw
+
+### 🆕 V2 Frontend — Reputation Display
+- [ ] Add attestation badge/link to `components/analyze/analysis-result.tsx` — show EAS attestation UID + BaseScan link after analysis
+- [ ] Create `components/analyze/attestation-badge.tsx` — "Verified on Base" badge with attestation link
+
+---
+
+## 📜 SMART CONTRACTS (Foundry — contracts/evm/)
+
+### ✅ Current State
+| File | Status | Description |
+|------|--------|-------------|
+| `foundry.toml` | ✅ Done | Foundry build config (default profile) |
+| `lib/forge-std/` | ✅ Done | Forge standard library |
+| `src/Counter.sol` | ⚠️ Placeholder | Example counter contract — to be replaced |
+| `test/Counter.t.sol` | ⚠️ Placeholder | Example test — to be replaced |
+| `script/Counter.s.sol` | ⚠️ Placeholder | Example deployment script — to be replaced |
+
+### 🆕 V2 Smart Contracts — EAS Schema Registration
+> Note: EAS attestations don't require custom smart contracts — they use the existing EAS contracts on Base.
+> However, we need to register a schema and may want a helper contract for batch operations.
+
+- [ ] Register EAS schema on Base Sepolia via EAS SDK or direct contract call
+  - Schema fields: `uint8 score, string recommendation, uint32 totalTransactions, uint64 timestamp, string chain, address wallet`
+  - Schema resolver: none (permissionless reads)
+  - Revocable: true (so scores can be updated)
+- [ ] Save schema UID to backend config
+- [ ] Verify schema visible on [Base Sepolia EAS Explorer](https://base-sepolia.easscan.org)
+- [ ] Create test attestation and verify readable on BaseScan
+
+### 🆕 V2 Smart Contracts — Optional Helper Contracts
+- [ ] (Optional) Create `src/MioraReputation.sol` — Helper contract for batch attestation queries
+- [ ] (Optional) Create `src/MioraAgent.sol` — Agent wallet wrapper with spending limits and guardrails
+- [ ] Update `foundry.toml` — Add Base Sepolia RPC, etherscan verification config
+- [ ] Create `script/Deploy.s.sol` — Deployment script for Base Sepolia
+- [ ] Remove placeholder Counter.sol, Counter.t.sol, Counter.s.sol
+
+---
+
+## 🧹 Cleanup Tasks
+- [ ] Remove `contracts/evm/src/Counter.sol` (placeholder)
+- [ ] Remove `contracts/evm/test/Counter.t.sol` (placeholder)
+- [ ] Remove `contracts/evm/script/Counter.s.sol` (placeholder)
+- [ ] Remove `frontend/constants/dummy.ts` after API connection is done
+- [ ] Remove `frontend/constants/dummy-watchlist.ts` after API connection is done
+
+---
+
+## 🔧 Infrastructure & Config Updates
+- [ ] Add new env vars to `backend/.env`:
+  - `BASE_SEPOLIA_RPC_URL` — Base Sepolia RPC endpoint
+  - `EAS_CONTRACT_ADDRESS` — EAS contract on Base Sepolia (0x4200000000000000000000000000000000000021)
+  - `EAS_SCHEMA_UID` — Registered schema UID
+  - `ATTESTER_PRIVATE_KEY` — Wallet private key for signing attestations
+  - `X402_PAYMENT_ADDRESS` — USDC receiving address for x402
+  - `X402_PRICE` — Price per reputation query (in USDC wei)
+  - `AGENTKIT_API_KEY` — Coinbase AgentKit API key (if needed)
+- [ ] Update `backend/config/config.go` to load new env vars
+- [ ] Add `@coinbase/cdp-sdk` to `frontend/package.json` (for AgentKit integration)
+- [ ] Add `@ethereum-attestation-service/eas-sdk` to `frontend/package.json` (if frontend needs to read attestations directly)
+- [ ] Update `frontend/.env` with any new public env vars
+- [ ] Update `Makefile` with new commands:
+  - `make deploy-schema` — Register EAS schema on Base Sepolia
+  - `make deploy-contracts` — Deploy helper contracts (if any)
+
+---
+
+## 🎯 Hackathon Priority (Base Batches Student Track — Due April 27)
+
+### 🔴 Must Have
+- [x] Cleanup Solana/V1 code ✅
+- [ ] **Deploy EAS attestation on Base Sepolia** — proof of on-chain reputation (this is the V2 differentiator)
+  - Register schema → make test attestation → verify on BaseScan
+  - Integrate into backend scoring flow
+  - Show attestation link in frontend after analysis
+- [ ] **Connect frontend to backend API** — replace dummy data with real API calls
+- [ ] Record 1-minute founder video
+- [ ] Submit Base Batches application
+
+### 🟡 Should Have
+- [ ] **Basic AgentKit proof of concept** — detect trade from top wallet → evaluate risk → execute swap on Base Sepolia testnet
+- [ ] **x402 endpoint** — reputation query with USDC micropayment
+- [ ] **Agent setup UI** — basic form to configure agent (budget, conditions, risk tolerance)
+
+### 🟢 Nice to Have
+- [ ] Agent dashboard with trade history
+- [ ] Multiple wallet monitoring in agent
+- [ ] Reputation leaderboard page
+- [ ] Attestation history page (all attestations made by Miora)
+
+---
+
+## ⬇️ De-prioritized for Hackathon
+- Smart contract fee router (replaced by x402 monetization)
+- Auto copy-trade without agent framework (replaced by AgentKit agent)
+- Swap page full implementation (agent replaces manual swap)
+- Multi-chain expansion beyond Base (post-hackathon roadmap)

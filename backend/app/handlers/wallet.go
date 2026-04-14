@@ -39,7 +39,7 @@ func NewWalletHandler(service interfaces.IWalletService) *WalletHandler {
 //
 //	{
 //	  "address": "0x...",   // required — wallet address to analyze
-//	  "chain":   "evm"      // required — must be "evm" or "svm"
+//	  "chain":   "evm"      // required — EVM chain name
 //	}
 //
 // Success response (200):

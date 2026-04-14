@@ -48,9 +48,6 @@ func (s *WalletService) getClient(chain string) (interfaces.BlockchainClient, *p
 	if constants.IsEVM(chain) {
 		return s.evmClient, nil
 	}
-	if constants.IsSolana(chain) {
-		return s.svmClient, nil
-	}
 	return nil, pkg.ErrBadReq(constants.UnsupportedChain)
 
 }
@@ -119,20 +116,13 @@ func (s *WalletService) fetchTokenData(chain string, txs []entities.Transaction)
 
 // --- Price helpers ---
 
-// getPrice fetches token price — Moralis for EVM (by block), Birdeye for Solana (by timestamp).
+// getPrice fetches token price via Moralis (by block).
 // block=0 and timestamp=now means current price.
 func (s *WalletService) getPrice(chain, tokenAddr string, blockNumber uint64, timestamp time.Time) float64 {
 
-	if constants.IsSolana(chain) {
-		data, err := s.birdeye.GetHistoricalPrice(tokenAddr, timestamp.Unix())
-		if err == nil && data.UsdPrice > 0 {
-			return data.UsdPrice
-		}
-	} else {
-		data, err := s.moralis.GetTokenPrice(chain, tokenAddr, blockNumber)
-		if err == nil && data.UsdPrice > 0 {
-			return data.UsdPrice
-		}
+	data, err := s.moralis.GetTokenPrice(chain, tokenAddr, blockNumber)
+	if err == nil && data.UsdPrice > 0 {
+		return data.UsdPrice
 	}
 
 	return 0

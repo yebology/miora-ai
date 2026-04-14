@@ -38,16 +38,13 @@ type Container struct {
 
 // NewContainer creates all dependencies and returns a fully wired Container.
 // Initialization order: clients → repositories → services → handlers.
-func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, geminiAPIKey, oneInchAPIKey, resendAPIKey, resendFrom string, scoring config.ScoringConfig, hub *ws.Hub) *Container {
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneInchAPIKey, resendAPIKey, resendFrom string, scoring config.ScoringConfig, hub *ws.Hub) *Container {
 
 	// Clients
 	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
-	svmClient := clients.NewAlchemySolana(alchemyAPIKey)
 	dexScreener := clients.NewDexScreener()
 	moralis := clients.NewMoralis(moralisAPIKey)
-	birdeye := clients.NewBirdeye(birdeyeAPIKey)
 	gemini := clients.NewGemini(geminiAPIKey)
-	jupiter := clients.NewJupiter()
 	oneInch := clients.NewOneInch(oneInchAPIKey)
 
 	// Repositories
@@ -58,14 +55,14 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, birdeyeAPIKey, gemi
 
 	// Services
 	aiService := services.NewAIService(gemini)
-	walletService := services.NewWalletService(walletRepo, evmClient, svmClient, dexScreener, moralis, birdeye, aiService, scoring)
-	swapService := services.NewSwapService(jupiter, oneInch)
+	walletService := services.NewWalletService(walletRepo, evmClient, dexScreener, moralis, aiService, scoring)
+	swapService := services.NewSwapService(oneInch)
 	userService := services.NewUserService(userRepo)
 	watchlistService := services.NewWatchlistService(watchlistRepo)
 
 	// Monitor
 	resendClient := clients.NewResend(resendAPIKey, resendFrom)
-	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, svmClient, dexScreener, aiService, resendClient, hub)
+	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, dexScreener, aiService, resendClient, hub)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)

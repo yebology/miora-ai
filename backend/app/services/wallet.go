@@ -28,10 +28,8 @@ import (
 type WalletService struct {
 	repo        interfaces.IWalletRepository
 	evmClient   interfaces.BlockchainClient
-	svmClient   interfaces.BlockchainClient
 	dexScreener interfaces.IDexScreener
 	moralis     interfaces.IMoralis
-	birdeye     interfaces.IBirdeye
 	ai          *AIService
 	scoring     config.ScoringConfig
 }
@@ -40,10 +38,8 @@ type WalletService struct {
 func NewWalletService(
 	repo interfaces.IWalletRepository,
 	evmClient interfaces.BlockchainClient,
-	svmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
 	moralis interfaces.IMoralis,
-	birdeye interfaces.IBirdeye,
 	ai *AIService,
 	scoring config.ScoringConfig,
 ) *WalletService {
@@ -51,10 +47,8 @@ func NewWalletService(
 	return &WalletService{
 		repo:        repo,
 		evmClient:   evmClient,
-		svmClient:   svmClient,
 		dexScreener: dexScreener,
 		moralis:     moralis,
-		birdeye:     birdeye,
 		ai:          ai,
 		scoring:     scoring,
 	}

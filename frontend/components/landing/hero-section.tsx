@@ -22,20 +22,19 @@ export function HeroSection() {
         )}
       >
         <p className="rounded-full border bg-muted/50 px-4 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-          🧠 AI-Powered Wallet Intelligence
+          🧠 Trading Reputation Protocol on Base
         </p>
 
-        <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-          See{" "}
+        <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          Score any trader on Base.{" "}
           <span className="animate-shimmer bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 bg-[length:200%_auto] bg-clip-text text-transparent">
-            beyond
-          </span>{" "}
-          the wallet.
+            Let AI ride the winners for you.
+          </span>
         </h1>
 
         <p className="max-w-lg text-muted-foreground">
-          Analyze any blockchain wallet, get smart recommendations, and swap
-          tokens across 6 chains.
+          Analyze wallets, get AI-powered reputation scores, follow the best
+          traders, and get notified when they move.
         </p>
 
         <div className="flex gap-3 pt-2">

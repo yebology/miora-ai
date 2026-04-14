@@ -7,24 +7,21 @@ import (
 	"miora-ai/pkg"
 )
 
-// SwapService handles swap quote requests by routing to the correct DEX aggregator.
+// SwapService handles swap quote requests by routing to 1inch.
 type SwapService struct {
-	jupiter interfaces.ISwapClient
 	oneInch interfaces.ISwapClient
 }
 
 // NewSwapService creates a new SwapService.
-func NewSwapService(jupiter, oneInch interfaces.ISwapClient) *SwapService {
+func NewSwapService(oneInch interfaces.ISwapClient) *SwapService {
 
 	return &SwapService{
-		jupiter: jupiter,
 		oneInch: oneInch,
 	}
 
 }
 
-// GetQuote fetches a swap quote from the appropriate DEX aggregator.
-// Solana → Jupiter, EVM chains → 1inch.
+// GetQuote fetches a swap quote from 1inch for EVM chains.
 func (s *SwapService) GetQuote(chain, inputMint, outputMint, amount string, slippage int) (*responses.SwapQuote, *pkg.AppError) {
 
 	cfg := constants.GetChainConfig(chain)
@@ -32,23 +29,15 @@ func (s *SwapService) GetQuote(chain, inputMint, outputMint, amount string, slip
 		return nil, pkg.ErrBadReq(constants.UnsupportedChain)
 	}
 
-	if constants.IsSolana(chain) {
-		quote, err := s.jupiter.GetQuote(inputMint, outputMint, amount, slippage)
-		if err != nil {
-			return nil, pkg.ErrUnexpected(502, err.Error())
-		}
-		return quote, nil
+	if !constants.IsEVM(chain) {
+		return nil, pkg.ErrBadReq(constants.UnsupportedChain)
 	}
 
-	if constants.IsEVM(chain) {
-		quote, err := s.oneInch.GetQuote(inputMint, outputMint, amount, slippage, chain)
-		if err != nil {
-			return nil, pkg.ErrUnexpected(502, err.Error())
-		}
-		quote.Chain = chain
-		return quote, nil
+	quote, err := s.oneInch.GetQuote(inputMint, outputMint, amount, slippage, chain)
+	if err != nil {
+		return nil, pkg.ErrUnexpected(502, err.Error())
 	}
-
-	return nil, pkg.ErrBadReq(constants.UnsupportedChain)
+	quote.Chain = chain
+	return quote, nil
 
 }

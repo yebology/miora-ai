@@ -41,7 +41,7 @@ export const FEATURES: Feature[] = [
     icon: ArrowLeftRight,
     title: "DEX Aggregator",
     description:
-      "Swap tokens across Jupiter (Solana) and 1inch (EVM) with best route discovery, all in one place.",
+      "Best price routing across Base DEXs via 1inch, all in one place.",
   },
   {
     icon: Shield,
@@ -59,7 +59,7 @@ export const FEATURES: Feature[] = [
     icon: Globe,
     title: "Multi-Chain Support",
     description:
-      "Ethereum, Arbitrum, Optimism, Base, Polygon, and Solana — all supported out of the box.",
+      "Base, Ethereum, Arbitrum, Optimism, and Polygon — all supported out of the box.",
   },
   {
     icon: Zap,
@@ -75,7 +75,6 @@ export const CHAINS: Chain[] = [
   { name: "Optimism", logo: "/chains/optimism.svg", color: "#FF0420" },
   { name: "Base", logo: "/chains/base.svg", color: "#0052FF" },
   { name: "Polygon", logo: "/chains/polygon.svg", color: "#8247E5" },
-  { name: "Solana", logo: "/chains/solana.svg", color: "#14F195" },
 ];
 
 export const STEPS: Step[] = [
