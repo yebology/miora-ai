@@ -26,7 +26,7 @@ Miora combines three layers into one cohesive product:
 - Multi-factor scoring engine: win rate, profit consistency, entry timing, token quality, trade discipline, risk exposure
 - FIFO buy-sell matching for accurate PnL calculation
 - 3-tier recommendation: Full Follow (80-100), Conditional Follow (40-79), Avoid (<40)
-- Scores published on-chain via Ethereum Attestation Service (EAS) on Base
+- Scores published on-chain via Ethereum Attestation Service (EAS) on Base Sepolia
 - Queryable by any protocol, agent, or dApp
 
 ### 🤖 AI-Powered Insights
@@ -49,7 +49,7 @@ Miora combines three layers into one cohesive product:
 - Autonomous trading based on top-scored wallets
 - User sets: budget, max per trade, risk tolerance, conditions
 - Agent evaluates every trade through scoring engine + AI risk assessment before executing
-- Powered by Coinbase AgentKit + Agentic Wallets on Base
+- Powered by Coinbase AgentKit + Agentic Wallets on Base Sepolia
 - Pause, adjust, or stop anytime
 
 ### 💰 x402 Reputation API
@@ -59,7 +59,7 @@ Miora combines three layers into one cohesive product:
 
 ### 🔐 Authentication
 - Google login via Firebase Auth
-- Wallet connect (MetaMask for EVM via wagmi/viem)
+- Wallet connect (MetaMask via wagmi/viem)
 
 ---
 
@@ -81,7 +81,7 @@ Miora combines three layers into one cohesive product:
 │  └──────┬───────┘  └──────────────┘  └─────────┬─────────┘  │
 │         │                                       │            │
 │  ┌──────▼───────────────────────────────────────▼─────────┐  │
-│  │              On-chain Layer (Base)                       │  │
+│  │              On-chain Layer (Base Sepolia)               │  │
 │  │  EAS Attestation · Agentic Wallet · x402 Payments       │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                              │
@@ -91,26 +91,17 @@ Miora combines three layers into one cohesive product:
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────────┐  │
+│  │              Agent Sidecar (Python + AgentKit)            │  │
+│  │  Coinbase AgentKit · Agentic Wallet · Swap Execution     │  │
+│  └─────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────────┐  │
 │  │              Database (PostgreSQL)                        │  │
 │  │  Users · Wallets · Transactions · Metrics ·              │  │
-│  │  Watchlist · Notifications · Agent Configs               │  │
+│  │  Watchlist · Notifications · Agent Configs · Agent Trades│  │
 │  └─────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## 🌐 Supported Chains
-
-| Chain | Wallet Analysis | Swap Quotes | Historical Price |
-|-------|:-:|:-:|:-:|
-| **Base** | ✅ | ✅ (1inch) | ✅ (Moralis) |
-| Ethereum | ✅ | ✅ (1inch) | ✅ (Moralis) |
-| Arbitrum | ✅ | ✅ (1inch) | ✅ (Moralis) |
-| Optimism | ✅ | ✅ (1inch) | ✅ (Moralis) |
-| Polygon | ✅ | ✅ (1inch) | ✅ (Moralis) |
-
-Base is the primary chain. Other EVM chains are supported for wallet analysis.
 
 ---
 
@@ -120,14 +111,14 @@ Base is the primary chain. Other EVM chains are supported for wallet analysis.
 |-------|-----------|
 | Frontend | Next.js 16, Tailwind CSS v4, shadcn/ui, TypeScript, wagmi, viem |
 | Backend | Go, Fiber, GORM, WebSocket |
+| Agent Sidecar | Python, FastAPI, Coinbase AgentKit |
 | Database | PostgreSQL |
 | Auth | Firebase Auth (Google) |
 | AI | Google Gemini (gemini-2.0-flash) |
 | Blockchain Data | Alchemy, DexScreener, Moralis |
-| On-chain | EAS (Ethereum Attestation Service) on Base |
+| On-chain | EAS (Ethereum Attestation Service) on Base Sepolia |
 | Agent | Coinbase AgentKit + Agentic Wallets |
 | Payments | x402 protocol (micropayments) |
-| DEX Aggregation | 1inch (EVM) |
 | Infra | Docker, Docker Compose |
 | Email | Resend |
 | API Testing | Bruno |
@@ -139,32 +130,34 @@ Base is the primary chain. Other EVM chains are supported for wallet analysis.
 ```
 ├── backend/
 │   ├── app/
-│   │   ├── clients/        # External API clients (Alchemy, DexScreener, Moralis, Gemini, 1inch)
+│   │   ├── clients/        # External API clients (Alchemy, DexScreener, Moralis, Gemini, EAS, AgentKit)
 │   │   ├── dto/            # Data transfer objects (requests, responses, prompts)
-│   │   ├── entities/       # Database models (User, Wallet, Transaction, WalletMetric, Watchlist, Notification)
+│   │   ├── entities/       # Database models (User, Wallet, Transaction, WalletMetric, Watchlist, Notification, AgentConfig, AgentTrade)
 │   │   ├── handlers/       # HTTP request handlers
 │   │   ├── http/           # Route registration per domain
 │   │   ├── interfaces/     # Service & repository contracts
-│   │   ├── middleware/      # Firebase auth middleware
+│   │   ├── middleware/      # Firebase auth + x402 payment middleware
 │   │   ├── output/         # Standardized API response (success/error envelope)
 │   │   ├── repositories/   # Database access layer
-│   │   ├── services/       # Business logic (wallet analysis, scoring, AI, swap, watchlist, monitor)
+│   │   ├── services/       # Business logic (wallet, scoring, AI, watchlist, monitor, agent)
 │   │   └── ws/             # WebSocket hub
-│   ├── cmd/                # CLI commands (seed, reset)
+│   ├── cmd/                # CLI commands (seed, reset, register-schema)
 │   ├── config/             # Environment config loader
-│   ├── constants/          # Constants (chains, errors, success messages)
+│   ├── constants/          # Constants (chains, errors, success messages, agent defaults)
 │   ├── migrations/         # Database migrations
 │   ├── router/             # DI container + route setup
 │   ├── utils/              # Shared utilities
 │   ├── pkg/                # Shared packages (AppError)
 │   └── main.go             # Entry point
+├── agent/
+│   ├── main.py             # AgentKit sidecar (FastAPI + Coinbase AgentKit)
+│   └── requirements.txt    # Python dependencies
 ├── frontend/
 │   ├── app/                # Next.js App Router pages
 │   │   ├── page.tsx        # Landing page
 │   │   ├── analyze/        # Wallet analysis page
 │   │   ├── watchlist/      # Watchlist + detail pages
-│   │   ├── swap/           # Swap page (placeholder)
-│   │   └── login/          # Login page (placeholder)
+│   │   └── login/          # Login page
 │   ├── components/
 │   │   ├── ui/             # shadcn/ui components
 │   │   ├── layout/         # Navbar, Footer, ThemeToggle
@@ -175,9 +168,7 @@ Base is the primary chain. Other EVM chains are supported for wallet analysis.
 │   ├── constants/          # Static data + dummy data
 │   ├── hooks/              # Custom hooks
 │   ├── types/              # TypeScript types
-│   └── lib/                # Utilities
-├── contracts/
-│   └── evm/                # EVM smart contracts (Foundry)
+│   └── lib/                # Utilities (API client, helpers)
 ├── Makefile                # Dev commands
 ├── PROGRESS.md             # Development progress tracker
 ├── MIORA_V2_CONCEPT.md     # V2 concept document
@@ -190,10 +181,12 @@ Base is the primary chain. Other EVM chains are supported for wallet analysis.
 
 ### 📦 Prerequisites
 - Go 1.25+
+- Python 3.10+ (for AgentKit sidecar)
 - Docker & Docker Compose
 - Node.js 18+ (for frontend)
-- Alchemy, Moralis, Gemini, 1inch API keys
+- Alchemy, Moralis, Gemini API keys
 - Firebase project with Google sign-in enabled
+- Coinbase Developer Platform (CDP) API keys (for AgentKit)
 
 ### 🔨 1. Clone Repository
 
@@ -206,7 +199,8 @@ cd miora-ai
 
 ```bash
 cp backend/.env.example backend/.env
-# Fill in all API keys and Firebase credentials
+cp agent/.env.example agent/.env
+# Fill in all API keys and credentials
 ```
 
 ### 🐘 3. Start Database
@@ -215,13 +209,27 @@ cp backend/.env.example backend/.env
 cd backend && docker compose up -d
 ```
 
-### 🚀 4. Run Backend
+### 📋 4. Register EAS Schema (one-time)
+
+```bash
+make register-schema
+# Copy the printed schema UID to EAS_SCHEMA_UID in backend/.env
+```
+
+### 🚀 5. Run Backend
 
 ```bash
 make run-be
 ```
 
-### 🌐 5. Run Frontend
+### 🤖 6. Run Agent Sidecar
+
+```bash
+make setup-agent  # Install Python dependencies (first time only)
+make run-agent    # Start AgentKit sidecar on port 8090
+```
+
+### 🌐 7. Run Frontend
 
 ```bash
 make run-fe
@@ -235,10 +243,15 @@ make run-fe
 | Method | Endpoint | Description |
 |--------|----------|------------|
 | GET | `/api/health` | Health check |
-| POST | `/api/wallets/analyze` | Analyze a wallet address |
+| POST | `/api/wallets/analyze` | Analyze a wallet address on Base |
 | POST | `/api/wallets/regenerate-insight` | Regenerate AI insight with different tone |
 | GET | `/api/wallets/:address` | Get stored analysis |
-| POST | `/api/swap/quote` | Get swap quote (1inch) |
+| GET | `/api/reputation/:address` | Get on-chain reputation attestation |
+
+### x402 Protected (USDC micropayment)
+| Method | Endpoint | Description |
+|--------|----------|------------|
+| GET | `/api/reputation/query?address=0x...` | Query reputation score (requires x402 payment) |
 
 ### Protected (Firebase Auth)
 | Method | Endpoint | Description |
@@ -248,21 +261,16 @@ make run-fe
 | PUT | `/api/watchlist/:address` | Update conditions / notification preference |
 | DELETE | `/api/watchlist/:address` | Unfollow a wallet |
 | GET | `/api/watchlist` | List followed wallets |
+| GET | `/api/agent/status` | Get agent status + config |
+| PUT | `/api/agent/config` | Update agent configuration |
+| POST | `/api/agent/start` | Start AI trading agent |
+| POST | `/api/agent/pause` | Pause agent |
+| GET | `/api/agent/trades` | Get agent trade history |
 
 ### WebSocket
 | Endpoint | Description |
 |----------|------------|
 | `ws://host/ws?user_id=ID` | Real-time trade notifications |
-
-### V2 (Planned)
-| Method | Endpoint | Description |
-|--------|----------|------------|
-| GET | `/api/reputation/:address` | Get on-chain reputation attestation |
-| GET | `/api/reputation/query` | Query reputation via x402 payment |
-| POST | `/api/agent/start` | Start AI trading agent |
-| PUT | `/api/agent/config` | Update agent configuration |
-| POST | `/api/agent/pause` | Pause/resume agent |
-| GET | `/api/agent/status` | Get agent status + trade history |
 
 ---
 

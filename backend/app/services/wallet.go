@@ -9,7 +9,6 @@
 //   - wallet_helper.go: helper methods (findOrCreateWallet, getPrice, fetchTokenData, etc.)
 //   - scoring.go:       scoring calculation logic
 //   - ai.go:            AI insight generation
-//   - swap.go:          swap quote service
 package services
 
 import (

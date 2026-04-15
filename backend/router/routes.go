@@ -18,12 +18,12 @@ import (
 //	  GET  /health              → health check (public)
 //	  POST /wallets/analyze     → analyze wallet (public)
 //	  GET  /wallets/:address    → get stored analysis (public)
-//	  POST /swap/quote          → get swap quote (public)
+//	  GET  /reputation/:address → get on-chain reputation (public)
 //	  GET  /auth/me             → get/create user (protected, Firebase)
 func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 
 	api := app.Group("/api")
-	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.GeminiAPIKey, cfg.OneInchAPIKey, cfg.ResendAPIKey, cfg.ResendFrom, cfg.Scoring, cfg.EAS, hub)
+	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.GeminiAPIKey, cfg.ResendAPIKey, cfg.ResendFrom, cfg.Scoring, cfg.EAS, hub)
 
 	// Start wallet monitor in background
 	go container.Monitor.Start()
@@ -42,7 +42,6 @@ func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 
 	// Public routes
 	apphttp.RegisterWalletPublicRoutes(api, container.WalletHandler)
-	apphttp.RegisterSwapPublicRoutes(api, container.SwapHandler)
 	apphttp.RegisterReputationPublicRoutes(api, container.ReputationHandler)
 
 	// x402-protected routes (USDC micropayment required)

@@ -11,12 +11,12 @@
 | 3 | Demo URL | ❌ Kamu isi | Butuh video/prototype link |
 | 4 | Describe what your company does (~50 chars) | ✅ Done | |
 | 5 | Unique value proposition | ✅ Done | |
-| 6 | What part is onchain? | ✅ Done | Akan lebih kuat kalau fee router sudah deploy |
+| 6 | What part is onchain? | ✅ Done | EAS attestation + AgentKit + x402 — strong on-chain presence |
 | 7 | Ideal customer profile | ✅ Done | |
 | 8 | Category | ✅ Done | |
 | 9 | Location | ❌ Kamu isi | Personal info |
 | 10 | Token? | ✅ Done | |
-| 11 | What part uses Base? | ✅ Done | |
+| 11 | What part uses Base? | ✅ Done | Base-exclusive — EAS + AgentKit + x402 |
 | 12 | Founder names + contact | ❌ Kamu isi | Personal info |
 | 13 | Founder background + LinkedIn | ❌ Kamu isi | Personal info |
 | 14 | 1-min founder video | ❌ Kamu isi | Harus direkam sendiri — ini sangat penting |
@@ -31,7 +31,7 @@
 | 23 | Users/customers? | ✅ Done | Jawaban: belum ada |
 | 24 | Active users / paying? | ✅ Done | N/A |
 | 25 | Revenue? | ✅ Done | N/A |
-| 26 | Dune / contract addresses? | ❌ Kamu isi | Deploy fee router dulu di Base Sepolia |
+| 26 | Dune / contract addresses? | ❌ Kamu isi | Run `make register-schema` lalu paste EAS schema UID |
 | 27 | Why join Base Batches? | ✅ Done | |
 | 28 | Anything else? | ❌ Kamu isi | Optional tapi recommended |
 | 29 | Who referred you? | ❌ Kamu isi | Kalau ada |
@@ -92,10 +92,11 @@ Existing tools like Nansen and Arkham are built for power users. Miora is built 
 
 ## What part of your product is onchain?
 
+- **EAS Attestation** — Trading reputation scores are published on-chain on Base Sepolia via Ethereum Attestation Service. Each analyzed wallet gets an attestation with score, recommendation, and metadata — verifiable by any protocol or agent.
 - **Wallet analysis** — Reads on-chain transaction history from Base via Alchemy to compute scoring metrics (PnL, win rate, entry timing, trade discipline)
-- **Token swap execution** — Executes swaps on Base through 1inch aggregator (Uniswap, SushiSwap, Curve, Balancer routing)
+- **AI Trading Agent** — Autonomous agent executes trades on Base via Coinbase AgentKit + Agentic Wallets. Transactions are on-chain and visible on BaseScan.
+- **x402 Micropayments** — Reputation API is monetized via x402 USDC micropayments on Base
 - **Market data enrichment** — Pulls on-chain pair data (liquidity, market cap, pair age) from DexScreener and Moralis for Base tokens
-- **Fee Router smart contract** — [PLANNED] Solidity contract on Base for collecting swap fees as the monetization layer
 
 ---
 
@@ -129,15 +130,17 @@ No.
 
 ## What part of your product uses Base?
 
-Miora supports wallet analysis, token swaps, and smart alerts on Base chain. Specifically:
+Miora is built exclusively on Base. Every on-chain component runs on Base Sepolia:
 
+- **EAS Attestation on Base** — Trading reputation scores published as on-chain attestations via EAS (0x4200...0021). Verifiable on BaseScan.
 - **Wallet analysis on Base** — Fetch transaction history via Alchemy, calculate PnL with FIFO buy-sell matching, generate multi-factor scoring
-- **Swap quotes and execution on Base** — Route through 1inch to find best prices across Base DEXs (Uniswap, Aerodrome, SushiSwap, etc.)
+- **AI Trading Agent on Base** — Autonomous agent trades via Coinbase AgentKit + Agentic Wallets on Base Sepolia
+- **x402 Micropayments on Base** — Reputation API monetized via USDC micropayments on Base
 - **Historical price data on Base** — Moralis for block-level token prices on Base
 - **Real-time pair data on Base** — DexScreener for liquidity, market cap, pair age of Base tokens
 - **Smart alerts for Base wallets** — Monitor followed wallets on Base, notify when they trade with AI risk assessment
 
-Base is the primary chain. Multi-chain support (Ethereum, Arbitrum, Optimism, Polygon, Solana) exists as an expansion layer, but Base is the focus for go-to-market.
+Built on Base's own infrastructure: EAS + AgentKit + x402. Base is home.
 
 ---
 
@@ -235,13 +238,13 @@ N/A — pre-launch.
 
 ## Revenue
 
-N/A — pre-launch. Planned revenue model: swap fee collection via on-chain fee router contract on Base.
+N/A — pre-launch. Planned revenue model: x402 USDC micropayments for reputation API queries on Base.
 
 ---
 
 ## Dune dashboards / deployed contract addresses
 
-[FILL — Deploy fee router on Base Sepolia and paste address here before submitting]
+[FILL — After running `make register-schema`, paste the EAS schema UID and attestation explorer link here]
 
 ---
 
@@ -282,8 +285,7 @@ Not Applicable (repo is public)
 ## 📋 Pre-Submission Checklist
 
 - [ ] Record 1-minute founder video
-- [ ] Connect frontend to backend API (replace dummy data)
-- [ ] Deploy fee router contract on Base Sepolia
+- [ ] Register EAS schema on Base Sepolia (`make register-schema`)
 - [ ] Fill all [FILL] fields
 - [ ] Make GitHub repo public
 - [ ] Review all answers for clarity and conciseness

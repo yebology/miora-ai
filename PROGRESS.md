@@ -60,19 +60,15 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `repositories/user.go` | ✅ Done | FindByFirebaseUID, Create, Update |
 | `entities/user.go` | ✅ Done | ID, FirebaseUID, Email, Name, Avatar |
 
-### ✅ Swap System — DONE, No Changes Needed
-| File | Status | Description |
-|------|--------|-------------|
-| `services/swap.go` | ✅ Done | 1inch swap quote service |
-| `handlers/swap.go` | ✅ Done | POST /swap/quote endpoint |
-| `clients/oneinch.go` | ✅ Done | 1inch API client for EVM swap quotes |
+### ✅ Swap System — REMOVED
+> Swap system (1inch, manual trading) has been removed. Agent handles all trading via AgentKit.
 
 ### ✅ Data Clients — DONE, No Changes Needed
 | File | Status | Description |
 |------|--------|-------------|
-| `clients/evm.go` | ✅ Done | Alchemy EVM client (Base, Ethereum, Arbitrum, Optimism, Polygon) |
+| `clients/evm.go` | ✅ Done | Alchemy EVM client (Base only) |
 | `clients/dexscreener.go` | ✅ Done | Token pair data (liquidity, mcap, pair age, price change) |
-| `clients/moralis.go` | ✅ Done | EVM historical token prices by block |
+| `clients/moralis.go` | ✅ Done | Historical token prices by block on Base |
 | `clients/helpers.go` | ✅ Done | Shared HTTP client helpers |
 
 ### ✅ Entities (Database Models) — DONE, Needs V2 Additions
@@ -91,7 +87,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `router/container.go` | ✅ Done | DI container: Clients → Repos → Services → Handlers |
 | `router/routes.go` | ✅ Done | Route registration + middleware setup |
 | `config/config.go` | ✅ Done | Environment config loader (all required keys) |
-| `constants/chains.go` | ✅ Done | Chain registry with Base support |
+| `constants/chains.go` | ✅ Done | Base only (multi-chain removed) |
 | `constants/limits.go` | ✅ Done | Configurable transaction limits per chain |
 | `constants/error.go` | ✅ Done | Error message constants |
 | `constants/success.go` | ✅ Done | Success message constants |
@@ -182,7 +178,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `app/analyze/page.tsx` | ✅ Done | Wallet analysis page — currently uses dummy data |
 | `app/watchlist/page.tsx` | ✅ Done | Watchlist dashboard — currently uses dummy data |
 | `app/watchlist/[chain]/[address]/page.tsx` | ✅ Done | Watchlist detail page — currently uses dummy data |
-| `app/swap/page.tsx` | ⚠️ Placeholder | De-prioritized — agent replaces manual swap |
+| `app/swap/page.tsx` | ⚠️ To remove | Swap system removed — agent handles trading |
 | `app/login/page.tsx` | ⚠️ Placeholder | Login page skeleton |
 | `app/agent/page.tsx` | ❌ To build | Agent setup + dashboard page (V2 new) |
 
@@ -201,16 +197,16 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 ### ✅ Data Layer — DONE, Needs Real API Connection
 | File | Status | Description |
 |------|--------|-------------|
-| `lib/api.ts` | ✅ Done | API client with all endpoints defined (analyzeWallet, getWallet, regenerateInsight, getSwapQuote, getWatchlist, followWallet, unfollowWallet, updateWatchlist, getMe) |
+| `lib/api.ts` | ✅ Done | API client with endpoints (analyzeWallet, getWallet, regenerateInsight, getWatchlist, followWallet, unfollowWallet, updateWatchlist, getMe) |
 | `constants/dummy.ts` | ⚠️ Dummy | 3 dummy wallet analyses (conditional_follow, full_follow, avoid) — to be replaced |
 | `constants/dummy-watchlist.ts` | ⚠️ Dummy | 3 dummy watchlist items + 4 dummy notifications — to be replaced |
 | `constants/landing.ts` | ✅ Done | Landing page copy (V2 narrative, Solana removed) |
 | `constants/nav.ts` | ✅ Done | Navigation items — needs "Agent" added |
-| `constants/tokens.ts` | ✅ Done | Token list for swap (Base, Ethereum, etc.) |
+| `constants/tokens.ts` | ⚠️ To remove | Token list for swap — swap system removed |
 | `types/wallet.ts` | ✅ Done | WalletAnalysis, TradedToken, Condition types |
 | `types/watchlist.ts` | ✅ Done | WatchlistItem, Notification types |
 | `types/api.ts` | ✅ Done | ApiResponse envelope type |
-| `types/swap.ts` | ✅ Done | SwapQuote type |
+| `types/swap.ts` | ⚠️ To remove | SwapQuote type — swap system removed |
 | `hooks/use-animate-on-scroll.ts` | ✅ Done | Scroll animation hook |
 | `lib/utils.ts` | ✅ Done | cn() utility for conditional classnames |
 
@@ -277,64 +273,27 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 
 ---
 
-## 📜 SMART CONTRACTS (Foundry — contracts/evm/)
-
-### ✅ Current State
-| File | Status | Description |
-|------|--------|-------------|
-| `foundry.toml` | ✅ Done | Foundry build config (default profile) |
-| `lib/forge-std/` | ✅ Done | Forge standard library |
-| `src/Counter.sol` | ⚠️ Placeholder | Example counter contract — to be replaced |
-| `test/Counter.t.sol` | ⚠️ Placeholder | Example test — to be replaced |
-| `script/Counter.s.sol` | ⚠️ Placeholder | Example deployment script — to be replaced |
-
-### 🆕 V2 Smart Contracts — EAS Schema Registration
-> Note: EAS attestations don't require custom smart contracts — they use the existing EAS contracts on Base.
-> However, we need to register a schema and may want a helper contract for batch operations.
-
-- [ ] Register EAS schema on Base Sepolia via EAS SDK or direct contract call
-  - Schema fields: `uint8 score, string recommendation, uint32 totalTransactions, string chain`
-  - Schema resolver: none (permissionless reads)
-  - Revocable: true (so scores can be updated)
-- [ ] Save schema UID to backend config (`EAS_SCHEMA_UID`)
-- [ ] Verify schema visible on [Base Sepolia EAS Explorer](https://base-sepolia.easscan.org)
-- [ ] Create test attestation and verify readable on BaseScan
-
-### 🆕 V2 Smart Contracts — Optional Helper Contracts
-- [ ] (Optional) Create `src/MioraReputation.sol` — Helper contract for batch attestation queries
-- [ ] (Optional) Create `src/MioraAgent.sol` — Agent wallet wrapper with spending limits and guardrails
-- [ ] Update `foundry.toml` — Add Base Sepolia RPC, etherscan verification config
-- [ ] Create `script/Deploy.s.sol` — Deployment script for Base Sepolia
-- [ ] Remove placeholder Counter.sol, Counter.t.sol, Counter.s.sol
-
----
-
-## 🧹 Cleanup Tasks
-- [ ] Remove `contracts/evm/src/Counter.sol` (placeholder)
-- [ ] Remove `contracts/evm/test/Counter.t.sol` (placeholder)
-- [ ] Remove `contracts/evm/script/Counter.s.sol` (placeholder)
+## 🧹 Cleanup — DONE
+- [x] Removed swap system (1inch, swap handler, swap service, swap routes)
+- [x] Removed multi-chain support (Base only — removed Ethereum, Arbitrum, Optimism, Polygon from chain registry)
+- [x] Removed smart contract placeholders (Counter.sol, Counter.t.sol, Counter.s.sol)
+- [x] Removed Solana/V1 code (all Solana clients, interfaces, references)
 - [ ] Remove `frontend/constants/dummy.ts` after API connection is done
 - [ ] Remove `frontend/constants/dummy-watchlist.ts` after API connection is done
 
 ---
 
 ## 🔧 Infrastructure & Config Updates
-- [x] Add EAS env vars to `backend/config/config.go`:
-  - `EAS_RPC_URL` — Base Sepolia RPC endpoint
-  - `EAS_CONTRACT_ADDRESS` — EAS contract (default: 0x4200000000000000000000000000000000000021)
-  - `EAS_SCHEMA_REGISTRY_ADDRESS` — SchemaRegistry (default: 0x4200000000000000000000000000000000000020)
-  - `EAS_SCHEMA_UID` — Registered schema UID (set after registration)
-  - `EAS_ATTESTER_PRIVATE_KEY` — Wallet private key for signing attestations
+- [x] Add EAS env vars to `backend/config/config.go`
+- [x] Add x402 env vars to `backend/config/config.go`
+- [x] Add Agent env vars to `backend/config/config.go`
+- [x] Update `Makefile` with `make register-schema`, `make setup-agent`, `make run-agent`
+- [x] Remove `ONEINCH_API_KEY` from config (swap system removed)
+- [x] Update `constants/chains.go` to Base only
 - [ ] Add EAS env vars to `backend/.env` (actual values)
-- [ ] Add x402/AgentKit env vars (when implementing Layer 2 & 3):
-  - `X402_PAYMENT_ADDRESS` — USDC receiving address for x402
-  - `X402_PRICE` — Price per reputation query (in USDC wei)
-  - `AGENTKIT_API_KEY` — Coinbase AgentKit API key (if needed)
-- [ ] Add `@coinbase/cdp-sdk` to `frontend/package.json` (for AgentKit integration)
-- [ ] Add `@ethereum-attestation-service/eas-sdk` to `frontend/package.json` (if frontend needs to read attestations directly)
+- [ ] Add `X402_RECIPIENT_ADDRESS` to `backend/.env`
+- [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
+- [ ] Add `@coinbase/cdp-sdk` to `frontend/package.json` (if frontend needs AgentKit)
 - [ ] Update `frontend/.env` with any new public env vars
-- [x] Update `Makefile` with `make register-schema` command
-- [ ] Update `Makefile` with additional commands:
-  - `make deploy-contracts` — Deploy helper contracts (if any)
 
 
