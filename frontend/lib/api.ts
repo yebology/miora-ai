@@ -58,15 +58,6 @@ export function regenerateInsight(address: string, chain: string, tone: string, 
   });
 }
 
-// --- Swap ---
-
-export function getSwapQuote(chain: string, inputMint: string, outputMint: string, amount: string, slippage?: number) {
-  return request<import("@/types/swap").SwapQuote>("/swap/quote", {
-    method: "POST",
-    body: { chain, input_mint: inputMint, output_mint: outputMint, amount, slippage },
-  });
-}
-
 // --- Watchlist (requires auth token) ---
 
 export function getWatchlist(token: string) {
@@ -89,4 +80,33 @@ export function updateWatchlist(token: string, address: string, data: { conditio
 
 export function getMe(token: string) {
   return request<{ id: number; firebase_uid: string; email: string; name: string }>("/auth/me", { token });
+}
+
+// --- Reputation ---
+
+export function getReputation(address: string) {
+  return request<import("@/types/reputation").Reputation>(`/reputation/${address}`);
+}
+
+// --- Agent (requires auth token) ---
+
+export function getAgentStatus(token: string) {
+  return request<import("@/types/agent").AgentConfig>("/agent/status", { token });
+}
+
+export function updateAgentConfig(token: string, data: { budget?: number; max_per_trade?: number; risk_tolerance?: string; min_score?: number; conditions?: string[] }) {
+  return request<import("@/types/agent").AgentConfig>("/agent/config", { method: "PUT", body: data, token });
+}
+
+export function startAgent(token: string) {
+  return request<import("@/types/agent").AgentConfig>("/agent/start", { method: "POST", token });
+}
+
+export function pauseAgent(token: string) {
+  return request<import("@/types/agent").AgentConfig>("/agent/pause", { method: "POST", token });
+}
+
+export function getAgentTrades(token: string, limit?: number) {
+  const query = limit ? `?limit=${limit}` : "";
+  return request<import("@/types/agent").AgentTrade[]>(`/agent/trades${query}`, { token });
 }

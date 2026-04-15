@@ -46,10 +46,10 @@ export function HeroSection() {
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/swap"
+            href="/agent"
             className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
           >
-            Swap Tokens
+            AI Agent
           </Link>
         </div>
       </div>

@@ -52,11 +52,6 @@ Miora combines three layers into one cohesive product:
 - Powered by Coinbase AgentKit + Agentic Wallets on Base Sepolia
 - Pause, adjust, or stop anytime
 
-### 💰 x402 Reputation API
-- Other protocols and AI agents can query Miora's reputation scores
-- Pay-per-request via x402 micropayments (USDC on Base)
-- No API keys needed — just connect wallet and pay
-
 ### 🔐 Authentication
 - Google login via Firebase Auth
 - Wallet connect (MetaMask via wagmi/viem)
@@ -82,7 +77,7 @@ Miora combines three layers into one cohesive product:
 │         │                                       │            │
 │  ┌──────▼───────────────────────────────────────▼─────────┐  │
 │  │              On-chain Layer (Base Sepolia)               │  │
-│  │  EAS Attestation · Agentic Wallet · x402 Payments       │  │
+│  │  EAS Attestation · Agentic Wallet                       │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────────┐  │
@@ -118,7 +113,6 @@ Miora combines three layers into one cohesive product:
 | Blockchain Data | Alchemy, DexScreener, Moralis |
 | On-chain | EAS (Ethereum Attestation Service) on Base Sepolia |
 | Agent | Coinbase AgentKit + Agentic Wallets |
-| Payments | x402 protocol (micropayments) |
 | Infra | Docker, Docker Compose |
 | Email | Resend |
 | API Testing | Bruno |
@@ -136,7 +130,7 @@ Miora combines three layers into one cohesive product:
 │   │   ├── handlers/       # HTTP request handlers
 │   │   ├── http/           # Route registration per domain
 │   │   ├── interfaces/     # Service & repository contracts
-│   │   ├── middleware/      # Firebase auth + x402 payment middleware
+│   │   ├── middleware/      # Firebase auth middleware
 │   │   ├── output/         # Standardized API response (success/error envelope)
 │   │   ├── repositories/   # Database access layer
 │   │   ├── services/       # Business logic (wallet, scoring, AI, watchlist, monitor, agent)
@@ -247,11 +241,6 @@ make run-fe
 | POST | `/api/wallets/regenerate-insight` | Regenerate AI insight with different tone |
 | GET | `/api/wallets/:address` | Get stored analysis |
 | GET | `/api/reputation/:address` | Get on-chain reputation attestation |
-
-### x402 Protected (USDC micropayment)
-| Method | Endpoint | Description |
-|--------|----------|------------|
-| GET | `/api/reputation/query?address=0x...` | Query reputation score (requires x402 payment) |
 
 ### Protected (Firebase Auth)
 | Method | Endpoint | Description |

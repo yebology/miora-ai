@@ -5,12 +5,12 @@
 Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a **Trading Reputation Protocol on Base** (V2).
 
 - **V1**: Analytics tool — analyze wallet, follow, get alerts, swap manually (off-chain only)
-- **V2**: Infrastructure protocol — publish trading scores on-chain via EAS, autonomous AI agent trading via AgentKit, monetize reputation API via x402
+- **V2**: Infrastructure protocol — publish trading scores on-chain via EAS, autonomous AI agent trading via AgentKit
 
 ### Why Pivot
 - V1 was an iterative improvement on existing tools (Nansen, Arkham, Cielo)
 - V2 creates a new primitive: on-chain trading reputation that other protocols can build on
-- V2 deeply integrates with Base ecosystem (EAS, AgentKit, x402)
+- V2 deeply integrates with Base ecosystem (EAS, AgentKit)
 - V2 aligns with Base 2026 strategy: global markets, stablecoin payments, home for builders/agents
 
 ---
@@ -127,18 +127,6 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [ ] Set `EAS_SCHEMA_UID` in `.env` (printed by register-schema command)
 - [ ] Test end-to-end: analyze wallet → attestation published → verify on [BaseScan](https://base-sepolia.easscan.org)
 
-### 🆕 V2 Backend — Layer 2: x402 Reputation API (Monetization)
-- [x] Research x402 protocol integration for Go (using `mark3labs/x402-go` library)
-- [x] Create `middleware/x402.go` — x402 payment verification middleware (Fiber-compatible)
-- [x] Add `X402_RECIPIENT_ADDRESS` to config (USDC receiving address)
-- [x] Add `X402_PRICE_USDC` to config (price per query in USDC)
-- [x] Create `handlers/reputation.go` → `QueryReputation()` — GET /reputation/query?address=0x... (x402-protected)
-- [x] Update `http/reputation.go` — register x402-protected reputation routes
-- [x] Create `dto/responses/reputation_query.go` — query response DTO
-- [x] Wire x402 middleware into `router/routes.go`
-- [ ] Add `X402_RECIPIENT_ADDRESS` to `backend/.env` (actual wallet address)
-- [ ] Test with x402 client on Base Sepolia
-
 ### 🆕 V2 Backend — Layer 3: AI Trading Agent (AgentKit)
 - [x] Research Coinbase AgentKit SDK — only available in TypeScript/Python, no Go SDK
 - [x] Create `entities/agent_config.go` — AgentConfig entity: UserID, Budget, MaxPerTrade, RiskTolerance, MinScore, Conditions (JSON), Status (active/paused/stopped), AgentWalletAddress, TotalSpent, TotalTrades
@@ -178,9 +166,9 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `app/analyze/page.tsx` | ✅ Done | Wallet analysis page — currently uses dummy data |
 | `app/watchlist/page.tsx` | ✅ Done | Watchlist dashboard — currently uses dummy data |
 | `app/watchlist/[chain]/[address]/page.tsx` | ✅ Done | Watchlist detail page — currently uses dummy data |
-| `app/swap/page.tsx` | ⚠️ To remove | Swap system removed — agent handles trading |
+| `app/swap/page.tsx` | ✅ Removed | Swap system removed — agent handles trading |
 | `app/login/page.tsx` | ⚠️ Placeholder | Login page skeleton |
-| `app/agent/page.tsx` | ❌ To build | Agent setup + dashboard page (V2 new) |
+| `app/agent/page.tsx` | ✅ Done | Agent setup + dashboard page (V2 new, dummy data) |
 
 ### ✅ Components — DONE, Needs V2 Additions
 | Directory | Files | Status |
@@ -192,7 +180,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `components/providers/` | auth-provider, theme-provider, web3-provider | ✅ Done — auth-provider uses simulated login |
 | `components/ui/` | button, card, badge, dialog, input, label, progress, select, sheet, auth-guard-modal, wallet-guard-modal | ✅ Done |
 | `components/icons/` | google | ✅ Done |
-| `components/agent/` | — | ❌ To build (V2 new) |
+| `components/agent/` | agent-config-form, agent-status-card, agent-trade-history | ✅ Done (V2 new) |
 
 ### ✅ Data Layer — DONE, Needs Real API Connection
 | File | Status | Description |
@@ -202,11 +190,13 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `constants/dummy-watchlist.ts` | ⚠️ Dummy | 3 dummy watchlist items + 4 dummy notifications — to be replaced |
 | `constants/landing.ts` | ✅ Done | Landing page copy (V2 narrative, Solana removed) |
 | `constants/nav.ts` | ✅ Done | Navigation items — needs "Agent" added |
-| `constants/tokens.ts` | ⚠️ To remove | Token list for swap — swap system removed |
+| `constants/tokens.ts` | ✅ Removed | Swap system removed |
 | `types/wallet.ts` | ✅ Done | WalletAnalysis, TradedToken, Condition types |
 | `types/watchlist.ts` | ✅ Done | WatchlistItem, Notification types |
 | `types/api.ts` | ✅ Done | ApiResponse envelope type |
-| `types/swap.ts` | ⚠️ To remove | SwapQuote type — swap system removed |
+| `types/swap.ts` | ✅ Removed | Swap system removed |
+| `types/agent.ts` | ✅ Done | AgentConfig, AgentTrade types (V2 new) |
+| `types/reputation.ts` | ✅ Done | Reputation type (V2 new) |
 | `hooks/use-animate-on-scroll.ts` | ✅ Done | Scroll animation hook |
 | `lib/utils.ts` | ✅ Done | cn() utility for conditional classnames |
 
@@ -217,18 +207,27 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Frontend builds clean
 
 ### 🆕 V2 Frontend — Agent Page & Components
-- [ ] Add "Agent" to `constants/nav.ts` navigation items
-- [ ] Create `app/agent/page.tsx` — Agent setup + dashboard page
-- [ ] Create `types/agent.ts` — AgentConfig, AgentTrade, AgentStatus types
-- [ ] Add agent API functions to `lib/api.ts` — startAgent, pauseAgent, getAgentStatus, updateAgentConfig, getAgentTrades
-- [ ] Create `components/agent/agent-config-form.tsx` — Budget, max per trade, risk tolerance, conditions form
-- [ ] Create `components/agent/agent-status-card.tsx` — Agent status (active/paused/stopped), wallet balance, total trades
-- [ ] Create `components/agent/agent-trade-history.tsx` — Table of agent's executed trades with PnL
-- [ ] Create `components/agent/agent-wallet-card.tsx` — Agentic wallet address, balance, deposit/withdraw
+- [x] Add "Agent" to `constants/nav.ts` navigation items
+- [x] Create `app/agent/page.tsx` — Agent setup + dashboard page (with dummy data)
+- [x] Create `types/agent.ts` — AgentConfig, AgentTrade types
+- [x] Create `types/reputation.ts` — Reputation type
+- [x] Add agent + reputation API functions to `lib/api.ts`
+- [x] Create `components/agent/agent-config-form.tsx` — Budget, max per trade, risk tolerance, conditions form
+- [x] Create `components/agent/agent-status-card.tsx` — Agent status (active/paused/stopped), wallet balance, total trades
+- [x] Create `components/agent/agent-trade-history.tsx` — Table of agent's executed trades with status + reason
 
 ### 🆕 V2 Frontend — Reputation Display
-- [ ] Add attestation badge/link to `components/analyze/analysis-result.tsx` — show EAS attestation UID + BaseScan link after analysis
-- [ ] Create `components/analyze/attestation-badge.tsx` — "Verified on Base" badge with attestation link
+- [x] Create `components/analyze/attestation-badge.tsx` — "Verified on Base" badge with attestation link
+- [ ] Add attestation badge to `components/analyze/analysis-result.tsx` — show after analysis
+
+### 🧹 Frontend Cleanup — DONE
+- [x] Removed swap page (`app/swap/page.tsx`)
+- [x] Removed swap types (`types/swap.ts`)
+- [x] Removed tokens constant (`constants/tokens.ts`)
+- [x] Removed swap from API client (`lib/api.ts`)
+- [x] Removed swap from nav (`constants/nav.ts`)
+- [x] Updated analyze-form to Base only (removed multi-chain selector)
+- [x] Frontend builds clean
 
 ### 🔌 Connect Frontend to Backend API (Replace Dummy Data) — LAST PRIORITY
 > Do this after all V2 UI is built and backend is running. Currently using dummy data so the UI can be reviewed visually first.
@@ -285,13 +284,11 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 
 ## 🔧 Infrastructure & Config Updates
 - [x] Add EAS env vars to `backend/config/config.go`
-- [x] Add x402 env vars to `backend/config/config.go`
 - [x] Add Agent env vars to `backend/config/config.go`
 - [x] Update `Makefile` with `make register-schema`, `make setup-agent`, `make run-agent`
 - [x] Remove `ONEINCH_API_KEY` from config (swap system removed)
 - [x] Update `constants/chains.go` to Base only
 - [ ] Add EAS env vars to `backend/.env` (actual values)
-- [ ] Add `X402_RECIPIENT_ADDRESS` to `backend/.env`
 - [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
 - [ ] Add `@coinbase/cdp-sdk` to `frontend/package.json` (if frontend needs AgentKit)
 - [ ] Update `frontend/.env` with any new public env vars

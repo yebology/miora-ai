@@ -44,14 +44,6 @@ func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 	apphttp.RegisterWalletPublicRoutes(api, container.WalletHandler)
 	apphttp.RegisterReputationPublicRoutes(api, container.ReputationHandler)
 
-	// x402-protected routes (USDC micropayment required)
-	if cfg.X402.RecipientAddress != "" {
-		apphttp.RegisterReputationX402Routes(api, container.ReputationHandler, middleware.X402Config{
-			RecipientAddress: cfg.X402.RecipientAddress,
-			PriceUSDC:        cfg.X402.PriceUSDC,
-		})
-	}
-
 	// Protected routes (Firebase auth required)
 	protected := api.Group("", middleware.FirebaseAuth(cfg.FirebaseCreds))
 	apphttp.RegisterAuthProtectedRoutes(protected, container.AuthHandler)

@@ -13,10 +13,5 @@ const (
 
 // HTTP status codes not defined in fiber.
 const (
-	HTTPStatusPaymentRequired = 402 // x402 payment required
-)
-
-// x402 protocol constants.
-const (
-	X402FacilitatorURL = "https://facilitator.x402.rs" // Public x402 payment facilitator
+	HTTPStatusPaymentRequired = 402
 )

@@ -11,12 +11,12 @@
 | 3 | Demo URL | ❌ Kamu isi | Butuh video/prototype link |
 | 4 | Describe what your company does (~50 chars) | ✅ Done | |
 | 5 | Unique value proposition | ✅ Done | |
-| 6 | What part is onchain? | ✅ Done | EAS attestation + AgentKit + x402 — strong on-chain presence |
+| 6 | What part is onchain? | ✅ Done | EAS attestation + AgentKit — strong on-chain presence |
 | 7 | Ideal customer profile | ✅ Done | |
 | 8 | Category | ✅ Done | |
 | 9 | Location | ❌ Kamu isi | Personal info |
 | 10 | Token? | ✅ Done | |
-| 11 | What part uses Base? | ✅ Done | Base-exclusive — EAS + AgentKit + x402 |
+| 11 | What part uses Base? | ✅ Done | Base-exclusive — EAS + AgentKit |
 | 12 | Founder names + contact | ❌ Kamu isi | Personal info |
 | 13 | Founder background + LinkedIn | ❌ Kamu isi | Personal info |
 | 14 | 1-min founder video | ❌ Kamu isi | Harus direkam sendiri — ini sangat penting |
@@ -95,7 +95,6 @@ Existing tools like Nansen and Arkham are built for power users. Miora is built 
 - **EAS Attestation** — Trading reputation scores are published on-chain on Base Sepolia via Ethereum Attestation Service. Each analyzed wallet gets an attestation with score, recommendation, and metadata — verifiable by any protocol or agent.
 - **Wallet analysis** — Reads on-chain transaction history from Base via Alchemy to compute scoring metrics (PnL, win rate, entry timing, trade discipline)
 - **AI Trading Agent** — Autonomous agent executes trades on Base via Coinbase AgentKit + Agentic Wallets. Transactions are on-chain and visible on BaseScan.
-- **x402 Micropayments** — Reputation API is monetized via x402 USDC micropayments on Base
 - **Market data enrichment** — Pulls on-chain pair data (liquidity, market cap, pair age) from DexScreener and Moralis for Base tokens
 
 ---
@@ -135,12 +134,11 @@ Miora is built exclusively on Base. Every on-chain component runs on Base Sepoli
 - **EAS Attestation on Base** — Trading reputation scores published as on-chain attestations via EAS (0x4200...0021). Verifiable on BaseScan.
 - **Wallet analysis on Base** — Fetch transaction history via Alchemy, calculate PnL with FIFO buy-sell matching, generate multi-factor scoring
 - **AI Trading Agent on Base** — Autonomous agent trades via Coinbase AgentKit + Agentic Wallets on Base Sepolia
-- **x402 Micropayments on Base** — Reputation API monetized via USDC micropayments on Base
 - **Historical price data on Base** — Moralis for block-level token prices on Base
 - **Real-time pair data on Base** — DexScreener for liquidity, market cap, pair age of Base tokens
 - **Smart alerts for Base wallets** — Monitor followed wallets on Base, notify when they trade with AI risk assessment
 
-Built on Base's own infrastructure: EAS + AgentKit + x402. Base is home.
+Built on Base's own infrastructure: EAS + AgentKit. Base is home.
 
 ---
 
@@ -238,7 +236,7 @@ N/A — pre-launch.
 
 ## Revenue
 
-N/A — pre-launch. Planned revenue model: x402 USDC micropayments for reputation API queries on Base.
+N/A — pre-launch. Planned revenue model: subscription or per-query fees for reputation API access on Base.
 
 ---
 

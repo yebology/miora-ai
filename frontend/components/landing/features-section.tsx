@@ -8,7 +8,7 @@ export function FeaturesSection() {
   const { ref, isVisible } = useAnimateOnScroll();
 
   return (
-    <section className="bg-muted/30 px-6 py-16">
+    <section className="px-6 py-16">
       <div ref={ref} className="mx-auto max-w-5xl">
         <h2 className="mb-10 text-center text-2xl font-bold tracking-tight">
           Everything you need

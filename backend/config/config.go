@@ -28,7 +28,6 @@ type Config struct {
 	ResendFrom     string // Sender email for Resend (RESEND_FROM_EMAIL)
 	Scoring        ScoringConfig
 	EAS            EASConfig
-	X402           X402Config
 	Agent          AgentConfig
 }
 
@@ -39,12 +38,6 @@ type EASConfig struct {
 	SchemaRegistryAddr string // SchemaRegistry contract address (EAS_SCHEMA_REGISTRY_ADDRESS)
 	SchemaUID          string // Registered schema UID (EAS_SCHEMA_UID)
 	AttesterPrivateKey string // Private key for signing attestations (EAS_ATTESTER_PRIVATE_KEY)
-}
-
-// X402Config holds configuration for x402 micropayment middleware.
-type X402Config struct {
-	RecipientAddress string // USDC receiving address (X402_RECIPIENT_ADDRESS)
-	PriceUSDC        string // Price per query in USDC, e.g. "0.01" (X402_PRICE_USDC)
 }
 
 // AgentConfig holds configuration for the AI trading agent.
@@ -107,10 +100,6 @@ func LoadConfig() (*Config, error) {
 			SchemaRegistryAddr: getEnvDefault("EAS_SCHEMA_REGISTRY_ADDRESS", "0x4200000000000000000000000000000000000020"),
 			SchemaUID:          os.Getenv("EAS_SCHEMA_UID"),
 			AttesterPrivateKey: os.Getenv("EAS_ATTESTER_PRIVATE_KEY"),
-		},
-		X402: X402Config{
-			RecipientAddress: os.Getenv("X402_RECIPIENT_ADDRESS"),
-			PriceUSDC:        getEnvDefault("X402_PRICE_USDC", "0.01"),
 		},
 		Agent: AgentConfig{
 			CDPAPIKeyID:     os.Getenv("CDP_API_KEY_ID"),

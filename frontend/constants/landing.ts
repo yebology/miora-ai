@@ -1,13 +1,14 @@
 import {
   Brain,
-  ArrowLeftRight,
   Shield,
   Bell,
-  Globe,
+  Bot,
   Zap,
   Search,
   BarChart3,
   MousePointerClick,
+  Fingerprint,
+  DollarSign,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,7 +21,7 @@ export type Feature = {
 export type Chain = {
   name: string;
   logo: string;
-  color: string; // tailwind shadow color for hover glow
+  color: string;
 };
 
 export type Step = {
@@ -32,16 +33,16 @@ export type Step = {
 
 export const FEATURES: Feature[] = [
   {
+    icon: Fingerprint,
+    title: "On-chain Reputation (EAS)",
+    description:
+      "Trading scores published on-chain via Ethereum Attestation Service on Base. Verifiable by any protocol, agent, or dApp.",
+  },
+  {
     icon: Brain,
     title: "AI-Powered Insights",
     description:
       "Understand any wallet's trading behavior in plain language. No charts, no jargon — just clear, actionable analysis.",
-  },
-  {
-    icon: ArrowLeftRight,
-    title: "DEX Aggregator",
-    description:
-      "Best price routing across Base DEXs via 1inch, all in one place.",
   },
   {
     icon: Shield,
@@ -56,46 +57,42 @@ export const FEATURES: Feature[] = [
       "Follow wallets and get notified instantly when they trade, filtered by your custom conditions.",
   },
   {
-    icon: Globe,
-    title: "Multi-Chain Support",
+    icon: Bot,
+    title: "AI Trading Agent",
     description:
-      "Base, Ethereum, Arbitrum, Optimism, and Polygon — all supported out of the box.",
+      "Autonomous agent monitors top wallets, evaluates trades, and executes swaps on Base via Coinbase AgentKit.",
   },
   {
-    icon: Zap,
-    title: "Beginner Friendly",
+    icon: DollarSign,
+    title: "x402 Reputation API",
     description:
-      "Built for everyone, not just advanced traders. AI translates complex data into simple decisions.",
+      "Other protocols and AI agents can query Miora scores via USDC micropayments. No API keys needed.",
   },
 ];
 
 export const CHAINS: Chain[] = [
-  { name: "Ethereum", logo: "/chains/ethereum.svg", color: "#627EEA" },
-  { name: "Arbitrum", logo: "/chains/arbitrum.svg", color: "#28A0F0" },
-  { name: "Optimism", logo: "/chains/optimism.svg", color: "#FF0420" },
   { name: "Base", logo: "/chains/base.svg", color: "#0052FF" },
-  { name: "Polygon", logo: "/chains/polygon.svg", color: "#8247E5" },
 ];
 
 export const STEPS: Step[] = [
   {
     step: "01",
     title: "Analyze",
-    description: "Paste any wallet address and select a chain to start.",
+    description: "Paste any wallet address on Base to get a multi-factor trading score.",
     icon: Search,
   },
   {
     step: "02",
-    title: "Understand",
+    title: "Follow or Agent",
     description:
-      "Get a multi-factor score with AI-powered insights in plain language.",
+      "Follow the wallet with smart conditions, or let the AI agent trade for you automatically.",
     icon: BarChart3,
   },
   {
     step: "03",
-    title: "Decide",
+    title: "Verified On-chain",
     description:
-      "Follow the wallet, set alert conditions, or swap tokens directly.",
+      "Every score is published as an EAS attestation on Base — verifiable by anyone.",
     icon: MousePointerClick,
   },
 ];

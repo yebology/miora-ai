@@ -35,15 +35,9 @@ Integrate Coinbase AgentKit for autonomous trading:
 - If all pass → execute swap via Agentic Wallet on Base Sepolia
 - Notify user of agent action via WebSocket
 
-### R5: x402 Reputation API
-Monetize reputation queries via x402 micropayments:
-- Endpoint: GET /api/reputation/query — returns score
-- Requires x402 USDC micropayment on Base
-- Test with x402 client on Base Sepolia
-
 ### R6: Update Frontend for V2 Narrative
 - Update landing page copy: "Trading Reputation Protocol" not "Wallet Analyzer"
-- Update features section to reflect V2 (EAS, AgentKit, x402)
+- Update features section to reflect V2 (EAS, AgentKit)
 - Add Agent setup page (/agent)
 - Add Agent dashboard (status, trade history, pause/resume)
 - Update chains section: Base-first, remove Solana
@@ -61,7 +55,7 @@ Monetize reputation queries via x402 micropayments:
 ### Architecture (V2)
 ```
 Frontend (Next.js) → Backend (Go + Fiber) → External APIs (Alchemy, DexScreener, Moralis, Gemini)
-                                           → On-chain (EAS Attestation, Agentic Wallet, x402)
+                                           → On-chain (EAS Attestation, Agentic Wallet)
                                            → Database (PostgreSQL)
                                            → WebSocket (real-time notifications)
 ```
@@ -71,8 +65,7 @@ Frontend (Next.js) → Backend (Go + Fiber) → External APIs (Alchemy, DexScree
 |---|---|---|
 | EAS Client | clients/eas.go | Publish attestations to Base Sepolia via EAS SDK |
 | AgentKit Client | clients/agentkit.go | Interact with Coinbase AgentKit for autonomous trading |
-| x402 Middleware | middleware/x402.go | Verify x402 micropayment before serving reputation data |
-| Reputation Handler | handlers/reputation.go | GET /reputation/:address, GET /reputation/query |
+| Reputation Handler | handlers/reputation.go | GET /reputation/:address |
 | Agent Handler | handlers/agent.go | POST /agent/start, PUT /agent/config, POST /agent/pause, GET /agent/status |
 | Agent Service | services/agent.go | Monitor top wallets → evaluate → execute via AgentKit |
 | Agent Entity | entities/agent_config.go | budget, max_per_trade, risk_tolerance, conditions, status |
@@ -129,7 +122,7 @@ Frontend (Next.js) → Backend (Go + Fiber) → External APIs (Alchemy, DexScree
 
 ### Phase 4: Frontend V2 Updates (Priority #4)
 - [ ] Task 4.1: Update landing page copy for V2 narrative
-- [ ] Task 4.2: Update features section (EAS, AgentKit, x402)
+- [ ] Task 4.2: Update features section (EAS, AgentKit)
 - [ ] Task 4.3: Update chains section (Base-first, remove Solana)
 - [ ] Task 4.4: Add "Agent" nav item
 - [ ] Task 4.5: Update analyze-form.tsx (remove Solana chain option)

@@ -20,7 +20,10 @@ Chain: **Base only** (Base Sepolia for testnet).
 ### Three Layers
 1. **Layer 1: On-chain Trading Reputation (EAS)** — Analyze wallet → score → publish attestation on Base Sepolia
 2. **Layer 2: Smart Follow + AI Alerts** — Follow top wallets → real-time notifications with AI risk assessment
-3. **Layer 3: AI Trading Agent (AgentKit)** — Autonomous agent monitors top wallets → evaluates trades → executes via Agentic Wallet
+
+### Two New Layers (V2)
+- **EAS** — On-chain reputation attestations on Base Sepolia
+- **AgentKit** — Autonomous AI trading agent via Coinbase Agentic Wallets
 
 ### Tech Stack
 - **Backend**: Go + Fiber + GORM + WebSocket (Base only)
@@ -29,7 +32,7 @@ Chain: **Base only** (Base Sepolia for testnet).
 - **Database**: PostgreSQL via Docker Compose
 - **Auth**: Firebase Auth (Google login)
 - **AI**: Google Gemini (gemini-2.0-flash)
-- **On-chain**: EAS attestation, Coinbase AgentKit + Agentic Wallets, x402 micropayments
+- **On-chain**: EAS attestation, Coinbase AgentKit + Agentic Wallets
 - **Data**: Alchemy (Base RPC), DexScreener (pair data), Moralis (historical prices)
 
 ### API Endpoints
@@ -39,7 +42,6 @@ Chain: **Base only** (Base Sepolia for testnet).
 | GET | `/api/wallets/:address` | Public | Get stored analysis |
 | POST | `/api/wallets/regenerate-insight` | Public | Regenerate AI insight |
 | GET | `/api/reputation/:address` | Public | Get on-chain attestation |
-| GET | `/api/reputation/query` | x402 | Query reputation (micropayment) |
 | GET | `/api/auth/me` | Firebase | Get/create user |
 | POST | `/api/watchlist/follow` | Firebase | Follow wallet |
 | PUT | `/api/watchlist/:address` | Firebase | Update conditions |
@@ -87,12 +89,11 @@ Chain: **Base only** (Base Sepolia for testnet).
 
 ### 🟡 Should Have
 5. **AgentKit proof of concept** — agent detects trade → executes on testnet
-6. **x402 reputation query** — monetization proof
-7. **Connect frontend to backend API** — replace dummy data (last)
+6. **Connect frontend to backend API** — replace dummy data (last)
 
 ### 🟢 Nice to Have
-8. Agent dashboard with trade history
-9. Reputation leaderboard
+7. Agent dashboard with trade history
+8. Reputation leaderboard
 
 ## What NOT to Do
 
