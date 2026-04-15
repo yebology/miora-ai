@@ -23,7 +23,7 @@ import (
 func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 
 	api := app.Group("/api")
-	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.GeminiAPIKey, cfg.OneInchAPIKey, cfg.ResendAPIKey, cfg.ResendFrom, cfg.Scoring, hub)
+	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.GeminiAPIKey, cfg.OneInchAPIKey, cfg.ResendAPIKey, cfg.ResendFrom, cfg.Scoring, cfg.EAS, hub)
 
 	// Start wallet monitor in background
 	go container.Monitor.Start()
@@ -40,6 +40,7 @@ func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 	// Public routes
 	apphttp.RegisterWalletPublicRoutes(api, container.WalletHandler)
 	apphttp.RegisterSwapPublicRoutes(api, container.SwapHandler)
+	apphttp.RegisterReputationPublicRoutes(api, container.ReputationHandler)
 
 	// Protected routes (Firebase auth required)
 	protected := api.Group("", middleware.FirebaseAuth(cfg.FirebaseCreds))

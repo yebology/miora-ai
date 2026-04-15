@@ -28,6 +28,16 @@ type Config struct {
 	ResendAPIKey   string // Resend API key for email notifications (RESEND_API_KEY)
 	ResendFrom     string // Sender email for Resend (RESEND_FROM_EMAIL)
 	Scoring        ScoringConfig
+	EAS            EASConfig
+}
+
+// EASConfig holds configuration for Ethereum Attestation Service on Base Sepolia.
+type EASConfig struct {
+	RPCURL             string // Base Sepolia RPC endpoint (EAS_RPC_URL)
+	EASContractAddress string // EAS contract address on Base Sepolia (EAS_CONTRACT_ADDRESS)
+	SchemaRegistryAddr string // SchemaRegistry contract address (EAS_SCHEMA_REGISTRY_ADDRESS)
+	SchemaUID          string // Registered schema UID (EAS_SCHEMA_UID)
+	AttesterPrivateKey string // Private key for signing attestations (EAS_ATTESTER_PRIVATE_KEY)
 }
 
 // ScoringConfig holds configurable thresholds for wallet scoring.
@@ -78,6 +88,13 @@ func LoadConfig() (*Config, error) {
 			LiquidityThreshold:  getEnvFloat("SCORING_LIQUIDITY_THRESHOLD"),
 			EntryTimingMaxAge:   getEnvFloat("SCORING_ENTRY_TIMING_MAX_AGE"),
 			TokenQualityLogBase: getEnvFloat("SCORING_TOKEN_QUALITY_LOG_BASE"),
+		},
+		EAS: EASConfig{
+			RPCURL:             os.Getenv("EAS_RPC_URL"),
+			EASContractAddress: getEnvDefault("EAS_CONTRACT_ADDRESS", "0x4200000000000000000000000000000000000021"),
+			SchemaRegistryAddr: getEnvDefault("EAS_SCHEMA_REGISTRY_ADDRESS", "0x4200000000000000000000000000000000000020"),
+			SchemaUID:          os.Getenv("EAS_SCHEMA_UID"),
+			AttesterPrivateKey: os.Getenv("EAS_ATTESTER_PRIVATE_KEY"),
 		},
 	}, nil
 

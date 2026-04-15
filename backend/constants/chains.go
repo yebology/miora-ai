@@ -1,5 +1,12 @@
 package constants
 
+// BaseSepoliaChainID is the chain ID for Base Sepolia testnet.
+// Used by the EAS client for signing transactions.
+const BaseSepoliaChainID = 84532
+
+// BaseSepoliaEASScanURL is the base URL for the EAS explorer on Base Sepolia.
+const BaseSepoliaEASScanURL = "https://base-sepolia.easscan.org"
+
 // ChainConfig holds API-specific identifiers for each supported chain.
 type ChainConfig struct {
 	Name           string  // Display name

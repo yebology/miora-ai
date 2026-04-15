@@ -112,21 +112,24 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Backend compiles clean
 
 ### 🆕 V2 Backend — Layer 1: EAS Attestation (On-chain Reputation)
-- [ ] Research EAS SDK for Go (or use direct contract call via go-ethereum/abigen)
-- [ ] Add `AttestationUID` field to `entities/wallet_metric.go`
-- [ ] Add `SchemaUID` to config (env var: `EAS_SCHEMA_UID`)
-- [ ] Add `EAS_CONTRACT_ADDRESS` to config (Base Sepolia EAS contract)
-- [ ] Add `BASE_RPC_URL` to config (Base Sepolia RPC endpoint)
-- [ ] Add `ATTESTER_PRIVATE_KEY` to config (wallet private key for signing attestations)
-- [ ] Create `clients/eas.go` — EAS client: create attestation, query attestation by UID
-- [ ] Create `interfaces/eas.go` — `IEASClient` interface
-- [ ] Update `services/wallet.go` — after scoring, call EAS client to publish attestation on-chain
-- [ ] Create `handlers/reputation.go` — GET /reputation/:address (return attestation data + on-chain proof)
-- [ ] Create `http/reputation.go` — register reputation routes (public)
-- [ ] Create `dto/responses/reputation.go` — reputation response DTO (score, recommendation, attestation UID, txn hash, timestamp)
-- [ ] Wire EAS client into `router/container.go`
-- [ ] Register reputation routes in `router/routes.go`
-- [ ] Update `migrations/migrations.go` to auto-migrate updated WalletMetric
+- [x] Research EAS SDK for Go (or use direct contract call via go-ethereum/abigen)
+- [x] Add `AttestationUID` field to `entities/wallet_metric.go`
+- [x] Add `SchemaUID` to config (env var: `EAS_SCHEMA_UID`)
+- [x] Add `EAS_CONTRACT_ADDRESS` to config (Base Sepolia EAS contract)
+- [x] Add `BASE_RPC_URL` to config (Base Sepolia RPC endpoint)
+- [x] Add `ATTESTER_PRIVATE_KEY` to config (wallet private key for signing attestations)
+- [x] Create `clients/eas.go` — EAS client: create attestation, query attestation by UID
+- [x] Create `interfaces/eas.go` — `IEASClient` interface
+- [x] Update `services/wallet.go` — after scoring, call EAS client to publish attestation on-chain
+- [x] Create `handlers/reputation.go` — GET /reputation/:address (return attestation data + on-chain proof)
+- [x] Create `http/reputation.go` — register reputation routes (public)
+- [x] Create `dto/responses/reputation.go` — reputation response DTO (score, recommendation, attestation UID, txn hash, timestamp)
+- [x] Wire EAS client into `router/container.go`
+- [x] Register reputation routes in `router/routes.go`
+- [x] Update `migrations/migrations.go` to auto-migrate updated WalletMetric
+- [ ] Register EAS schema on Base Sepolia → run `make register-schema` (needs testnet ETH in attester wallet)
+- [ ] Set `EAS_SCHEMA_UID` in `.env` (printed by register-schema command)
+- [ ] Test end-to-end: analyze wallet → attestation published → verify on [BaseScan](https://base-sepolia.easscan.org)
 
 ### 🆕 V2 Backend — Layer 2: x402 Reputation API (Monetization)
 - [ ] Research x402 protocol integration for Go (HTTP middleware pattern)
@@ -211,7 +214,30 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Updated hero section + README tagline to V2 narrative
 - [x] Frontend builds clean
 
-### 🔌 Connect Frontend to Backend API (Replace Dummy Data)
+### 🆕 V2 Frontend — Agent Page & Components
+- [ ] Add "Agent" to `constants/nav.ts` navigation items
+- [ ] Create `app/agent/page.tsx` — Agent setup + dashboard page
+- [ ] Create `types/agent.ts` — AgentConfig, AgentTrade, AgentStatus types
+- [ ] Add agent API functions to `lib/api.ts` — startAgent, pauseAgent, getAgentStatus, updateAgentConfig, getAgentTrades
+- [ ] Create `components/agent/agent-config-form.tsx` — Budget, max per trade, risk tolerance, conditions form
+- [ ] Create `components/agent/agent-status-card.tsx` — Agent status (active/paused/stopped), wallet balance, total trades
+- [ ] Create `components/agent/agent-trade-history.tsx` — Table of agent's executed trades with PnL
+- [ ] Create `components/agent/agent-wallet-card.tsx` — Agentic wallet address, balance, deposit/withdraw
+
+### 🆕 V2 Frontend — Reputation Display
+- [ ] Add attestation badge/link to `components/analyze/analysis-result.tsx` — show EAS attestation UID + BaseScan link after analysis
+- [ ] Create `components/analyze/attestation-badge.tsx` — "Verified on Base" badge with attestation link
+
+### 🔌 Connect Frontend to Backend API (Replace Dummy Data) — LAST PRIORITY
+> Do this after all V2 UI is built and backend is running. Currently using dummy data so the UI can be reviewed visually first.
+
+#### Auth Provider (`components/providers/auth-provider.tsx`)
+- [ ] Replace simulated sign-in with real Firebase Google sign-in (`signInWithPopup`, `GoogleAuthProvider`)
+- [ ] Store Firebase ID token for API calls
+- [ ] Call `getMe()` after sign-in to sync user with backend
+- [ ] Replace simulated sign-out with real Firebase sign-out
+- [ ] Add `getToken()` method to auth context for components to use
+
 #### Analyze Page (`app/analyze/page.tsx`)
 - [ ] Replace dummy data simulation with real `analyzeWallet()` call from `lib/api.ts`
 - [ ] Replace dummy "wallet exists" check with real `getWallet()` call
@@ -243,27 +269,6 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [ ] Replace dummy re-analyze with real `analyzeWallet()` call
 - [ ] Remove all dummy data imports
 
-#### Auth Provider (`components/providers/auth-provider.tsx`)
-- [ ] Replace simulated sign-in with real Firebase Google sign-in (`signInWithPopup`, `GoogleAuthProvider`)
-- [ ] Store Firebase ID token for API calls
-- [ ] Call `getMe()` after sign-in to sync user with backend
-- [ ] Replace simulated sign-out with real Firebase sign-out
-- [ ] Add `getToken()` method to auth context for components to use
-
-### 🆕 V2 Frontend — Agent Page & Components
-- [ ] Add "Agent" to `constants/nav.ts` navigation items
-- [ ] Create `app/agent/page.tsx` — Agent setup + dashboard page
-- [ ] Create `types/agent.ts` — AgentConfig, AgentTrade, AgentStatus types
-- [ ] Add agent API functions to `lib/api.ts` — startAgent, pauseAgent, getAgentStatus, updateAgentConfig, getAgentTrades
-- [ ] Create `components/agent/agent-config-form.tsx` — Budget, max per trade, risk tolerance, conditions form
-- [ ] Create `components/agent/agent-status-card.tsx` — Agent status (active/paused/stopped), wallet balance, total trades
-- [ ] Create `components/agent/agent-trade-history.tsx` — Table of agent's executed trades with PnL
-- [ ] Create `components/agent/agent-wallet-card.tsx` — Agentic wallet address, balance, deposit/withdraw
-
-### 🆕 V2 Frontend — Reputation Display
-- [ ] Add attestation badge/link to `components/analyze/analysis-result.tsx` — show EAS attestation UID + BaseScan link after analysis
-- [ ] Create `components/analyze/attestation-badge.tsx` — "Verified on Base" badge with attestation link
-
 ---
 
 ## 📜 SMART CONTRACTS (Foundry — contracts/evm/)
@@ -282,10 +287,10 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 > However, we need to register a schema and may want a helper contract for batch operations.
 
 - [ ] Register EAS schema on Base Sepolia via EAS SDK or direct contract call
-  - Schema fields: `uint8 score, string recommendation, uint32 totalTransactions, uint64 timestamp, string chain, address wallet`
+  - Schema fields: `uint8 score, string recommendation, uint32 totalTransactions, string chain`
   - Schema resolver: none (permissionless reads)
   - Revocable: true (so scores can be updated)
-- [ ] Save schema UID to backend config
+- [ ] Save schema UID to backend config (`EAS_SCHEMA_UID`)
 - [ ] Verify schema visible on [Base Sepolia EAS Explorer](https://base-sepolia.easscan.org)
 - [ ] Create test attestation and verify readable on BaseScan
 
@@ -308,51 +313,22 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 ---
 
 ## 🔧 Infrastructure & Config Updates
-- [ ] Add new env vars to `backend/.env`:
-  - `BASE_SEPOLIA_RPC_URL` — Base Sepolia RPC endpoint
-  - `EAS_CONTRACT_ADDRESS` — EAS contract on Base Sepolia (0x4200000000000000000000000000000000000021)
-  - `EAS_SCHEMA_UID` — Registered schema UID
-  - `ATTESTER_PRIVATE_KEY` — Wallet private key for signing attestations
+- [x] Add EAS env vars to `backend/config/config.go`:
+  - `EAS_RPC_URL` — Base Sepolia RPC endpoint
+  - `EAS_CONTRACT_ADDRESS` — EAS contract (default: 0x4200000000000000000000000000000000000021)
+  - `EAS_SCHEMA_REGISTRY_ADDRESS` — SchemaRegistry (default: 0x4200000000000000000000000000000000000020)
+  - `EAS_SCHEMA_UID` — Registered schema UID (set after registration)
+  - `EAS_ATTESTER_PRIVATE_KEY` — Wallet private key for signing attestations
+- [ ] Add EAS env vars to `backend/.env` (actual values)
+- [ ] Add x402/AgentKit env vars (when implementing Layer 2 & 3):
   - `X402_PAYMENT_ADDRESS` — USDC receiving address for x402
   - `X402_PRICE` — Price per reputation query (in USDC wei)
   - `AGENTKIT_API_KEY` — Coinbase AgentKit API key (if needed)
-- [ ] Update `backend/config/config.go` to load new env vars
 - [ ] Add `@coinbase/cdp-sdk` to `frontend/package.json` (for AgentKit integration)
 - [ ] Add `@ethereum-attestation-service/eas-sdk` to `frontend/package.json` (if frontend needs to read attestations directly)
 - [ ] Update `frontend/.env` with any new public env vars
-- [ ] Update `Makefile` with new commands:
-  - `make deploy-schema` — Register EAS schema on Base Sepolia
+- [x] Update `Makefile` with `make register-schema` command
+- [ ] Update `Makefile` with additional commands:
   - `make deploy-contracts` — Deploy helper contracts (if any)
 
----
 
-## 🎯 Hackathon Priority (Base Batches Student Track — Due April 27)
-
-### 🔴 Must Have
-- [x] Cleanup Solana/V1 code ✅
-- [ ] **Deploy EAS attestation on Base Sepolia** — proof of on-chain reputation (this is the V2 differentiator)
-  - Register schema → make test attestation → verify on BaseScan
-  - Integrate into backend scoring flow
-  - Show attestation link in frontend after analysis
-- [ ] **Connect frontend to backend API** — replace dummy data with real API calls
-- [ ] Record 1-minute founder video
-- [ ] Submit Base Batches application
-
-### 🟡 Should Have
-- [ ] **Basic AgentKit proof of concept** — detect trade from top wallet → evaluate risk → execute swap on Base Sepolia testnet
-- [ ] **x402 endpoint** — reputation query with USDC micropayment
-- [ ] **Agent setup UI** — basic form to configure agent (budget, conditions, risk tolerance)
-
-### 🟢 Nice to Have
-- [ ] Agent dashboard with trade history
-- [ ] Multiple wallet monitoring in agent
-- [ ] Reputation leaderboard page
-- [ ] Attestation history page (all attestations made by Miora)
-
----
-
-## ⬇️ De-prioritized for Hackathon
-- Smart contract fee router (replaced by x402 monetization)
-- Auto copy-trade without agent framework (replaced by AgentKit agent)
-- Swap page full implementation (agent replaces manual swap)
-- Multi-chain expansion beyond Base (post-hackathon roadmap)

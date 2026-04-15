@@ -20,3 +20,6 @@ db-reset:
 
 db-seed:
 	cd backend && go run cmd/seed/main.go
+
+register-schema:
+	cd backend && go run cmd/register-schema/main.go

@@ -14,5 +14,7 @@ type WalletMetric struct {
 	TradeDiscipline   float64   `json:"trade_discipline"`
 	FinalScore        float64   `json:"final_score"`
 	Recommendation    string    `json:"recommendation"`
+	AttestationUID    string    `json:"attestation_uid,omitempty"`     // EAS attestation UID on Base Sepolia
+	AttestationTxHash string    `json:"attestation_tx_hash,omitempty"` // Transaction hash of the attestation
 	UpdatedAt         time.Time `json:"updated_at"`
 }

@@ -32,6 +32,7 @@ type WalletService struct {
 	moralis     interfaces.IMoralis
 	ai          *AIService
 	scoring     config.ScoringConfig
+	eas         interfaces.IEASClient
 }
 
 // NewWalletService creates a new WalletService with the given dependencies.
@@ -42,6 +43,7 @@ func NewWalletService(
 	moralis interfaces.IMoralis,
 	ai *AIService,
 	scoring config.ScoringConfig,
+	eas interfaces.IEASClient,
 ) *WalletService {
 
 	return &WalletService{
@@ -51,6 +53,7 @@ func NewWalletService(
 		moralis:     moralis,
 		ai:          ai,
 		scoring:     scoring,
+		eas:         eas,
 	}
 
 }
@@ -119,6 +122,31 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 		result.AiInsight = insight
 	} else {
 		log.Printf("AI insight failed: %v", err)
+	}
+
+	// Publish EAS attestation on Base Sepolia (non-blocking — if it fails, continue without attestation)
+	if s.eas != nil {
+		go func() {
+			uid, txHash, err := s.eas.Attest(
+				address,
+				uint8(metric.FinalScore),
+				metric.Recommendation,
+				uint32(metric.TotalTransactions),
+				chain,
+			)
+			if err != nil {
+				log.Printf("[EAS] Attestation failed for %s: %v", address, err)
+				return
+			}
+			log.Printf("[EAS] Attestation published for %s — UID: %s, TxHash: %s", address, uid, txHash)
+
+			// Update metric with attestation data
+			metric.AttestationUID = uid
+			metric.AttestationTxHash = txHash
+			if saveErr := s.repo.SaveMetric(metric); saveErr != nil {
+				log.Printf("[EAS] Failed to save attestation UID for %s: %v", address, saveErr)
+			}
+		}()
 	}
 
 	return result, nil

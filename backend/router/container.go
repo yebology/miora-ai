@@ -17,6 +17,7 @@
 package router
 
 import (
+	"log"
 	"miora-ai/app/clients"
 	"miora-ai/app/handlers"
 	"miora-ai/app/repositories"
@@ -29,16 +30,17 @@ import (
 
 // Container holds all handler instances, ready to be used by route registration.
 type Container struct {
-	WalletHandler    *handlers.WalletHandler
-	SwapHandler      *handlers.SwapHandler
-	AuthHandler      *handlers.AuthHandler
-	WatchlistHandler *handlers.WatchlistHandler
-	Monitor          *services.MonitorService
+	WalletHandler     *handlers.WalletHandler
+	SwapHandler       *handlers.SwapHandler
+	AuthHandler       *handlers.AuthHandler
+	WatchlistHandler  *handlers.WatchlistHandler
+	ReputationHandler *handlers.ReputationHandler
+	Monitor           *services.MonitorService
 }
 
 // NewContainer creates all dependencies and returns a fully wired Container.
 // Initialization order: clients → repositories → services → handlers.
-func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneInchAPIKey, resendAPIKey, resendFrom string, scoring config.ScoringConfig, hub *ws.Hub) *Container {
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneInchAPIKey, resendAPIKey, resendFrom string, scoring config.ScoringConfig, easCfg config.EASConfig, hub *ws.Hub) *Container {
 
 	// Clients
 	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
@@ -46,6 +48,13 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 	moralis := clients.NewMoralis(moralisAPIKey)
 	gemini := clients.NewGemini(geminiAPIKey)
 	oneInch := clients.NewOneInch(oneInchAPIKey)
+
+	// EAS Client (Base Sepolia)
+	easClient, err := clients.NewEASClient(easCfg.RPCURL, easCfg.EASContractAddress, easCfg.SchemaUID, easCfg.AttesterPrivateKey)
+	if err != nil {
+		log.Printf("[WARN] EAS client initialization failed: %v — attestations will be disabled", err)
+		easClient = &clients.EASClient{}
+	}
 
 	// Repositories
 	walletRepo := repositories.NewWalletRepository(db)
@@ -55,7 +64,7 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 
 	// Services
 	aiService := services.NewAIService(gemini)
-	walletService := services.NewWalletService(walletRepo, evmClient, dexScreener, moralis, aiService, scoring)
+	walletService := services.NewWalletService(walletRepo, evmClient, dexScreener, moralis, aiService, scoring, easClient)
 	swapService := services.NewSwapService(oneInch)
 	userService := services.NewUserService(userRepo)
 	watchlistService := services.NewWatchlistService(watchlistRepo)
@@ -69,13 +78,15 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 	swapHandler := handlers.NewSwapHandler(swapService)
 	authHandler := handlers.NewAuthHandler(userService)
 	watchlistHandler := handlers.NewWatchlistHandler(watchlistService, userService)
+	reputationHandler := handlers.NewReputationHandler(walletRepo, easClient)
 
 	return &Container{
-		WalletHandler:    walletHandler,
-		SwapHandler:      swapHandler,
-		AuthHandler:      authHandler,
-		WatchlistHandler: watchlistHandler,
-		Monitor:          monitorService,
+		WalletHandler:     walletHandler,
+		SwapHandler:       swapHandler,
+		AuthHandler:       authHandler,
+		WatchlistHandler:  watchlistHandler,
+		ReputationHandler: reputationHandler,
+		Monitor:           monitorService,
 	}
 
 }
