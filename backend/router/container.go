@@ -35,7 +35,9 @@ type Container struct {
 	AuthHandler       *handlers.AuthHandler
 	WatchlistHandler  *handlers.WatchlistHandler
 	ReputationHandler *handlers.ReputationHandler
+	AgentHandler      *handlers.AgentHandler
 	Monitor           *services.MonitorService
+	AgentLoop         *services.AgentLoopService
 }
 
 // NewContainer creates all dependencies and returns a fully wired Container.
@@ -61,6 +63,7 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 	userRepo := repositories.NewUserRepository(db)
 	watchlistRepo := repositories.NewWatchlistRepository(db)
 	notifRepo := repositories.NewNotificationRepository(db)
+	agentRepo := repositories.NewAgentRepository(db)
 
 	// Services
 	aiService := services.NewAIService(gemini)
@@ -68,10 +71,15 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 	swapService := services.NewSwapService(oneInch)
 	userService := services.NewUserService(userRepo)
 	watchlistService := services.NewWatchlistService(watchlistRepo)
+	agentService := services.NewAgentService(agentRepo)
 
 	// Monitor
 	resendClient := clients.NewResend(resendAPIKey, resendFrom)
 	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, dexScreener, aiService, resendClient, hub)
+
+	// Agent Loop (background trading)
+	agentKitClient := clients.NewAgentKitClient("")
+	agentLoop := services.NewAgentLoopService(agentRepo, walletRepo, evmClient, dexScreener, aiService, agentKitClient)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)
@@ -79,6 +87,7 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 	authHandler := handlers.NewAuthHandler(userService)
 	watchlistHandler := handlers.NewWatchlistHandler(watchlistService, userService)
 	reputationHandler := handlers.NewReputationHandler(walletRepo, easClient)
+	agentHandler := handlers.NewAgentHandler(agentService, userService)
 
 	return &Container{
 		WalletHandler:     walletHandler,
@@ -86,7 +95,9 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, oneIn
 		AuthHandler:       authHandler,
 		WatchlistHandler:  watchlistHandler,
 		ReputationHandler: reputationHandler,
+		AgentHandler:      agentHandler,
 		Monitor:           monitorService,
+		AgentLoop:         agentLoop,
 	}
 
 }

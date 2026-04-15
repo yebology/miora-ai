@@ -23,3 +23,9 @@ db-seed:
 
 register-schema:
 	cd backend && go run cmd/register-schema/main.go
+
+setup-agent:
+	cd agent && pip install -r requirements.txt
+
+run-agent:
+	cd agent && python main.py

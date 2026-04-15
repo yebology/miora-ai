@@ -87,3 +87,37 @@ func (h *ReputationHandler) GetReputation(c *fiber.Ctx) error {
 		ExplorerURL:       explorerURL(attestation.UID),
 	})
 }
+
+// QueryReputation handles GET /reputation/query?address=0x...
+// This is the x402-protected endpoint — payment is verified by middleware before reaching here.
+// Returns a simplified reputation response (score + recommendation only).
+func (h *ReputationHandler) QueryReputation(c *fiber.Ctx) error {
+	address := c.Query("address")
+	if address == "" {
+		return output.GetError(c, fiber.StatusBadRequest, "Query parameter 'address' is required.")
+	}
+
+	wallet, err := h.walletRepo.FindByAddress(address)
+	if err != nil || wallet == nil {
+		return output.GetError(c, fiber.StatusNotFound, "Wallet not found. Analyze it first.")
+	}
+
+	metric, err := h.walletRepo.GetMetric(wallet.ID)
+	if err != nil || metric == nil {
+		return output.GetError(c, fiber.StatusNotFound, "No scoring data found for this wallet.")
+	}
+
+	result := responses.ReputationQuery{
+		Address:        address,
+		Score:          uint8(metric.FinalScore),
+		Recommendation: metric.Recommendation,
+		Chain:          wallet.Chain,
+	}
+
+	if metric.AttestationUID != "" {
+		result.AttestationUID = metric.AttestationUID
+		result.ExplorerURL = explorerURL(metric.AttestationUID)
+	}
+
+	return output.GetSuccess(c, constants.SuccessGetData, result)
+}

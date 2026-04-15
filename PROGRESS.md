@@ -132,31 +132,37 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [ ] Test end-to-end: analyze wallet → attestation published → verify on [BaseScan](https://base-sepolia.easscan.org)
 
 ### 🆕 V2 Backend — Layer 2: x402 Reputation API (Monetization)
-- [ ] Research x402 protocol integration for Go (HTTP middleware pattern)
-- [ ] Create `middleware/x402.go` — x402 payment verification middleware
-- [ ] Add `X402_PAYMENT_ADDRESS` to config (USDC receiving address)
-- [ ] Add `X402_PRICE` to config (price per query in USDC)
-- [ ] Create `handlers/reputation_query.go` — GET /reputation/query?address=0x... (x402-protected)
-- [ ] Create `http/reputation_query.go` — register x402-protected reputation routes
-- [ ] Create `dto/responses/reputation_query.go` — query response DTO
-- [ ] Wire x402 middleware into `router/routes.go`
+- [x] Research x402 protocol integration for Go (using `mark3labs/x402-go` library)
+- [x] Create `middleware/x402.go` — x402 payment verification middleware (Fiber-compatible)
+- [x] Add `X402_RECIPIENT_ADDRESS` to config (USDC receiving address)
+- [x] Add `X402_PRICE_USDC` to config (price per query in USDC)
+- [x] Create `handlers/reputation.go` → `QueryReputation()` — GET /reputation/query?address=0x... (x402-protected)
+- [x] Update `http/reputation.go` — register x402-protected reputation routes
+- [x] Create `dto/responses/reputation_query.go` — query response DTO
+- [x] Wire x402 middleware into `router/routes.go`
+- [ ] Add `X402_RECIPIENT_ADDRESS` to `backend/.env` (actual wallet address)
+- [ ] Test with x402 client on Base Sepolia
 
 ### 🆕 V2 Backend — Layer 3: AI Trading Agent (AgentKit)
-- [ ] Research Coinbase AgentKit SDK for Go (or TypeScript sidecar service)
-- [ ] Create `entities/agent_config.go` — AgentConfig entity: UserID, Budget, MaxPerTrade, RiskTolerance, Conditions (JSON), Status (active/paused/stopped), AgentWalletAddress, CreatedAt, UpdatedAt
-- [ ] Create `entities/agent_trade.go` — AgentTrade entity: AgentConfigID, WalletAddress (source), TokenAddress, TokenSymbol, Amount, TxHash, Status, Reason, CreatedAt
-- [ ] Create `repositories/agent.go` — AgentConfig + AgentTrade CRUD
-- [ ] Create `interfaces/agent.go` — `IAgentRepository`, `IAgentService`
-- [ ] Create `clients/agentkit.go` — AgentKit client: create agentic wallet, execute swap, get balance
-- [ ] Create `interfaces/agentkit.go` — `IAgentKitClient` interface
-- [ ] Create `services/agent.go` — Agent service: start, pause, resume, update config, monitor top wallets → evaluate → execute
-- [ ] Create `handlers/agent.go` — POST /agent/start, PUT /agent/config, POST /agent/pause, GET /agent/status, GET /agent/trades
-- [ ] Create `http/agent.go` — register agent routes (protected, Firebase auth)
-- [ ] Create `dto/requests/agent.go` — agent config request DTO
-- [ ] Create `dto/responses/agent.go` — agent status + trade history response DTO
-- [ ] Wire agent service + handler into `router/container.go`
-- [ ] Register agent routes in `router/routes.go`
-- [ ] Update `migrations/migrations.go` to auto-migrate AgentConfig + AgentTrade
+- [x] Research Coinbase AgentKit SDK — only available in TypeScript/Python, no Go SDK
+- [x] Create `entities/agent_config.go` — AgentConfig entity: UserID, Budget, MaxPerTrade, RiskTolerance, MinScore, Conditions (JSON), Status (active/paused/stopped), AgentWalletAddress, TotalSpent, TotalTrades
+- [x] Create `entities/agent_trade.go` — AgentTrade entity: AgentConfigID, SourceWallet, SourceScore, TokenAddress, TokenSymbol, Direction, AmountUSD, TxHash, Status, Reason, RiskAssessment
+- [x] Create `repositories/agent.go` — AgentConfig + AgentTrade CRUD
+- [x] Create `interfaces/agent.go` — `IAgentRepository`, `IAgentService`
+- [x] Create `services/agent.go` — Agent service: GetOrCreateConfig, UpdateConfig, Start, Pause, GetStatus, GetTrades
+- [x] Create `handlers/agent.go` — GET /agent/status, PUT /agent/config, POST /agent/start, POST /agent/pause, GET /agent/trades
+- [x] Create `http/agent.go` — register agent routes (protected, Firebase auth)
+- [x] Create `dto/requests/agent.go` — agent config request DTO
+- [x] Wire agent service + handler into `router/container.go`
+- [x] Register agent routes in `router/routes.go`
+- [x] Update `migrations/migrations.go` to auto-migrate AgentConfig + AgentTrade
+- [x] Create Python AgentKit sidecar (`agent/main.py`) — FastAPI service wrapping `coinbase-agentkit`
+- [x] Create `clients/agentkit.go` — Go HTTP client to call Python sidecar (GetWallet, ExecuteSwap, IsHealthy)
+- [x] Create `services/agent_loop.go` — Background loop: poll active configs → check top wallets → evaluate conditions → execute swap via sidecar
+- [x] Add swap endpoint to Python sidecar (`POST /swap`)
+- [x] Add `make setup-agent` and `make run-agent` to Makefile
+- [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
+- [ ] Test end-to-end: agent detects trade → evaluates → executes swap on Base Sepolia
 
 ---
 

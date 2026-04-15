@@ -26,6 +26,8 @@ func RunMigrations(db *gorm.DB) error {
 		&entities.WalletMetric{},
 		&entities.Watchlist{},
 		&entities.Notification{},
+		&entities.AgentConfig{},
+		&entities.AgentTrade{},
 	)
 
 }
