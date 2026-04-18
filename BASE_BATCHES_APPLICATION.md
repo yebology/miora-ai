@@ -44,9 +44,9 @@
 
 | # | Pertanyaan | Kenapa Ragu |
 |---|---|---|
-| 6 | What part is onchain? | Saat ini jawaban terasa tipis — mayoritas "baca data on-chain", bukan "logic on-chain." Fee router belum deploy. Kalau juri strict soal on-chain component, ini bisa jadi kelemahan. |
-| 11 | What part uses Base? | Saya tulis "Base is the primary chain" tapi kenyataannya di codebase tidak ada yang Base-exclusive. Semua fitur jalan di 5 EVM chain. Juri bisa challenge ini. Kamu perlu decide apakah mau reframe atau jujur saja. |
-| 17 | How far along? | Saya pilih "Prototype" — tapi bisa juga argue "MVP" karena backend fully functional. Tergantung bagaimana kamu define. Prototype lebih honest karena frontend belum connect. |
+| 6 | What part is onchain? | Saat ini jawaban sudah kuat — EAS attestation + AgentKit bots trading on-chain. |
+| 11 | What part uses Base? | Saya tulis "Base is built exclusively on Base" — ini akurat karena codebase sudah Base-only. EAS + AgentKit semua di Base Sepolia. |
+| 17 | How far along? | Saya pilih "Prototype" — tapi bisa juga argue "MVP" karena backend + agent sidecar fully functional. Tergantung bagaimana kamu define. Prototype lebih honest karena frontend belum connect ke backend. |
 | 20 | What part is magic? | Jawaban saya fokus ke scoring engine. Tapi ini subjektif — mungkin kamu merasa bagian lain yang lebih "magic" (misalnya AI risk assessment per notification, atau conditional follow system). Kamu yang paling tahu apa yang paling kamu banggakan. |
 | 21 | Unique insight? | Saya tulis "90% users don't need more charts, they need decisions." Ini catchy tapi belum di-validate dengan data. Kalau juri tanya "based on what?", kamu perlu punya jawaban. Idealnya ada personal story atau user research yang back this up. |
 | 23-25 | Users/Revenue | Saya jawab "not yet / N/A" — ini honest tapi lemah. Kalau sebelum submit kamu bisa dapat bahkan 5-10 orang coba produknya dan kasih feedback, jawaban ini berubah drastis. |
@@ -86,7 +86,7 @@ AI-powered wallet intelligence and trading on Base
 
 Miora AI turns overwhelming on-chain data into simple, actionable decisions. Instead of reading charts and numbers, users get a clear answer: "Follow this wallet", "Follow with conditions", or "Avoid." 
 
-Existing tools like Nansen and Arkham are built for power users. Miora is built for everyone — analyze any wallet, get an AI-scored recommendation, set smart alert conditions, and trade directly from the platform. No more switching between analytics dashboards, Telegram alpha groups, and DEX frontends.
+Existing tools like Nansen and Arkham are built for power users. Miora is built for everyone — analyze any wallet, get an AI-scored recommendation, set smart alert conditions, and let AI bots trade for you. No more switching between analytics dashboards, Telegram alpha groups, and DEX frontends.
 
 ---
 
@@ -94,7 +94,7 @@ Existing tools like Nansen and Arkham are built for power users. Miora is built 
 
 - **EAS Attestation** — Trading reputation scores are published on-chain on Base Sepolia via Ethereum Attestation Service. Each analyzed wallet gets an attestation with score, recommendation, and metadata — verifiable by any protocol or agent.
 - **Wallet analysis** — Reads on-chain transaction history from Base via Alchemy to compute scoring metrics (PnL, win rate, entry timing, trade discipline)
-- **AI Trading Agent** — Autonomous agent executes trades on Base via Coinbase AgentKit + Agentic Wallets. Transactions are on-chain and visible on BaseScan.
+- **AI Trading Bots** — Two bot types: wallet bot (copies one wallet's trades) and consensus bot (trades when multiple high-score wallets agree). Both execute trades on Base via Coinbase AgentKit + Agentic Wallets. Transactions are on-chain and visible on BaseScan.
 - **Market data enrichment** — Pulls on-chain pair data (liquidity, market cap, pair age) from DexScreener and Moralis for Base tokens
 
 ---
@@ -133,7 +133,7 @@ Miora is built exclusively on Base. Every on-chain component runs on Base Sepoli
 
 - **EAS Attestation on Base** — Trading reputation scores published as on-chain attestations via EAS (0x4200...0021). Verifiable on BaseScan.
 - **Wallet analysis on Base** — Fetch transaction history via Alchemy, calculate PnL with FIFO buy-sell matching, generate multi-factor scoring
-- **AI Trading Agent on Base** — Autonomous agent trades via Coinbase AgentKit + Agentic Wallets on Base Sepolia
+- **AI Trading Bots on Base** — Two bot types: wallet bot (copies one wallet's trades) and consensus bot (trades on multi-wallet agreement). Both trade via Coinbase AgentKit + Agentic Wallets on Base Sepolia
 - **Historical price data on Base** — Moralis for block-level token prices on Base
 - **Real-time pair data on Base** — DexScreener for liquidity, market cap, pair age of Base tokens
 - **Smart alerts for Base wallets** — Monitor followed wallets on Base, notify when they trade with AI risk assessment
@@ -176,7 +176,7 @@ Built on Base's own infrastructure: EAS + AgentKit. Base is home.
 
 Prototype
 
-Backend is complete (Go + Fiber, clean architecture, all API endpoints functional). Frontend is complete (Next.js 16, all pages built). Currently connecting frontend to backend API. Smart contract fee router is in development.
+Backend is complete (Go + Fiber, clean architecture, all API endpoints functional). Frontend is complete (Next.js 16, all pages built). Currently connecting frontend to backend API. Two bot types implemented: wallet bot (copy trades) and consensus bot (multi-wallet agreement). Agent sidecar (Python + FastAPI + Coinbase AgentKit) is built. EAS attestation integration is complete.
 
 ---
 
@@ -210,7 +210,7 @@ No other tool gives you a simple "should I follow this wallet?" answer with cust
 
 90% of crypto users don't need more charts — they need someone to tell them which wallets are worth following and when to pay attention.
 
-Existing wallet analytics tools (Nansen, Arkham, DeBank) show data. Miora shows decisions. The gap in the market isn't "better analytics" — it's "actionable intelligence for non-experts." We combine wallet scoring, conditional alerts, and DEX trading into one flow so users go from discovery to action without leaving the platform.
+Existing wallet analytics tools (Nansen, Arkham, DeBank) show data. Miora shows decisions. The gap in the market isn't "better analytics" — it's "actionable intelligence for non-experts." We combine wallet scoring, conditional alerts, and AI trading bots into one flow so users go from discovery to action without leaving the platform.
 
 The technical advantage: our scoring engine uses FIFO PnL matching and multi-factor analysis that goes beyond simple profit tracking. Most "wallet score" tools just look at total profit. We evaluate how consistently they profit, how early they enter, what quality tokens they trade, and how disciplined their strategy is.
 
@@ -236,7 +236,7 @@ N/A — pre-launch.
 
 ## Revenue
 
-N/A — pre-launch. Planned revenue model: subscription or per-query fees for reputation API access on Base.
+N/A — pre-launch. Planned revenue model: consensus bot as premium feature, plus subscription or per-query fees for reputation API access on Base.
 
 ---
 

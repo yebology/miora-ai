@@ -18,6 +18,7 @@ type IWalletService interface {
 // Methods return Go's error — the service layer converts these to *pkg.AppError.
 type IWalletRepository interface {
 	FindByAddress(address string) (*entities.Wallet, error)
+	FindAllWithMetrics(minScore int) ([]entities.Wallet, error)
 	Create(wallet *entities.Wallet) error
 	SaveTransactions(txs []entities.Transaction) error
 	GetTransactions(walletID uint) ([]entities.Transaction, error)

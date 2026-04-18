@@ -1,7 +1,6 @@
 // Package handlers contains the AI trading agent HTTP request handlers.
 //
-// All agent endpoints require wallet authentication.
-// The user is identified by wallet address from the WalletAuth middleware.
+// Each bot targets one wallet. Users can have multiple bots.
 package handlers
 
 import (
@@ -17,115 +16,165 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// AgentHandler handles agent-related HTTP requests.
 type AgentHandler struct {
 	agentService interfaces.IAgentService
 	userService  *services.UserService
 }
 
-// NewAgentHandler creates a new AgentHandler.
 func NewAgentHandler(agentService interfaces.IAgentService, userService *services.UserService) *AgentHandler {
-	return &AgentHandler{
-		agentService: agentService,
-		userService:  userService,
-	}
+	return &AgentHandler{agentService: agentService, userService: userService}
 }
 
-// getUserID extracts the user ID from the wallet auth context.
 func (h *AgentHandler) getUserID(c *fiber.Ctx) (uint, *fiber.Error) {
 	walletAddress, _ := c.Locals("wallet_address").(string)
 	if walletAddress == "" {
 		return 0, fiber.NewError(fiber.StatusUnauthorized, constants.Unauthorized)
 	}
-
 	user, appErr := h.userService.FindOrCreateByWallet(walletAddress)
 	if appErr != nil {
 		return 0, fiber.NewError(fiber.StatusUnauthorized, constants.Unauthorized)
 	}
-
 	return user.ID, nil
 }
 
-// GetStatus handles GET /agent/status.
-func (h *AgentHandler) GetStatus(c *fiber.Ctx) error {
+// ListBots handles GET /agent/bots — list all bots for the user.
+func (h *AgentHandler) ListBots(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
 		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
 	}
 
-	config, appErr := h.agentService.GetStatus(userID)
+	bots, appErr := h.agentService.ListBots(userID)
 	if appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	return output.GetSuccess(c, constants.SuccessGetData, config)
+	return output.GetSuccess(c, constants.SuccessGetData, bots)
 }
 
-// UpdateConfig handles PUT /agent/config.
-func (h *AgentHandler) UpdateConfig(c *fiber.Ctx) error {
+// GetBot handles GET /agent/bots/:id — get a single bot.
+func (h *AgentHandler) GetBot(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
 		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
 	}
 
-	var req requests.UpdateAgentConfig
+	botID, _ := strconv.ParseUint(c.Params("id"), 10, 32)
+	bot, appErr := h.agentService.GetBot(uint(botID), userID)
+	if appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, constants.SuccessGetData, bot)
+}
+
+// CreateBot handles POST /agent/bots — create a new bot for a wallet.
+func (h *AgentHandler) CreateBot(c *fiber.Ctx) error {
+	userID, err := h.getUserID(c)
+	if err != nil {
+		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
+	}
+
+	var req requests.CreateBot
 	if appErr := utils.ParseAndValidateBody(c, &req); appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	config, appErr := h.agentService.UpdateConfig(
-		userID, req.Budget, req.MaxPerTrade, req.RiskTolerance, req.MinScore, req.Conditions,
+	bot, appErr := h.agentService.CreateBot(
+		userID, req.BotType, req.TargetWalletAddress, req.TargetWalletChain,
+		req.TargetWalletScore, req.Recommendation,
+		req.Budget, req.MaxPerTrade, req.Conditions,
+		req.ConsensusThreshold, req.ConsensusWindowMin, req.MinScore,
 	)
 	if appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	return output.GetSuccess(c, "Agent configuration updated.", config)
+	return output.GetSuccess(c, "Bot created.", bot)
 }
 
-// Start handles POST /agent/start.
-func (h *AgentHandler) Start(c *fiber.Ctx) error {
+// UpdateBot handles PUT /agent/bots/:id — update bot config.
+func (h *AgentHandler) UpdateBot(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
 		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
 	}
 
-	config, appErr := h.agentService.Start(userID)
+	botID, _ := strconv.ParseUint(c.Params("id"), 10, 32)
+	var req requests.UpdateBot
+	if appErr := utils.ParseAndValidateBody(c, &req); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	bot, appErr := h.agentService.UpdateBot(
+		uint(botID), userID, req.Budget, req.MaxPerTrade, req.Conditions,
+		req.ConsensusThreshold, req.ConsensusWindowMin, req.MinScore,
+	)
 	if appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	return output.GetSuccess(c, "Agent started.", config)
+	return output.GetSuccess(c, "Bot updated.", bot)
 }
 
-// Pause handles POST /agent/pause.
-func (h *AgentHandler) Pause(c *fiber.Ctx) error {
+// DeleteBot handles DELETE /agent/bots/:id — remove a bot.
+func (h *AgentHandler) DeleteBot(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
 		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
 	}
 
-	config, appErr := h.agentService.Pause(userID)
+	botID, _ := strconv.ParseUint(c.Params("id"), 10, 32)
+	if appErr := h.agentService.DeleteBot(uint(botID), userID); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, "Bot deleted.", nil)
+}
+
+// StartBot handles POST /agent/bots/:id/start.
+func (h *AgentHandler) StartBot(c *fiber.Ctx) error {
+	userID, err := h.getUserID(c)
+	if err != nil {
+		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
+	}
+
+	botID, _ := strconv.ParseUint(c.Params("id"), 10, 32)
+	bot, appErr := h.agentService.StartBot(uint(botID), userID)
 	if appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}
 
-	return output.GetSuccess(c, "Agent paused.", config)
+	return output.GetSuccess(c, "Bot started.", bot)
 }
 
-// GetTrades handles GET /agent/trades.
+// PauseBot handles POST /agent/bots/:id/pause.
+func (h *AgentHandler) PauseBot(c *fiber.Ctx) error {
+	userID, err := h.getUserID(c)
+	if err != nil {
+		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
+	}
+
+	botID, _ := strconv.ParseUint(c.Params("id"), 10, 32)
+	bot, appErr := h.agentService.PauseBot(uint(botID), userID)
+	if appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, "Bot paused.", bot)
+}
+
+// GetTrades handles GET /agent/bots/:id/trades.
 func (h *AgentHandler) GetTrades(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
 		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
 	}
 
+	botID, _ := strconv.ParseUint(c.Params("id"), 10, 32)
 	limit, _ := strconv.Atoi(c.Query("limit", "50"))
-	if limit <= 0 || limit > 100 {
-		limit = 50
-	}
 
-	trades, appErr := h.agentService.GetTrades(userID, limit)
+	trades, appErr := h.agentService.GetTrades(uint(botID), userID, limit)
 	if appErr != nil {
 		return output.GetError(c, appErr.Code, appErr.Message)
 	}

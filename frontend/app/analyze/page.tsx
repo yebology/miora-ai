@@ -25,7 +25,7 @@ export default function AnalyzePage() {
     chain: string;
   } | null>(null);
 
-  const checkAndAnalyze = async (address: string, chain: string, limit: number) => {
+  const checkAndAnalyze = async (address: string, chain: string) => {
     setError(null);
     setResult(null);
 

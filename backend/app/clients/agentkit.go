@@ -77,6 +77,7 @@ type SwapRequest struct {
 	TokenAddress string `json:"token_address"`
 	AmountETH    string `json:"amount_eth"`
 	TokenSymbol  string `json:"token_symbol"`
+	Direction    string `json:"direction"` // "buy" or "sell"
 }
 
 // SwapResult is the response from the sidecar swap endpoint.
@@ -90,11 +91,12 @@ type SwapResult struct {
 }
 
 // ExecuteSwap calls the Python sidecar to execute a token swap via AgentKit.
-func (c *AgentKitClient) ExecuteSwap(tokenAddress, tokenSymbol, amountETH string) (*SwapResult, error) {
+func (c *AgentKitClient) ExecuteSwap(tokenAddress, tokenSymbol, amountETH, direction string) (*SwapResult, error) {
 	payload, _ := json.Marshal(SwapRequest{
 		TokenAddress: tokenAddress,
 		AmountETH:    amountETH,
 		TokenSymbol:  tokenSymbol,
+		Direction:    direction,
 	})
 
 	resp, err := c.httpClient.Post(c.baseURL+"/swap", "application/json", bytes.NewReader(payload))

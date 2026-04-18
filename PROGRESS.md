@@ -5,7 +5,7 @@
 Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a **Trading Reputation Protocol on Base** (V2).
 
 - **V1**: Analytics tool — analyze wallet, follow, get alerts, swap manually (off-chain only)
-- **V2**: Infrastructure protocol — publish trading scores on-chain via EAS, autonomous AI agent trading via AgentKit
+- **V2**: Infrastructure protocol — publish trading scores on-chain via EAS, autonomous AI bots trading via AgentKit
 
 ### Why Pivot
 - V1 was an iterative improvement on existing tools (Nansen, Arkham, Cielo)
@@ -51,17 +51,24 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `repositories/watchlist.go` | ✅ Done | Create, Delete, Exists, FindByUser, Update |
 | `entities/watchlist.go` | ✅ Done | UserID, WalletAddress, Chain, Recommendation, Conditions (JSON), EmailNotify |
 
-### ✅ Auth & User System — DONE, No Changes Needed
+### ✅ Auth & User System — DONE (Wallet-Based Auth)
 | File | Status | Description |
 |------|--------|-------------|
-| `services/user.go` | ✅ Done | Find-or-create from Firebase UID |
+| `services/user.go` | ✅ Done | Find-or-create from wallet address |
 | `handlers/auth.go` | ✅ Done | GET /auth/me endpoint |
-| `middleware/firebase.go` | ✅ Done | Firebase token verification middleware |
-| `repositories/user.go` | ✅ Done | FindByFirebaseUID, Create, Update |
-| `entities/user.go` | ✅ Done | ID, FirebaseUID, Email, Name, Avatar |
+| `middleware/wallet_auth.go` | ✅ Done | Wallet auth middleware (X-Wallet-Address header) |
+| `repositories/user.go` | ✅ Done | FindByWalletAddress, Create, Update |
+| `entities/user.go` | ✅ Done | ID, WalletAddress |
+
+### ✅ Firebase Removal — DONE
+- [x] Removed Firebase Auth dependency
+- [x] Replaced with wallet-based auth (MetaMask connect → X-Wallet-Address header)
+- [x] Removed `middleware/firebase.go`
+- [x] Removed Firebase config from `config/config.go`
+- [x] Updated all protected routes to use wallet auth middleware
 
 ### ✅ Swap System — REMOVED
-> Swap system (1inch, manual trading) has been removed. Agent handles all trading via AgentKit.
+> Swap system (1inch, manual trading) has been removed. Bots handle all trading via AgentKit.
 
 ### ✅ Data Clients — DONE, No Changes Needed
 | File | Status | Description |
@@ -71,22 +78,24 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `clients/moralis.go` | ✅ Done | Historical token prices by block on Base |
 | `clients/helpers.go` | ✅ Done | Shared HTTP client helpers |
 
-### ✅ Entities (Database Models) — DONE, Needs V2 Additions
+### ✅ Entities (Database Models) — DONE
 | File | Status | Description |
 |------|--------|-------------|
-| `entities/user.go` | ✅ Done | ID, FirebaseUID, Email, Name, Avatar |
+| `entities/user.go` | ✅ Done | ID, WalletAddress |
 | `entities/wallet.go` | ✅ Done | ID, Address, Chain |
 | `entities/transaction.go` | ✅ Done | ID, WalletID, Hash, Chain, From, To, Value, TokenSymbol, ContractAddress, Direction, BlockNumber, Timestamp |
 | `entities/wallet_metric.go` | ✅ Done | ID, WalletID, TotalTransactions, 6 scoring metrics, FinalScore, Recommendation |
 | `entities/watchlist.go` | ✅ Done | ID, UserID, WalletAddress, Chain, Recommendation, Conditions (JSON), EmailNotify |
 | `entities/notification.go` | ✅ Done | ID, UserID, WalletAddress, Chain, TokenAddress, TokenSymbol, Direction, Value, Liquidity, MarketCap, AiAssessment, Read |
+| `entities/agent_config.go` | ✅ Done | Per-wallet bot config: UserID, BotType (wallet/consensus), TargetWallet, Budget, MaxPerTrade, MinScore, Conditions (JSON), Status, AgentWalletAddress, TotalSpent, TotalTrades. Consensus fields: ConsensusThreshold, ConsensusWindowMin |
+| `entities/agent_trade.go` | ✅ Done | AgentConfigID, SourceWallet, SourceScore, TokenAddress, TokenSymbol, Direction (buy/sell), AmountUSD, TxHash, Status, Reason, RiskAssessment |
 
 ### ✅ Infrastructure — DONE, No Changes Needed
 | File | Status | Description |
 |------|--------|-------------|
 | `router/container.go` | ✅ Done | DI container: Clients → Repos → Services → Handlers |
 | `router/routes.go` | ✅ Done | Route registration + middleware setup |
-| `config/config.go` | ✅ Done | Environment config loader (all required keys) |
+| `config/config.go` | ✅ Done | Environment config loader (all required keys, no Firebase) |
 | `constants/chains.go` | ✅ Done | Base only (multi-chain removed) |
 | `constants/limits.go` | ✅ Done | Configurable transaction limits per chain |
 | `constants/error.go` | ✅ Done | Error message constants |
@@ -127,26 +136,29 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [ ] Set `EAS_SCHEMA_UID` in `.env` (printed by register-schema command)
 - [ ] Test end-to-end: analyze wallet → attestation published → verify on [BaseScan](https://base-sepolia.easscan.org)
 
-### 🆕 V2 Backend — Layer 3: AI Trading Agent (AgentKit)
+### 🆕 V2 Backend — Layer 3: AI Trading Bots (AgentKit)
 - [x] Research Coinbase AgentKit SDK — only available in TypeScript/Python, no Go SDK
-- [x] Create `entities/agent_config.go` — AgentConfig entity: UserID, Budget, MaxPerTrade, RiskTolerance, MinScore, Conditions (JSON), Status (active/paused/stopped), AgentWalletAddress, TotalSpent, TotalTrades
-- [x] Create `entities/agent_trade.go` — AgentTrade entity: AgentConfigID, SourceWallet, SourceScore, TokenAddress, TokenSymbol, Direction, AmountUSD, TxHash, Status, Reason, RiskAssessment
-- [x] Create `repositories/agent.go` — AgentConfig + AgentTrade CRUD
+- [x] Create `entities/agent_config.go` — Per-wallet bot config: UserID, BotType (wallet/consensus), TargetWallet, Budget, MaxPerTrade, MinScore, Conditions (JSON), Status (active/paused/stopped), AgentWalletAddress, TotalSpent, TotalTrades. Consensus fields: ConsensusThreshold, ConsensusWindowMin
+- [x] Create `entities/agent_trade.go` — AgentTrade entity: AgentConfigID, SourceWallet, SourceScore, TokenAddress, TokenSymbol, Direction (buy/sell), AmountUSD, TxHash, Status, Reason, RiskAssessment
+- [x] Create `repositories/agent.go` — AgentConfig + AgentTrade CRUD (per-bot)
 - [x] Create `interfaces/agent.go` — `IAgentRepository`, `IAgentService`
-- [x] Create `services/agent.go` — Agent service: GetOrCreateConfig, UpdateConfig, Start, Pause, GetStatus, GetTrades
-- [x] Create `handlers/agent.go` — GET /agent/status, PUT /agent/config, POST /agent/start, POST /agent/pause, GET /agent/trades
-- [x] Create `http/agent.go` — register agent routes (protected, Firebase auth)
-- [x] Create `dto/requests/agent.go` — agent config request DTO
+- [x] Create `services/agent.go` — Bot service: CreateBot, UpdateBot, StartBot, PauseBot, DeleteBot, GetBot, ListBots, GetTrades
+- [x] Create `handlers/agent.go` — POST /agent/bots, GET /agent/bots, GET /agent/bots/:id, PUT /agent/bots/:id, POST /agent/bots/:id/start, POST /agent/bots/:id/pause, DELETE /agent/bots/:id, GET /agent/bots/:id/trades
+- [x] Create `http/agent.go` — register bot routes (protected, wallet auth)
+- [x] Create `dto/requests/agent.go` — bot create/update request DTO (bot_type, target_wallet, budget, max_per_trade, min_score, conditions, consensus_threshold, consensus_window_min)
 - [x] Wire agent service + handler into `router/container.go`
-- [x] Register agent routes in `router/routes.go`
+- [x] Register bot routes in `router/routes.go`
 - [x] Update `migrations/migrations.go` to auto-migrate AgentConfig + AgentTrade
 - [x] Create Python AgentKit sidecar (`agent/main.py`) — FastAPI service wrapping `coinbase-agentkit`
 - [x] Create `clients/agentkit.go` — Go HTTP client to call Python sidecar (GetWallet, ExecuteSwap, IsHealthy)
-- [x] Create `services/agent_loop.go` — Background loop: poll active configs → check top wallets → evaluate conditions → execute swap via sidecar
+- [x] Create `services/agent_loop.go` — Background loop: poll active bots → wallet bot copies target wallet trades (buy + sell) → consensus bot scans all Miora wallets for agreement → evaluate conditions → execute swap via sidecar
+- [x] Add sell logic to bots (buy + sell based on target wallet behavior)
+- [x] Add consensus bot type: separate bot that scans all Miora wallets, trades when multiple high-score wallets buy same token within time window
 - [x] Add swap endpoint to Python sidecar (`POST /swap`)
 - [x] Add `make setup-agent` and `make run-agent` to Makefile
+- [x] Create bot from watchlist: user selects wallet from watchlist → conditions auto-filled from analyze result
 - [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
-- [ ] Test end-to-end: agent detects trade → evaluates → executes swap on Base Sepolia
+- [ ] Test end-to-end: bot detects trade → evaluates → executes swap on Base Sepolia
 
 ---
 
@@ -157,18 +169,17 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - next-themes (dark/light mode, default dark), Space Grotesk font
 - wagmi + viem + @reown/appkit (wallet connect — MetaMask, WalletConnect)
 - @tanstack/react-query (installed, not yet used — ready for API integration)
-- @coinbase/cdp-sdk (NOT installed in package.json — needs to be added for AgentKit)
 
 ### ✅ Pages — DONE, Needs V2 Additions
 | Page | Status | Description |
 |------|--------|-------------|
-| `app/page.tsx` (Landing) | ✅ Done | V2 hero + narrative (reputation protocol + AI agent) |
+| `app/page.tsx` (Landing) | ✅ Done | V2 hero + narrative (reputation protocol + AI bots) |
 | `app/analyze/page.tsx` | ✅ Done | Wallet analysis page — currently uses dummy data |
 | `app/watchlist/page.tsx` | ✅ Done | Watchlist dashboard — currently uses dummy data |
 | `app/watchlist/[chain]/[address]/page.tsx` | ✅ Done | Watchlist detail page — currently uses dummy data |
-| `app/swap/page.tsx` | ✅ Removed | Swap system removed — agent handles trading |
-| `app/login/page.tsx` | ⚠️ Placeholder | Login page skeleton |
-| `app/agent/page.tsx` | ✅ Done | Agent setup + dashboard page (V2 new, dummy data) |
+| `app/swap/page.tsx` | ✅ Removed | Swap system removed — bots handle trading |
+| `app/login/page.tsx` | ⚠️ Placeholder | Login page skeleton (wallet connect) |
+| `app/agent/page.tsx` | ✅ Done | Bot management + dashboard page (V2 new, dummy data) |
 
 ### ✅ Components — DONE, Needs V2 Additions
 | Directory | Files | Status |
@@ -177,7 +188,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `components/watchlist/` | watchlist-card, notification-item | ✅ Done — uses dummy data |
 | `components/landing/` | hero-section, hero-background, features-section, how-it-works-section, chains-section, cta-section | ✅ Done — V2 narrative applied |
 | `components/layout/` | navbar, footer, theme-toggle | ✅ Done — needs "Agent" nav item |
-| `components/providers/` | auth-provider, theme-provider, web3-provider | ✅ Done — auth-provider uses simulated login |
+| `components/providers/` | auth-provider, theme-provider, web3-provider | ✅ Done — auth-provider uses wallet connect |
 | `components/ui/` | button, card, badge, dialog, input, label, progress, select, sheet, auth-guard-modal, wallet-guard-modal | ✅ Done |
 | `components/icons/` | google | ✅ Done |
 | `components/agent/` | agent-config-form, agent-status-card, agent-trade-history | ✅ Done (V2 new) |
@@ -185,7 +196,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 ### ✅ Data Layer — DONE, Needs Real API Connection
 | File | Status | Description |
 |------|--------|-------------|
-| `lib/api.ts` | ✅ Done | API client with endpoints (analyzeWallet, getWallet, regenerateInsight, getWatchlist, followWallet, unfollowWallet, updateWatchlist, getMe) |
+| `lib/api.ts` | ✅ Done | API client with endpoints (analyzeWallet, getWallet, regenerateInsight, getWatchlist, followWallet, unfollowWallet, updateWatchlist, getMe, bot CRUD) |
 | `constants/dummy.ts` | ⚠️ Dummy | 3 dummy wallet analyses (conditional_follow, full_follow, avoid) — to be replaced |
 | `constants/dummy-watchlist.ts` | ⚠️ Dummy | 3 dummy watchlist items + 4 dummy notifications — to be replaced |
 | `constants/landing.ts` | ✅ Done | Landing page copy (V2 narrative, Solana removed) |
@@ -195,7 +206,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `types/watchlist.ts` | ✅ Done | WatchlistItem, Notification types |
 | `types/api.ts` | ✅ Done | ApiResponse envelope type |
 | `types/swap.ts` | ✅ Removed | Swap system removed |
-| `types/agent.ts` | ✅ Done | AgentConfig, AgentTrade types (V2 new) |
+| `types/agent.ts` | ✅ Done | BotConfig (wallet/consensus types), BotTrade types (V2 new) |
 | `types/reputation.ts` | ✅ Done | Reputation type (V2 new) |
 | `hooks/use-animate-on-scroll.ts` | ✅ Done | Scroll animation hook |
 | `lib/utils.ts` | ✅ Done | cn() utility for conditional classnames |
@@ -206,19 +217,19 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Updated hero section + README tagline to V2 narrative
 - [x] Frontend builds clean
 
-### 🆕 V2 Frontend — Agent Page & Components
+### 🆕 V2 Frontend — Bot Page & Components
 - [x] Add "Agent" to `constants/nav.ts` navigation items
-- [x] Create `app/agent/page.tsx` — Agent setup + dashboard page (with dummy data)
-- [x] Create `types/agent.ts` — AgentConfig, AgentTrade types
+- [x] Create `app/agent/page.tsx` — Bot management + dashboard page (with dummy data)
+- [x] Create `types/agent.ts` — BotConfig (wallet/consensus types), BotTrade types
 - [x] Create `types/reputation.ts` — Reputation type
-- [x] Add agent + reputation API functions to `lib/api.ts`
-- [x] Create `components/agent/agent-config-form.tsx` — Budget, max per trade, risk tolerance, conditions form
-- [x] Create `components/agent/agent-status-card.tsx` — Agent status (active/paused/stopped), wallet balance, total trades
-- [x] Create `components/agent/agent-trade-history.tsx` — Table of agent's executed trades with status + reason
+- [x] Add bot + reputation API functions to `lib/api.ts`
+- [x] Create `components/agent/agent-config-form.tsx` — Bot creation: select type (wallet/consensus), budget, max per trade, min score, conditions (auto-filled from watchlist)
+- [x] Create `components/agent/agent-status-card.tsx` — Bot status (active/paused/stopped), wallet balance, total trades
+- [x] Create `components/agent/agent-trade-history.tsx` — Table of bot's executed trades with status + reason
 
 ### 🆕 V2 Frontend — Reputation Display
 - [x] Create `components/analyze/attestation-badge.tsx` — "Verified on Base" badge with attestation link
-- [ ] Add attestation badge to `components/analyze/analysis-result.tsx` — show after analysis
+- [x] Add attestation badge to `components/analyze/analysis-result.tsx` — shows after analysis
 
 ### 🧹 Frontend Cleanup — DONE
 - [x] Removed swap page (`app/swap/page.tsx`)
@@ -233,11 +244,11 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 > Do this after all V2 UI is built and backend is running. Currently using dummy data so the UI can be reviewed visually first.
 
 #### Auth Provider (`components/providers/auth-provider.tsx`)
-- [ ] Replace simulated sign-in with real Firebase Google sign-in (`signInWithPopup`, `GoogleAuthProvider`)
-- [ ] Store Firebase ID token for API calls
-- [ ] Call `getMe()` after sign-in to sync user with backend
-- [ ] Replace simulated sign-out with real Firebase sign-out
-- [ ] Add `getToken()` method to auth context for components to use
+- [ ] Replace simulated sign-in with real wallet connect (MetaMask via wagmi)
+- [ ] Send X-Wallet-Address header with all API calls
+- [ ] Call `getMe()` after wallet connect to sync user with backend
+- [ ] Replace simulated sign-out with wallet disconnect
+- [ ] Add `getWalletAddress()` method to auth context for components to use
 
 #### Analyze Page (`app/analyze/page.tsx`)
 - [ ] Replace dummy data simulation with real `analyzeWallet()` call from `lib/api.ts`
@@ -251,18 +262,18 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 
 #### Conditions Card (`components/analyze/conditions-card.tsx`)
 - [ ] Replace dummy follow action with real `followWallet()` call from `lib/api.ts`
-- [ ] Pass Firebase auth token from `useAuth()` context
+- [ ] Pass wallet address from `useAuth()` context
 
 #### Analysis Result (`components/analyze/analysis-result.tsx`)
 - [ ] Replace dummy "Follow Wallet" action with real `followWallet()` call
-- [ ] Pass Firebase auth token from `useAuth()` context
+- [ ] Pass wallet address from `useAuth()` context
 
 #### Watchlist Page (`app/watchlist/page.tsx`)
 - [ ] Replace `DUMMY_WATCHLIST` with real `getWatchlist()` call from `lib/api.ts`
 - [ ] Replace `DUMMY_NOTIFICATIONS` with real notification data (WebSocket or polling)
 - [ ] Replace dummy unfollow with real `unfollowWallet()` call
 - [ ] Replace dummy toggle notify with real `updateWatchlist()` call
-- [ ] Pass Firebase auth token from `useAuth()` context
+- [ ] Pass wallet address from `useAuth()` context
 
 #### Watchlist Detail Page (`app/watchlist/[chain]/[address]/page.tsx`)
 - [ ] Replace `DUMMY_ANALYSIS` with real `getWallet()` call from `lib/api.ts`
@@ -277,6 +288,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Removed multi-chain support (Base only — removed Ethereum, Arbitrum, Optimism, Polygon from chain registry)
 - [x] Removed smart contract placeholders (Counter.sol, Counter.t.sol, Counter.s.sol)
 - [x] Removed Solana/V1 code (all Solana clients, interfaces, references)
+- [x] Removed Firebase Auth — replaced with wallet-based auth (MetaMask connect, X-Wallet-Address header)
 - [ ] Remove `frontend/constants/dummy.ts` after API connection is done
 - [ ] Remove `frontend/constants/dummy-watchlist.ts` after API connection is done
 
@@ -288,9 +300,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Update `Makefile` with `make register-schema`, `make setup-agent`, `make run-agent`
 - [x] Remove `ONEINCH_API_KEY` from config (swap system removed)
 - [x] Update `constants/chains.go` to Base only
+- [x] Remove Firebase config from `backend/config/config.go`
 - [ ] Add EAS env vars to `backend/.env` (actual values)
 - [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
-- [ ] Add `@coinbase/cdp-sdk` to `frontend/package.json` (if frontend needs AgentKit)
 - [ ] Update `frontend/.env` with any new public env vars
-
-

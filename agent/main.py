@@ -128,12 +128,13 @@ class TransferRequest(BaseModel):
 class SwapRequest(BaseModel):
     """Request to execute a token swap via the Agentic Wallet.
     
-    For hackathon PoC, this uses native_transfer to simulate a swap.
+    For hackathon PoC, this uses native_transfer (buy) or erc20 transfer (sell).
     In production, this would use a DEX aggregator action (Uniswap/1inch).
     """
-    token_address: str      # Token contract address to buy
-    amount_eth: str         # Amount of ETH to spend (e.g. "0.001")
-    token_symbol: str = ""  # Optional token symbol for logging
+    token_address: str          # Token contract address
+    amount_eth: str             # Amount of ETH to spend (buy) or token amount (sell)
+    token_symbol: str = ""      # Optional token symbol for logging
+    direction: str = "buy"      # "buy" or "sell"
 
 
 # --- Endpoints ---
@@ -182,35 +183,52 @@ async def get_wallet():
 
 @app.post("/swap")
 async def execute_swap(req: SwapRequest):
-    """Execute a token swap using the Agentic Wallet.
+    """Execute a token buy or sell using the Agentic Wallet.
     
     Called by Go backend's agent_loop.go when:
-    1. A top-scored wallet makes a trade
-    2. All conditions pass (liquidity, mcap, pair age, budget, AI risk)
+    1. A watched wallet makes a trade (buy or sell)
+    2. All conditions pass
     3. Agent status is "active"
     
-    For hackathon PoC: uses native_transfer to simulate a swap.
-    In production: would integrate with Uniswap/1inch action provider
-    to actually swap ETH for the target token.
+    Buy: uses native_transfer to send ETH to token address (PoC).
+    Sell: uses erc20 transfer to send tokens back (PoC).
+    In production: would use DEX aggregator for actual swaps.
     """
     if not agent_kit:
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
     try:
         actions = agent_kit.get_actions()
-        transfer_action = next((a for a in actions if a.name == "native_transfer"), None)
 
-        if not transfer_action:
-            raise HTTPException(status_code=500, detail="Transfer action not available")
+        if req.direction == "sell":
+            # Sell: transfer ERC-20 tokens from agent wallet
+            # In production, this would swap token → ETH via DEX
+            transfer_action = next((a for a in actions if a.name == "transfer"), None)
+            if not transfer_action:
+                # Fallback to native transfer if erc20 transfer not available
+                transfer_action = next((a for a in actions if a.name == "native_transfer"), None)
 
-        # Execute the swap (PoC: native transfer to token address)
-        result = transfer_action.invoke({
-            "to": req.token_address,
-            "value": req.amount_eth,
-        })
+            if not transfer_action:
+                raise HTTPException(status_code=500, detail="Transfer action not available")
+
+            result = transfer_action.invoke({
+                "to": req.token_address,
+                "value": req.amount_eth,
+            })
+        else:
+            # Buy: send ETH to token address (PoC)
+            transfer_action = next((a for a in actions if a.name == "native_transfer"), None)
+            if not transfer_action:
+                raise HTTPException(status_code=500, detail="Transfer action not available")
+
+            result = transfer_action.invoke({
+                "to": req.token_address,
+                "value": req.amount_eth,
+            })
 
         return {
             "status": "success",
+            "direction": req.direction,
             "token_address": req.token_address,
             "token_symbol": req.token_symbol,
             "amount_eth": req.amount_eth,

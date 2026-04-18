@@ -44,7 +44,7 @@
    - ☐ 24h volume > $60k
 3. Andi centang liquidity dan market cap
 4. Klik "Follow Wallet"
-5. Miora minta login → Andi sign in with Google
+5. Miora minta connect wallet → Andi connect MetaMask
 6. Wallet ditambahkan ke watchlist
 7. Andi sekarang hanya dapat notifikasi kalau wallet 0xABC beli token yang liquidity > $120k DAN mcap > $450k
 
@@ -82,44 +82,85 @@
 
 ---
 
-## Story 4: Andi setup AI trading agent
+## Story 4: Andi buat wallet bot dari watchlist
 
-> "Sebagai Andi, saya ingin agent yang trade otomatis berdasarkan wallet terbaik, supaya saya tidak perlu monitor 24/7."
+> "Sebagai Andi, saya ingin bot yang otomatis copy trade wallet terbaik dari watchlist saya, supaya saya tidak perlu monitor 24/7."
 
 **Scenario:**
 
-1. Andi buka halaman Agent
-2. Isi konfigurasi:
+1. Andi buka halaman Agent (Bot Management)
+2. Klik "Create Bot" → pilih type: **Wallet Bot**
+3. Miora tampilkan daftar wallet dari watchlist Andi
+4. Andi pilih wallet 0xDEF (score 88, Full Follow)
+5. Conditions otomatis terisi dari hasil analyze wallet 0xDEF:
+   - ✅ Min liquidity: $100k
+   - ✅ Min mcap: $1M
+   - ✅ Min pair age: 6 hours
+6. Andi isi parameter:
    - Budget: $200
    - Max per trade: $20
-   - Risk tolerance: Medium
-   - Min score: 75 (hanya follow wallet score tinggi)
-   - Conditions: ✅ Min liquidity, ✅ Min mcap
-3. Klik "Save Configuration"
-4. Klik "Start Agent"
-5. Agent mulai jalan di background
-6. 2 jam kemudian:
-   - Wallet 0xDEF (score 88) beli LINK
-   - Agent evaluate: liquidity $95M ✅, mcap $8.5B ✅, budget cukup ✅
+   - Min score: 75
+7. Klik "Create Bot" → bot dibuat
+8. Klik "Start" → bot mulai jalan di background
+9. 2 jam kemudian:
+   - Wallet 0xDEF beli LINK
+   - Bot evaluate: liquidity $95M ✅, mcap $8.5B ✅, pair age OK ✅, budget cukup ✅
    - AI assessment: "Very low risk — top-tier token"
-   - Agent execute: beli $20 LINK via Agentic Wallet
-7. Andi buka Agent page → lihat trade history:
-   - "✅ LINK — $20 — Bought because wallet 0xDEF (score 88) bought it"
-8. Keesokan harinya:
-   - Wallet 0xGHI (score 65) beli NEWTOKEN
-   - Agent evaluate: score 65 < minScore 75 ❌
-   - Agent skip: "Wallet score below threshold"
-   - Trade dicatat sebagai "skipped"
+   - Bot execute: beli $20 LINK via Agentic Wallet
+10. Andi buka Bot page → lihat trade history:
+    - "✅ LINK — $20 — Bought because wallet 0xDEF (score 88) bought it"
+11. 3 jam kemudian:
+    - Wallet 0xDEF jual LINK
+    - Bot evaluate: conditions pass ✅
+    - Bot execute: jual LINK via Agentic Wallet
+    - "✅ LINK — Sold because wallet 0xDEF sold it"
 
 **Acceptance criteria:**
-- Agent hanya trade kalau SEMUA conditions pass
+- Bot hanya trade kalau SEMUA conditions pass
+- Bot follows both buys AND sells of target wallet
 - Budget tidak pernah terlampaui
 - Setiap trade (executed/skipped/failed) dicatat dengan alasan
 - User bisa pause/resume kapan saja
+- Conditions auto-filled dari analyze result saat create bot dari watchlist
 
 ---
 
-## Story 5: Andi cek reputasi on-chain
+## Story 5: Andi buat consensus bot
+
+> "Sebagai Andi, saya ingin bot yang trade otomatis kalau banyak wallet bagus beli token yang sama, supaya saya dapat sinyal yang lebih kuat."
+
+**Scenario:**
+
+1. Andi buka halaman Agent → klik "Create Bot" → pilih type: **Consensus Bot**
+2. Isi parameter:
+   - Budget: $300
+   - Max per trade: $30
+   - Min score: 70 (hanya pertimbangkan wallet score tinggi)
+   - Consensus threshold: 3 (minimal 3 wallet harus beli token yang sama)
+   - Time window: 60 menit (dalam 60 menit terakhir)
+3. Klik "Create Bot" → bot dibuat
+4. Klik "Start" → bot mulai scan semua wallet Miora
+5. 4 jam kemudian:
+   - Wallet 0xAAA (score 85) beli TOKEN_X
+   - Wallet 0xBBB (score 78) beli TOKEN_X
+   - Wallet 0xCCC (score 91) beli TOKEN_X
+   - 3 wallet dalam 60 menit → threshold tercapai ✅
+   - Bot evaluate conditions: liquidity OK ✅, mcap OK ✅
+   - AI assessment: "Multiple high-score wallets buying — strong consensus signal"
+   - Bot execute: beli $30 TOKEN_X
+6. Andi lihat di trade history:
+   - "✅ TOKEN_X — $30 — Consensus: 3 wallets (0xAAA, 0xBBB, 0xCCC) bought within 60min"
+
+**Acceptance criteria:**
+- Consensus bot is a separate bot type (not a toggle inside wallet bot)
+- Bot only trades when threshold number of wallets buy same token within time window
+- Each wallet must meet min_score requirement
+- Budget dan max per trade dipatuhi
+- Trade history menunjukkan wallet mana yang trigger consensus
+
+---
+
+## Story 6: Andi cek reputasi on-chain
 
 > "Sebagai Andi, saya ingin buktikan ke teman bahwa wallet saya punya trading score bagus, dengan bukti on-chain yang tidak bisa dipalsukan."
 
@@ -145,7 +186,7 @@
 
 ---
 
-## Story 6: Protocol lain query Miora score
+## Story 7: Protocol lain query Miora score
 
 > "Sebagai developer lending protocol di Base, saya ingin query trading reputation wallet sebelum approve pinjaman, supaya saya bisa assess risiko borrower."
 
@@ -176,23 +217,26 @@
 
 ---
 
-## Story 7: Andi pause agent karena market crash
+## Story 8: Andi pause bot karena market crash
 
-> "Sebagai Andi, saya ingin bisa pause agent kapan saja kalau market sedang tidak stabil, supaya agent tidak trade di kondisi buruk."
+> "Sebagai Andi, saya ingin bisa pause bot kapan saja kalau market sedang tidak stabil, supaya bot tidak trade di kondisi buruk."
 
 **Scenario:**
 
 1. Andi lihat berita: "Base DeFi market crash 20%"
 2. Buka halaman Agent
-3. Status: Active, 8 trades executed, $160 spent
-4. Klik "Pause Agent"
-5. Agent langsung berhenti polling
+3. Andi punya 2 bot:
+   - Wallet Bot (0xDEF): Active, 8 trades executed, $160 spent
+   - Consensus Bot: Active, 3 trades executed, $90 spent
+4. Klik "Pause" di kedua bot
+5. Kedua bot langsung berhenti polling
 6. Tidak ada trade baru yang dieksekusi
 7. 3 hari kemudian, market stabil
-8. Andi buka Agent → klik "Start Agent"
-9. Agent resume polling dan trading
+8. Andi buka Agent → klik "Start" di kedua bot
+9. Bot resume polling dan trading
 
 **Acceptance criteria:**
 - Pause immediate — tidak ada trade setelah pause
 - State preserved — budget, trade history tetap ada
 - Resume tanpa perlu reconfigure
+- Each bot can be paused/started independently

@@ -88,25 +88,37 @@ export function getReputation(address: string) {
   return request<import("@/types/reputation").Reputation>(`/reputation/${address}`);
 }
 
-// --- Agent (requires auth token) ---
+// --- Agent (requires wallet auth) ---
 
-export function getAgentStatus(token: string) {
-  return request<import("@/types/agent").AgentConfig>("/agent/status", { token });
+export function listBots(token: string) {
+  return request<import("@/types/agent").AgentConfig[]>("/agent/bots", { token });
 }
 
-export function updateAgentConfig(token: string, data: { budget?: number; max_per_trade?: number; risk_tolerance?: string; min_score?: number; conditions?: string[] }) {
-  return request<import("@/types/agent").AgentConfig>("/agent/config", { method: "PUT", body: data, token });
+export function getBot(token: string, botId: number) {
+  return request<import("@/types/agent").AgentConfig>(`/agent/bots/${botId}`, { token });
 }
 
-export function startAgent(token: string) {
-  return request<import("@/types/agent").AgentConfig>("/agent/start", { method: "POST", token });
+export function createBot(token: string, data: { target_wallet_address: string; target_wallet_chain: string; target_wallet_score: number; recommendation: string; budget: number; max_per_trade: number; conditions: string[] }) {
+  return request<import("@/types/agent").AgentConfig>("/agent/bots", { method: "POST", body: data, token });
 }
 
-export function pauseAgent(token: string) {
-  return request<import("@/types/agent").AgentConfig>("/agent/pause", { method: "POST", token });
+export function updateBot(token: string, botId: number, data: { budget?: number; max_per_trade?: number; conditions?: string[]; consensus_enabled?: boolean; consensus_threshold?: number; consensus_window_min?: number }) {
+  return request<import("@/types/agent").AgentConfig>(`/agent/bots/${botId}`, { method: "PUT", body: data, token });
 }
 
-export function getAgentTrades(token: string, limit?: number) {
+export function deleteBot(token: string, botId: number) {
+  return request<void>(`/agent/bots/${botId}`, { method: "DELETE", token });
+}
+
+export function startBot(token: string, botId: number) {
+  return request<import("@/types/agent").AgentConfig>(`/agent/bots/${botId}/start`, { method: "POST", token });
+}
+
+export function pauseBot(token: string, botId: number) {
+  return request<import("@/types/agent").AgentConfig>(`/agent/bots/${botId}/pause`, { method: "POST", token });
+}
+
+export function getBotTrades(token: string, botId: number, limit?: number) {
   const query = limit ? `?limit=${limit}` : "";
-  return request<import("@/types/agent").AgentTrade[]>(`/agent/trades${query}`, { token });
+  return request<import("@/types/agent").AgentTrade[]>(`/agent/bots/${botId}/trades${query}`, { token });
 }

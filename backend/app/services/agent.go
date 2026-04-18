@@ -1,12 +1,7 @@
 // Package services contains the AI trading agent business logic.
 //
-// The agent monitors top-scored wallets, evaluates their trades through
-// the scoring engine and AI risk assessment, and executes swaps when
-// all conditions are met.
-//
-// Note: For the hackathon, the agent service handles config management
-// and trade recording. Actual autonomous trading (monitor → evaluate → execute)
-// is a background process that will be implemented with AgentKit integration.
+// Each bot targets one specific wallet. A user can have multiple bots.
+// Conditions are inherited from the wallet's analyze result.
 package services
 
 import (
@@ -18,29 +13,32 @@ import (
 	"miora-ai/pkg"
 )
 
-// AgentService implements interfaces.IAgentService.
 type AgentService struct {
 	repo interfaces.IAgentRepository
 }
 
-// NewAgentService creates a new AgentService.
 func NewAgentService(repo interfaces.IAgentRepository) *AgentService {
 	return &AgentService{repo: repo}
 }
 
-// GetOrCreateConfig returns the agent config for a user, creating a default if none exists.
-func (s *AgentService) GetOrCreateConfig(userID uint) (*entities.AgentConfig, *pkg.AppError) {
-	config, err := s.repo.FindConfigByUserID(userID)
-	if err == nil && config != nil {
-		return config, nil
-	}
+// CreateBot creates a new bot.
+func (s *AgentService) CreateBot(userID uint, botType, targetWallet, chain string, score int, recommendation string, budget, maxPerTrade float64, conditions []string, consensusThreshold, consensusWindowMin, minScore int) (*entities.AgentConfig, *pkg.AppError) {
+	condJSON, _ := json.Marshal(conditions)
 
-	// Create empty config — user must configure via PUT /agent/config before starting
-	defaultConditions, _ := json.Marshal([]string{})
-	config = &entities.AgentConfig{
-		UserID:     userID,
-		Conditions: defaultConditions,
-		Status:     constants.DefaultAgentStatus,
+	config := &entities.AgentConfig{
+		UserID:              userID,
+		BotType:             botType,
+		TargetWalletAddress: targetWallet,
+		TargetWalletChain:   chain,
+		TargetWalletScore:   score,
+		Recommendation:      recommendation,
+		Budget:              budget,
+		MaxPerTrade:         maxPerTrade,
+		Conditions:          condJSON,
+		Status:              constants.DefaultAgentStatus,
+		ConsensusThreshold:  consensusThreshold,
+		ConsensusWindowMin:  consensusWindowMin,
+		MinScore:            minScore,
 	}
 
 	if err := s.repo.CreateConfig(config); err != nil {
@@ -50,11 +48,11 @@ func (s *AgentService) GetOrCreateConfig(userID uint) (*entities.AgentConfig, *p
 	return config, nil
 }
 
-// UpdateConfig updates the agent configuration for a user.
-func (s *AgentService) UpdateConfig(userID uint, budget, maxPerTrade float64, riskTolerance string, minScore int, conditions []string) (*entities.AgentConfig, *pkg.AppError) {
-	config, appErr := s.GetOrCreateConfig(userID)
-	if appErr != nil {
-		return nil, appErr
+// UpdateBot updates a bot's configuration.
+func (s *AgentService) UpdateBot(botID, userID uint, budget, maxPerTrade float64, conditions []string, consensusThreshold, consensusWindowMin, minScore int) (*entities.AgentConfig, *pkg.AppError) {
+	config, err := s.repo.FindByID(botID)
+	if err != nil || config.UserID != userID {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
 	}
 
 	if budget > 0 {
@@ -63,15 +61,18 @@ func (s *AgentService) UpdateConfig(userID uint, budget, maxPerTrade float64, ri
 	if maxPerTrade > 0 {
 		config.MaxPerTrade = maxPerTrade
 	}
-	if riskTolerance != "" {
-		config.RiskTolerance = riskTolerance
-	}
-	if minScore >= 0 && minScore <= 100 {
-		config.MinScore = minScore
-	}
 	if conditions != nil {
 		condJSON, _ := json.Marshal(conditions)
 		config.Conditions = condJSON
+	}
+	if consensusThreshold >= 2 {
+		config.ConsensusThreshold = consensusThreshold
+	}
+	if consensusWindowMin >= 5 {
+		config.ConsensusWindowMin = consensusWindowMin
+	}
+	if minScore >= 0 && minScore <= 100 {
+		config.MinScore = minScore
 	}
 
 	if err := s.repo.UpdateConfig(config); err != nil {
@@ -81,11 +82,25 @@ func (s *AgentService) UpdateConfig(userID uint, budget, maxPerTrade float64, ri
 	return config, nil
 }
 
-// Start activates the agent for a user.
-func (s *AgentService) Start(userID uint) (*entities.AgentConfig, *pkg.AppError) {
-	config, appErr := s.GetOrCreateConfig(userID)
-	if appErr != nil {
-		return nil, appErr
+// DeleteBot removes a bot.
+func (s *AgentService) DeleteBot(botID, userID uint) *pkg.AppError {
+	config, err := s.repo.FindByID(botID)
+	if err != nil || config.UserID != userID {
+		return pkg.ErrNotFound(constants.DataNotFound)
+	}
+
+	if err := s.repo.DeleteConfig(botID); err != nil {
+		return pkg.ErrInternal()
+	}
+
+	return nil
+}
+
+// StartBot activates a bot.
+func (s *AgentService) StartBot(botID, userID uint) (*entities.AgentConfig, *pkg.AppError) {
+	config, err := s.repo.FindByID(botID)
+	if err != nil || config.UserID != userID {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
 	}
 
 	config.Status = "active"
@@ -96,11 +111,11 @@ func (s *AgentService) Start(userID uint) (*entities.AgentConfig, *pkg.AppError)
 	return config, nil
 }
 
-// Pause pauses the agent for a user.
-func (s *AgentService) Pause(userID uint) (*entities.AgentConfig, *pkg.AppError) {
-	config, appErr := s.GetOrCreateConfig(userID)
-	if appErr != nil {
-		return nil, appErr
+// PauseBot pauses a bot.
+func (s *AgentService) PauseBot(botID, userID uint) (*entities.AgentConfig, *pkg.AppError) {
+	config, err := s.repo.FindByID(botID)
+	if err != nil || config.UserID != userID {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
 	}
 
 	config.Status = "paused"
@@ -111,19 +126,32 @@ func (s *AgentService) Pause(userID uint) (*entities.AgentConfig, *pkg.AppError)
 	return config, nil
 }
 
-// GetStatus returns the current agent status.
-func (s *AgentService) GetStatus(userID uint) (*entities.AgentConfig, *pkg.AppError) {
-	return s.GetOrCreateConfig(userID)
+// GetBot returns a single bot.
+func (s *AgentService) GetBot(botID, userID uint) (*entities.AgentConfig, *pkg.AppError) {
+	config, err := s.repo.FindByID(botID)
+	if err != nil || config.UserID != userID {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
+	}
+	return config, nil
 }
 
-// GetTrades returns the agent's trade history for a user.
-func (s *AgentService) GetTrades(userID uint, limit int) ([]entities.AgentTrade, *pkg.AppError) {
-	config, err := s.repo.FindConfigByUserID(userID)
-	if err != nil || config == nil {
-		return []entities.AgentTrade{}, nil
+// ListBots returns all bots for a user.
+func (s *AgentService) ListBots(userID uint) ([]entities.AgentConfig, *pkg.AppError) {
+	configs, err := s.repo.FindByUserID(userID)
+	if err != nil {
+		return nil, pkg.ErrInternal()
+	}
+	return configs, nil
+}
+
+// GetTrades returns trade history for a bot.
+func (s *AgentService) GetTrades(botID, userID uint, limit int) ([]entities.AgentTrade, *pkg.AppError) {
+	config, err := s.repo.FindByID(botID)
+	if err != nil || config.UserID != userID {
+		return nil, pkg.ErrNotFound(constants.DataNotFound)
 	}
 
-	trades, err := s.repo.FindTradesByConfigID(config.ID, limit)
+	trades, err := s.repo.FindTradesByConfigID(botID, limit)
 	if err != nil {
 		return nil, pkg.ErrInternal()
 	}

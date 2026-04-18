@@ -8,7 +8,7 @@ Replace all dummy data in frontend with real API calls to backend endpoints.
 - Watchlist page: call GET /api/watchlist, display real followed wallets
 - Watchlist detail: call GET /api/wallets/:address, display stored analysis
 - Notifications: connect WebSocket for real-time trade alerts
-- Auth: integrate Firebase Auth (Google login) with GET /api/auth/me
+- Auth: integrate wallet-based auth (MetaMask connect via wagmi/viem) with GET /api/auth/me
 
 ### R2: Cleanup Solana/V1 Code
 Remove all Solana-specific code per #[[file:CLEANUP.md]]:
@@ -30,7 +30,8 @@ Publish wallet trading reputation scores on-chain via Ethereum Attestation Servi
 ### R4: Basic AgentKit Proof of Concept
 Integrate Coinbase AgentKit for autonomous trading:
 - Create Agentic Wallet on Base Sepolia
-- Agent config: budget, max_per_trade, risk_tolerance, conditions
+- Two bot types: wallet bot (copy one wallet's trades) and consensus bot (trade on multi-wallet agreement)
+- Bot config: budget, max_per_trade, min_score, conditions (wallet bot adds target_wallet; consensus bot adds consensus_threshold, consensus_window_min)
 - Agent monitors top-scored wallets → evaluates trade → checks conditions
 - If all pass → execute swap via Agentic Wallet on Base Sepolia
 - Notify user of agent action via WebSocket
@@ -66,9 +67,9 @@ Frontend (Next.js) → Backend (Go + Fiber) → External APIs (Alchemy, DexScree
 | EAS Client | clients/eas.go | Publish attestations to Base Sepolia via EAS SDK |
 | AgentKit Client | clients/agentkit.go | Interact with Coinbase AgentKit for autonomous trading |
 | Reputation Handler | handlers/reputation.go | GET /reputation/:address |
-| Agent Handler | handlers/agent.go | POST /agent/start, PUT /agent/config, POST /agent/pause, GET /agent/status |
-| Agent Service | services/agent.go | Monitor top wallets → evaluate → execute via AgentKit |
-| Agent Entity | entities/agent_config.go | budget, max_per_trade, risk_tolerance, conditions, status |
+| Agent Handler | handlers/agent.go | POST /agent/bots, GET /agent/bots, GET /agent/bots/:id, PUT /agent/bots/:id, POST /agent/bots/:id/start, POST /agent/bots/:id/pause, DELETE /agent/bots/:id, GET /agent/bots/:id/trades |
+| Agent Service | services/agent.go | Bot management + monitor top wallets → evaluate → execute via AgentKit sidecar |
+| Agent Entity | entities/agent_config.go | bot_type (wallet/consensus), target_wallet, budget, max_per_trade, min_score, conditions, status, consensus_threshold, consensus_window_min |
 
 ### New Frontend Pages
 | Page | Route | Purpose |
@@ -80,8 +81,8 @@ Frontend (Next.js) → Backend (Go + Fiber) → External APIs (Alchemy, DexScree
 | Entity | Change |
 |---|---|
 | WalletMetric | Add: attestation_uid (string, nullable) |
-| AgentConfig (NEW) | user_id, budget, max_per_trade, risk_tolerance, conditions (JSON), status (active/paused), created_at |
-| AgentTrade (NEW) | agent_config_id, wallet_address, token_address, token_symbol, amount, tx_hash, risk_assessment, created_at |
+| AgentConfig (NEW) | user_id, bot_type (wallet/consensus), target_wallet, budget, max_per_trade, min_score, conditions (JSON), status (active/paused/stopped), agent_wallet_address, total_spent, total_trades, consensus_threshold, consensus_window_min |
+| AgentTrade (NEW) | agent_config_id, source_wallet, source_score, token_address, token_symbol, direction (buy/sell), amount_usd, tx_hash, status, reason, risk_assessment |
 
 ---
 
@@ -98,7 +99,7 @@ Frontend (Next.js) → Backend (Go + Fiber) → External APIs (Alchemy, DexScree
 - [ ] Task 1.8: Connect watchlist page to GET /api/watchlist
 - [ ] Task 1.9: Connect watchlist detail to GET /api/wallets/:address
 - [ ] Task 1.10: Connect WebSocket for real-time notifications
-- [ ] Task 1.11: Integrate Firebase Auth in frontend (login flow)
+- [ ] Task 1.11: Integrate wallet-based auth in frontend (MetaMask connect via wagmi/viem, X-Wallet-Address header)
 
 ### Phase 2: EAS Attestation (Priority #2)
 - [ ] Task 2.1: Research EAS SDK integration in Go

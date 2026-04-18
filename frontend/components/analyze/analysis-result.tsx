@@ -14,6 +14,7 @@ import { ConditionsCard } from "@/components/analyze/conditions-card";
 import { AlertTriangle, Eye, Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AttestationBadge } from "@/components/analyze/attestation-badge";
 
 type Props = {
   data: WalletAnalysis;
@@ -105,6 +106,9 @@ export function AnalysisResult({ data }: Props) {
             <p className="font-mono text-xs text-muted-foreground break-all">
               {data.address}
             </p>
+            <div className="mt-2">
+              <AttestationBadge attestationUID="0xdummy-attestation-uid-for-visual-review" />
+            </div>
           </div>
         </CardContent>
       </Card>

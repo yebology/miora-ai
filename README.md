@@ -2,9 +2,9 @@
 
 > **Score any trader on Base. Let AI ride the winners for you.**
 
-**Miora AI** is a trading reputation protocol on Base that analyzes any wallet's trading behavior, publishes scores on-chain as EAS attestations, and runs an AI agent that trades autonomously based on the best wallets — with your rules, your budget, your risk limits.
+**Miora AI** is a trading reputation protocol on Base that analyzes any wallet's trading behavior, publishes scores on-chain as EAS attestations, and runs AI bots that trade autonomously based on the best wallets — with your rules, your budget, your conditions.
 
-Instead of raw on-chain data, Miora transforms complex blockchain activity into actionable intelligence: a score, a recommendation, and an agent that acts on it.
+Instead of raw on-chain data, Miora transforms complex blockchain activity into actionable intelligence: a score, a recommendation, and a bot that acts on it.
 
 ---
 
@@ -16,7 +16,7 @@ Miora combines three layers into one cohesive product:
 
 1. 🧠 **Trading Reputation Protocol** — Analyze any wallet, compute a multi-factor score, publish it on-chain via EAS attestation. Other protocols can read and use this score.
 2. 🔔 **Smart Follow + AI Alerts** — Follow top-scored wallets, get real-time notifications with AI risk assessment when they trade.
-3. 🤖 **AI Trading Agent** — An autonomous agent that monitors top wallets, evaluates trades, and executes swaps on your behalf via Coinbase AgentKit — with your budget and conditions.
+3. 🤖 **AI Trading Bots** — Per-wallet bots that monitor a target wallet's buys and sells, evaluate trades, and execute swaps on your behalf via Coinbase AgentKit — with your budget and conditions.
 
 ---
 
@@ -45,16 +45,30 @@ Miora combines three layers into one cohesive product:
 - Email notifications via Resend (async, non-blocking)
 - Notification history saved to database
 
-### 🤖 AI Trading Agent (AgentKit)
-- Autonomous trading based on top-scored wallets
-- User sets: budget, max per trade, risk tolerance, conditions
-- Agent evaluates every trade through scoring engine + AI risk assessment before executing
+### 🤖 AI Trading Bots (AgentKit)
+Two bot types, each targeting specific trading strategies:
+
+**Wallet Bot** — Copy one specific wallet's trades (buys AND sells)
+- User selects a wallet from their watchlist → conditions auto-filled from analyze result
+- Bot monitors that wallet and mirrors its buys and sells
+- User sets: budget, max per trade, min score, conditions
 - Powered by Coinbase AgentKit + Agentic Wallets on Base Sepolia
-- Pause, adjust, or stop anytime
+
+**Consensus Bot** — Trade when multiple high-score wallets agree
+- Scans all Miora-analyzed wallets on Base
+- Trades when multiple wallets buy the same token within a time window
+- User sets: budget, max per trade, min score, consensus threshold, time window
+- Higher confidence trades based on crowd intelligence
+
+Both bot types:
+- Evaluate every trade through conditions from analyze result + AI risk assessment before executing
+- Can be paused, adjusted, or stopped anytime
+- Track all trades (executed/skipped/failed) with reasons
 
 ### 🔐 Authentication
-- Google login via Firebase Auth
-- Wallet connect (MetaMask via wagmi/viem)
+- Wallet-based auth via MetaMask connect (wagmi/viem)
+- `X-Wallet-Address` header for API authentication
+- No Firebase — no Google login required
 
 ---
 
@@ -63,7 +77,7 @@ Miora combines three layers into one cohesive product:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Frontend (Next.js 16)                      │
-│  Analyze → Dashboard → Agent Setup → Notifications           │
+│  Analyze → Dashboard → Bot Setup → Notifications             │
 └──────────────────────┬──────────────────────────────────────┘
                        │
                        ▼
@@ -71,7 +85,7 @@ Miora combines three layers into one cohesive product:
 │                  Backend (Go + Fiber)                         │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐  │
-│  │ Scoring      │  │ Smart Follow │  │ AI Trading Agent  │  │
+│  │ Scoring      │  │ Smart Follow │  │ AI Trading Bots   │  │
 │  │ Engine       │  │ + Alerts     │  │ (AgentKit)        │  │
 │  └──────┬───────┘  └──────────────┘  └─────────┬─────────┘  │
 │         │                                       │            │
@@ -93,7 +107,7 @@ Miora combines three layers into one cohesive product:
 │  ┌─────────────────────────────────────────────────────────┐  │
 │  │              Database (PostgreSQL)                        │  │
 │  │  Users · Wallets · Transactions · Metrics ·              │  │
-│  │  Watchlist · Notifications · Agent Configs · Agent Trades│  │
+│  │  Watchlist · Notifications · Bot Configs · Bot Trades    │  │
 │  └─────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -108,7 +122,7 @@ Miora combines three layers into one cohesive product:
 | Backend | Go, Fiber, GORM, WebSocket |
 | Agent Sidecar | Python, FastAPI, Coinbase AgentKit |
 | Database | PostgreSQL |
-| Auth | Firebase Auth (Google) |
+| Auth | Wallet-based (MetaMask connect, X-Wallet-Address header) |
 | AI | Google Gemini (gemini-2.0-flash) |
 | Blockchain Data | Alchemy, DexScreener, Moralis |
 | On-chain | EAS (Ethereum Attestation Service) on Base Sepolia |
@@ -130,7 +144,7 @@ Miora combines three layers into one cohesive product:
 │   │   ├── handlers/       # HTTP request handlers
 │   │   ├── http/           # Route registration per domain
 │   │   ├── interfaces/     # Service & repository contracts
-│   │   ├── middleware/      # Firebase auth middleware
+│   │   ├── middleware/      # Wallet auth middleware (X-Wallet-Address)
 │   │   ├── output/         # Standardized API response (success/error envelope)
 │   │   ├── repositories/   # Database access layer
 │   │   ├── services/       # Business logic (wallet, scoring, AI, watchlist, monitor, agent)
@@ -151,6 +165,7 @@ Miora combines three layers into one cohesive product:
 │   │   ├── page.tsx        # Landing page
 │   │   ├── analyze/        # Wallet analysis page
 │   │   ├── watchlist/      # Watchlist + detail pages
+│   │   ├── agent/          # Bot management pages
 │   │   └── login/          # Login page
 │   ├── components/
 │   │   ├── ui/             # shadcn/ui components
@@ -158,15 +173,18 @@ Miora combines three layers into one cohesive product:
 │   │   ├── landing/        # Landing page sections
 │   │   ├── analyze/        # Analyze page components
 │   │   ├── watchlist/      # Watchlist components
+│   │   ├── agent/          # Bot config + status components
 │   │   └── providers/      # Theme, Auth, Web3 providers
 │   ├── constants/          # Static data + dummy data
 │   ├── hooks/              # Custom hooks
 │   ├── types/              # TypeScript types
 │   └── lib/                # Utilities (API client, helpers)
 ├── Makefile                # Dev commands
-├── PROGRESS.md             # Development progress tracker
-├── MIORA_V2_CONCEPT.md     # V2 concept document
-└── README.md
+├── README.md               # Project overview
+├── USER_STORIES.md          # User stories with scenarios
+├── USER_NONTECHNICAL_FLOW.md # Non-technical user flow
+├── USER_TECHNICAL_FLOW.md   # Technical architecture flow
+└── PROGRESS.md              # Development progress tracker
 ```
 
 ---
@@ -179,7 +197,7 @@ Miora combines three layers into one cohesive product:
 - Docker & Docker Compose
 - Node.js 18+ (for frontend)
 - Alchemy, Moralis, Gemini API keys
-- Firebase project with Google sign-in enabled
+- MetaMask wallet (for authentication)
 - Coinbase Developer Platform (CDP) API keys (for AgentKit)
 
 ### 🔨 1. Clone Repository
@@ -242,7 +260,7 @@ make run-fe
 | GET | `/api/wallets/:address` | Get stored analysis |
 | GET | `/api/reputation/:address` | Get on-chain reputation attestation |
 
-### Protected (Firebase Auth)
+### Protected (Wallet Auth — X-Wallet-Address header)
 | Method | Endpoint | Description |
 |--------|----------|------------|
 | GET | `/api/auth/me` | Get/create current user |
@@ -250,16 +268,41 @@ make run-fe
 | PUT | `/api/watchlist/:address` | Update conditions / notification preference |
 | DELETE | `/api/watchlist/:address` | Unfollow a wallet |
 | GET | `/api/watchlist` | List followed wallets |
-| GET | `/api/agent/status` | Get agent status + config |
-| PUT | `/api/agent/config` | Update agent configuration |
-| POST | `/api/agent/start` | Start AI trading agent |
-| POST | `/api/agent/pause` | Pause agent |
-| GET | `/api/agent/trades` | Get agent trade history |
+| POST | `/api/agent/bots` | Create a new bot (wallet or consensus type) |
+| GET | `/api/agent/bots` | List all user's bots |
+| GET | `/api/agent/bots/:id` | Get bot details + status |
+| PUT | `/api/agent/bots/:id` | Update bot configuration |
+| POST | `/api/agent/bots/:id/start` | Start a bot |
+| POST | `/api/agent/bots/:id/pause` | Pause a bot |
+| DELETE | `/api/agent/bots/:id` | Delete a bot |
+| GET | `/api/agent/bots/:id/trades` | Get bot's trade history |
 
 ### WebSocket
 | Endpoint | Description |
 |----------|------------|
-| `ws://host/ws?user_id=ID` | Real-time trade notifications |
+| `ws://host/ws?wallet_address=ADDR` | Real-time trade notifications |
+
+---
+
+## 🗺️ Roadmap
+
+### Now (Hackathon)
+- Deploy EAS schema + attestation on Base Sepolia
+- Bot PoC: wallet bot (copy trades) + consensus bot (multi-wallet agreement)
+- Connect frontend to backend API
+
+### Post-Hackathon
+- Deploy to Base mainnet
+- Consensus bot as premium feature (revenue stream)
+- Full DEX integration for bot swaps (Aerodrome/Uniswap)
+- Reputation leaderboard
+- Multi-bot portfolio tracking
+
+### Scale
+- Multi-chain expansion (Ethereum, Arbitrum, Optimism)
+- Reputation score marketplace (protocols subscribe)
+- Advanced bot strategies (cross-wallet pattern detection, sentiment analysis)
+- Mobile app
 
 ---
 
@@ -269,7 +312,7 @@ make run-fe
 |------|--------|
 | Show data | Show decisions |
 | Charts & numbers | "Follow this wallet" or "Avoid" |
-| Analytics only | Analytics + autonomous trading agent |
+| Analytics only | Analytics + autonomous trading bots |
 | Off-chain scores | On-chain reputation via EAS |
 | No composability | Other protocols can query Miora scores |
 | For advanced traders | For everyone |
@@ -286,7 +329,7 @@ make run-fe
 
 ## ⚠️ Disclaimer
 
-Miora AI provides informational insights only and does not constitute financial advice. AI agent trading involves risk. Users are responsible for their own trading decisions and agent configurations.
+Miora AI provides informational insights only and does not constitute financial advice. AI bot trading involves risk. Users are responsible for their own trading decisions and bot configurations.
 
 ---
 

@@ -1,15 +1,21 @@
 export type AgentConfig = {
   id: number;
   user_id: number;
+  bot_type: "wallet" | "consensus";
+  target_wallet_address?: string;
+  target_wallet_chain?: string;
+  target_wallet_score?: number;
+  recommendation?: string;
   budget: number;
   max_per_trade: number;
-  risk_tolerance: "low" | "medium" | "high";
-  min_score: number;
   conditions: string[];
   status: "active" | "paused" | "stopped";
   agent_wallet_address: string;
   total_spent: number;
   total_trades: number;
+  consensus_threshold?: number;
+  consensus_window_min?: number;
+  min_score?: number;
   created_at: string;
   updated_at: string;
 };

@@ -11,16 +11,22 @@ import (
 //
 // Routes:
 //
-//	GET    /agent/status  → get agent status and config
-//	PUT    /agent/config  → update agent configuration
-//	POST   /agent/start   → start the agent
-//	POST   /agent/pause   → pause the agent
-//	GET    /agent/trades  → get agent trade history
+//	GET    /agent/bots           → list all bots
+//	POST   /agent/bots           → create a new bot
+//	GET    /agent/bots/:id       → get bot details
+//	PUT    /agent/bots/:id       → update bot config
+//	DELETE /agent/bots/:id       → delete a bot
+//	POST   /agent/bots/:id/start → start a bot
+//	POST   /agent/bots/:id/pause → pause a bot
+//	GET    /agent/bots/:id/trades → get bot trade history
 func RegisterAgentProtectedRoutes(r fiber.Router, h *handlers.AgentHandler) {
-	agent := r.Group("/agent")
-	agent.Get("/status", h.GetStatus)
-	agent.Put("/config", h.UpdateConfig)
-	agent.Post("/start", h.Start)
-	agent.Post("/pause", h.Pause)
-	agent.Get("/trades", h.GetTrades)
+	bots := r.Group("/agent/bots")
+	bots.Get("/", h.ListBots)
+	bots.Post("/", h.CreateBot)
+	bots.Get("/:id", h.GetBot)
+	bots.Put("/:id", h.UpdateBot)
+	bots.Delete("/:id", h.DeleteBot)
+	bots.Post("/:id/start", h.StartBot)
+	bots.Post("/:id/pause", h.PauseBot)
+	bots.Get("/:id/trades", h.GetTrades)
 }

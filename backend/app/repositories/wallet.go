@@ -84,3 +84,17 @@ func (r *WalletRepository) GetMetric(walletID uint) (*entities.WalletMetric, err
 	return &metric, nil
 
 }
+
+// FindAllWithMetrics returns all wallets that have a metric with score >= minScore.
+// Used by the consensus agent to scan all analyzed wallets in the database.
+func (r *WalletRepository) FindAllWithMetrics(minScore int) ([]entities.Wallet, error) {
+	var wallets []entities.Wallet
+	err := r.db.
+		Joins("JOIN wallet_metrics ON wallet_metrics.wallet_id = wallets.id").
+		Where("wallet_metrics.final_score >= ?", minScore).
+		Find(&wallets).Error
+	if err != nil {
+		return nil, err
+	}
+	return wallets, nil
+}

@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"miora-ai/app/clients"
@@ -29,21 +30,19 @@ import (
 
 // AgentLoopService runs the background agent trading loop.
 type AgentLoopService struct {
-	agentRepo     interfaces.IAgentRepository
-	watchlistRepo interfaces.IWatchlistRepository
-	walletRepo    interfaces.IWalletRepository
-	evmClient     interfaces.BlockchainClient
-	dexScreener   interfaces.IDexScreener
-	ai            *AIService
-	agentKit      *clients.AgentKitClient
-	interval      time.Duration
-	lastTxCount   map[string]int
+	agentRepo   interfaces.IAgentRepository
+	walletRepo  interfaces.IWalletRepository
+	evmClient   interfaces.BlockchainClient
+	dexScreener interfaces.IDexScreener
+	ai          *AIService
+	agentKit    *clients.AgentKitClient
+	interval    time.Duration
+	lastTxCount map[string]int
 }
 
 // NewAgentLoopService creates a new AgentLoopService.
 func NewAgentLoopService(
 	agentRepo interfaces.IAgentRepository,
-	watchlistRepo interfaces.IWatchlistRepository,
 	walletRepo interfaces.IWalletRepository,
 	evmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
@@ -51,15 +50,14 @@ func NewAgentLoopService(
 	agentKit *clients.AgentKitClient,
 ) *AgentLoopService {
 	return &AgentLoopService{
-		agentRepo:     agentRepo,
-		watchlistRepo: watchlistRepo,
-		walletRepo:    walletRepo,
-		evmClient:     evmClient,
-		dexScreener:   dexScreener,
-		ai:            ai,
-		agentKit:      agentKit,
-		interval:      30 * time.Second,
-		lastTxCount:   make(map[string]int),
+		agentRepo:   agentRepo,
+		walletRepo:  walletRepo,
+		evmClient:   evmClient,
+		dexScreener: dexScreener,
+		ai:          ai,
+		agentKit:    agentKit,
+		interval:    30 * time.Second,
+		lastTxCount: make(map[string]int),
 	}
 }
 
@@ -98,46 +96,159 @@ type walletWithScore struct {
 	Score   int
 }
 
-// processConfig evaluates trades for a single agent config.
-// Only monitors wallets from the user's watchlist — not all wallets in the database.
+// processConfig evaluates trades for a single bot.
+// Routes to the correct handler based on bot type.
 func (s *AgentLoopService) processConfig(config *entities.AgentConfig) {
-	// Check budget
 	remaining := config.Budget - config.TotalSpent
 	if remaining < config.MaxPerTrade {
 		return
 	}
 
-	// Get wallets from user's watchlist
-	watchlist, err := s.watchlistRepo.FindByUser(config.UserID)
-	if err != nil || len(watchlist) == 0 {
+	switch config.BotType {
+	case "consensus":
+		s.processConsensus(config)
+	default: // "wallet"
+		w := walletWithScore{
+			Address: config.TargetWalletAddress,
+			Chain:   config.TargetWalletChain,
+			Score:   config.TargetWalletScore,
+		}
+		s.checkWalletForAgent(config, w)
+	}
+}
+
+// processConsensus scans all wallets in Miora DB and detects when multiple
+// high-score wallets buy the same token within a time window.
+// This is a premium feature — trades with higher confidence.
+func (s *AgentLoopService) processConsensus(config *entities.AgentConfig) {
+	// Get all wallets with score >= minScore from entire database
+	wallets, err := s.walletRepo.FindAllWithMetrics(config.MinScore)
+	if err != nil || len(wallets) == 0 {
 		return
 	}
 
-	// For each watched wallet, get its score and check for new trades
-	for _, item := range watchlist {
-		wallet, err := s.walletRepo.FindByAddress(item.WalletAddress)
-		if err != nil || wallet == nil {
-			continue
-		}
+	// Track which tokens are being bought by which wallets
+	// Key: token contract address, Value: list of wallets that bought it
+	tokenBuyers := make(map[string][]walletWithScore)
 
+	for _, wallet := range wallets {
 		metric, err := s.walletRepo.GetMetric(wallet.ID)
 		if err != nil || metric == nil {
 			continue
 		}
 
-		// Skip wallets below minScore
-		if int(metric.FinalScore) < config.MinScore {
-			continue
-		}
-
 		w := walletWithScore{
-			Address: item.WalletAddress,
-			Chain:   item.Chain,
+			Address: wallet.Address,
+			Chain:   wallet.Chain,
 			Score:   int(metric.FinalScore),
 		}
 
-		s.checkWalletForAgent(config, w)
+		// Check for new buys
+		transfers, err := s.evmClient.GetTransfers(wallet.Address, 10, wallet.Chain)
+		if err != nil {
+			continue
+		}
+
+		key := fmt.Sprintf("consensus:%d:%s", config.ID, wallet.Address)
+		prevCount := s.lastTxCount[key]
+
+		if prevCount == 0 {
+			s.lastTxCount[key] = len(transfers)
+			continue
+		}
+
+		if len(transfers) <= prevCount {
+			continue
+		}
+
+		newTxs := transfers[:len(transfers)-prevCount]
+		s.lastTxCount[key] = len(transfers)
+
+		for _, tx := range newTxs {
+			if tx.ContractAddress == "" || tx.Direction != "in" {
+				continue
+			}
+			tokenBuyers[tx.ContractAddress] = append(tokenBuyers[tx.ContractAddress], w)
+		}
 	}
+
+	// Check consensus: which tokens have >= threshold buyers?
+	for tokenAddr, buyers := range tokenBuyers {
+		if len(buyers) < config.ConsensusThreshold {
+			continue
+		}
+
+		// Consensus reached! Multiple wallets bought the same token
+		avgScore := 0
+		walletList := ""
+		for _, b := range buyers {
+			avgScore += b.Score
+			walletList += fmt.Sprintf("%s(score:%d) ", b.Address[:8], b.Score)
+		}
+		avgScore /= len(buyers)
+
+		log.Printf("[AgentLoop] CONSENSUS: %d wallets bought token %s (avg score %d) — %s",
+			len(buyers), tokenAddr, avgScore, walletList)
+
+		// Use the first buyer as the "source" for the trade record
+		source := buyers[0]
+
+		// Build a synthetic transfer for the trade
+		syntheticTx := interfaces.TransferData{
+			ContractAddress: tokenAddr,
+			TokenSymbol:     fmt.Sprintf("TOKEN_%s", tokenAddr[:8]),
+			Direction:       "in",
+		}
+
+		// Execute with consensus reason
+		s.evaluateAndExecuteConsensus(config, source, syntheticTx, len(buyers), avgScore)
+	}
+}
+
+// evaluateAndExecuteConsensus executes a consensus-detected trade.
+func (s *AgentLoopService) evaluateAndExecuteConsensus(config *entities.AgentConfig, source walletWithScore, tx interfaces.TransferData, numBuyers, avgScore int) {
+	dexChain := chainToDexScreenerID(source.Chain)
+	var tokenInfo *dto.TokenPairData
+	pairs, err := s.dexScreener.GetTokenPairs(dexChain, tx.ContractAddress)
+	if err == nil && len(pairs) > 0 {
+		tokenInfo = &pairs[0]
+		tx.TokenSymbol = pairs[0].BaseSymbol
+	}
+
+	if !s.meetsAgentConditions(config, tokenInfo) {
+		s.recordTrade(config, source, tx, "buy", "skipped",
+			fmt.Sprintf("consensus (%d wallets) but conditions not met", numBuyers), "")
+		return
+	}
+
+	remaining := config.Budget - config.TotalSpent
+	if config.MaxPerTrade > remaining {
+		s.recordTrade(config, source, tx, "buy", "skipped", "insufficient budget", "")
+		return
+	}
+
+	if !s.agentKit.IsHealthy() {
+		s.recordTrade(config, source, tx, "buy", "failed", "agent sidecar unavailable", "")
+		return
+	}
+
+	amountETH := fmt.Sprintf("%.6f", config.MaxPerTrade/2000)
+	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountETH, "buy")
+	if err != nil {
+		s.recordTrade(config, source, tx, "buy", "failed", fmt.Sprintf("swap failed: %v", err), "")
+		return
+	}
+
+	log.Printf("[AgentLoop] CONSENSUS TRADE: User %d bought %s — %d wallets (avg score %d)",
+		config.UserID, tx.TokenSymbol, numBuyers, avgScore)
+
+	config.TotalSpent += config.MaxPerTrade
+	config.TotalTrades++
+	s.agentRepo.UpdateConfig(config)
+
+	s.recordTrade(config, source, tx, "buy", "executed",
+		fmt.Sprintf("CONSENSUS: %d wallets (avg score %d) bought %s. Agent wallet: %s",
+			numBuyers, avgScore, tx.TokenSymbol, result.AgentWallet), "")
 }
 
 // checkWalletForAgent checks a wallet for new trades and evaluates them for the agent.
@@ -172,8 +283,9 @@ func (s *AgentLoopService) checkWalletForAgent(config *entities.AgentConfig, wal
 
 // evaluateAndExecute evaluates a trade and executes it if all conditions pass.
 func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wallet walletWithScore, tx interfaces.TransferData) {
-	if tx.Direction != "in" {
-		return
+	direction := "buy"
+	if tx.Direction == "out" {
+		direction = "sell"
 	}
 
 	dexChain := chainToDexScreenerID(wallet.Chain)
@@ -183,18 +295,22 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 		tokenInfo = &pairs[0]
 	}
 
-	if !s.meetsAgentConditions(config, tokenInfo) {
-		s.recordTrade(config, wallet, tx, "skipped", "conditions not met", "")
-		return
+	// For buys: check conditions and budget
+	if direction == "buy" {
+		if !s.meetsAgentConditions(config, tokenInfo) {
+			s.recordTrade(config, wallet, tx, direction, "skipped", "conditions not met", "")
+			return
+		}
+
+		remaining := config.Budget - config.TotalSpent
+		tradeAmount := config.MaxPerTrade
+		if tradeAmount > remaining {
+			s.recordTrade(config, wallet, tx, direction, "skipped", "insufficient budget", "")
+			return
+		}
 	}
 
-	remaining := config.Budget - config.TotalSpent
-	tradeAmount := config.MaxPerTrade
-	if tradeAmount > remaining {
-		s.recordTrade(config, wallet, tx, "skipped", "insufficient budget", "")
-		return
-	}
-
+	// AI risk assessment
 	riskAssessment := ""
 	if s.ai != nil && tokenInfo != nil {
 		pairAgeHours := float64(0)
@@ -210,33 +326,30 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 		}
 	}
 
-	if config.RiskTolerance == "low" && tokenInfo != nil && tokenInfo.Liquidity < 100000 {
-		s.recordTrade(config, wallet, tx, "skipped", "risk too high for low tolerance", riskAssessment)
-		return
-	}
-
 	if !s.agentKit.IsHealthy() {
-		s.recordTrade(config, wallet, tx, "failed", "agent sidecar unavailable", riskAssessment)
+		s.recordTrade(config, wallet, tx, direction, "failed", "agent sidecar unavailable", riskAssessment)
 		return
 	}
 
-	amountETH := fmt.Sprintf("%.6f", tradeAmount/2000)
-	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountETH)
+	amountETH := fmt.Sprintf("%.6f", config.MaxPerTrade/2000)
+	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountETH, direction)
 	if err != nil {
-		s.recordTrade(config, wallet, tx, "failed", fmt.Sprintf("swap failed: %v", err), riskAssessment)
+		s.recordTrade(config, wallet, tx, direction, "failed", fmt.Sprintf("swap failed: %v", err), riskAssessment)
 		return
 	}
 
-	log.Printf("[AgentLoop] User %d: executed swap for %s (%.2f USD) triggered by wallet %s (score %d)",
-		config.UserID, tx.TokenSymbol, tradeAmount, wallet.Address, wallet.Score)
+	log.Printf("[AgentLoop] User %d: %s %s (%.2f USD) triggered by wallet %s (score %d)",
+		config.UserID, direction, tx.TokenSymbol, config.MaxPerTrade, wallet.Address, wallet.Score)
 
-	config.TotalSpent += tradeAmount
+	if direction == "buy" {
+		config.TotalSpent += config.MaxPerTrade
+	}
 	config.TotalTrades++
 	s.agentRepo.UpdateConfig(config)
 
-	s.recordTrade(config, wallet, tx, "executed",
-		fmt.Sprintf("Bought %s because wallet %s (score %d) bought it. Agent wallet: %s",
-			tx.TokenSymbol, wallet.Address, wallet.Score, result.AgentWallet),
+	s.recordTrade(config, wallet, tx, direction, "executed",
+		fmt.Sprintf("%s %s because wallet %s (score %d) did the same. Agent wallet: %s",
+			strings.ToUpper(direction[:1])+direction[1:], tx.TokenSymbol, wallet.Address, wallet.Score, result.AgentWallet),
 		riskAssessment)
 }
 
@@ -281,14 +394,14 @@ func (s *AgentLoopService) meetsAgentConditions(config *entities.AgentConfig, to
 }
 
 // recordTrade saves an agent trade to the database.
-func (s *AgentLoopService) recordTrade(config *entities.AgentConfig, wallet walletWithScore, tx interfaces.TransferData, status, reason, riskAssessment string) {
+func (s *AgentLoopService) recordTrade(config *entities.AgentConfig, wallet walletWithScore, tx interfaces.TransferData, direction, status, reason, riskAssessment string) {
 	s.agentRepo.CreateTrade(&entities.AgentTrade{
 		AgentConfigID:  config.ID,
 		SourceWallet:   wallet.Address,
 		SourceScore:    wallet.Score,
 		TokenAddress:   tx.ContractAddress,
 		TokenSymbol:    tx.TokenSymbol,
-		Direction:      "buy",
+		Direction:      direction,
 		AmountUSD:      config.MaxPerTrade,
 		Status:         status,
 		Reason:         reason,
