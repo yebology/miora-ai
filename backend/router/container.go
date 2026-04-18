@@ -76,7 +76,7 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, resen
 
 	// Agent Loop (background trading)
 	agentKitClient := clients.NewAgentKitClient("")
-	agentLoop := services.NewAgentLoopService(agentRepo, walletRepo, evmClient, dexScreener, aiService, agentKitClient)
+	agentLoop := services.NewAgentLoopService(agentRepo, watchlistRepo, walletRepo, evmClient, dexScreener, aiService, agentKitClient)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)

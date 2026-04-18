@@ -4,22 +4,20 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 
-// Redirect to home — sign in is handled via navbar button
+// Redirect to analyze — auth is handled via wallet connect in navbar
 export default function LoginPage() {
   const router = useRouter();
-  const { user, signIn } = useAuth();
+  const { isConnected } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    if (isConnected) {
       router.push("/analyze");
-    } else {
-      signIn().then(() => router.push("/analyze"));
     }
-  }, [user, signIn, router]);
+  }, [isConnected, router]);
 
   return (
     <div className="flex flex-1 items-center justify-center py-24">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+      <p className="text-sm text-muted-foreground">Connect your wallet to continue.</p>
     </div>
   );
 }

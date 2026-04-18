@@ -10,7 +10,7 @@ import { NotificationItem } from "@/components/watchlist/notification-item";
 import { Eye, Bell } from "lucide-react";
 
 export default function WatchlistPage() {
-  const { user } = useAuth();
+  const { user, isConnected } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(DUMMY_WATCHLIST);
   const [notifications] = useState<Notification[]>(DUMMY_NOTIFICATIONS);
@@ -42,18 +42,18 @@ export default function WatchlistPage() {
           </p>
         </div>
 
-        {!user ? (
+        {!isConnected ? (
           <>
             <div className="py-16 text-center">
               <Eye className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
               <p className="mb-4 text-sm text-muted-foreground">
-                Sign in to view your watchlist and trade notifications.
+                Connect your wallet to view your watchlist and trade notifications.
               </p>
               <button
                 onClick={() => setShowAuthModal(true)}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Sign in
+                Connect Wallet
               </button>
             </div>
             <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />

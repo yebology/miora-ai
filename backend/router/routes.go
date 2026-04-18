@@ -19,7 +19,7 @@ import (
 //	  POST /wallets/analyze     → analyze wallet (public)
 //	  GET  /wallets/:address    → get stored analysis (public)
 //	  GET  /reputation/:address → get on-chain reputation (public)
-//	  GET  /auth/me             → get/create user (protected, Firebase)
+//	  GET  /auth/me             → get/create user (protected, wallet)
 func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 
 	api := app.Group("/api")
@@ -44,8 +44,8 @@ func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 	apphttp.RegisterWalletPublicRoutes(api, container.WalletHandler)
 	apphttp.RegisterReputationPublicRoutes(api, container.ReputationHandler)
 
-	// Protected routes (Firebase auth required)
-	protected := api.Group("", middleware.FirebaseAuth(cfg.FirebaseCreds))
+	// Protected routes (wallet auth — X-Wallet-Address header)
+	protected := api.Group("", middleware.WalletAuth())
 	apphttp.RegisterAuthProtectedRoutes(protected, container.AuthHandler)
 	apphttp.RegisterWatchlistProtectedRoutes(protected, container.WatchlistHandler)
 	apphttp.RegisterAgentProtectedRoutes(protected, container.AgentHandler)

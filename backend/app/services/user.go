@@ -1,3 +1,6 @@
+// Package services contains user business logic.
+//
+// Users are identified by wallet address. No Firebase — just connect wallet.
 package services
 
 import (
@@ -16,23 +19,13 @@ type UserService struct {
 }
 
 func NewUserService(repo interfaces.IUserRepository) *UserService {
-
 	return &UserService{repo: repo}
-
 }
 
-// FindOrCreateFromFirebase finds a user by Firebase UID, or creates one if not found.
-// Also updates name/avatar if they changed.
-func (s *UserService) FindOrCreateFromFirebase(firebaseUID, email, name, avatar string) (*entities.User, *pkg.AppError) {
-
-	user, err := s.repo.FindByFirebaseUID(firebaseUID)
+// FindOrCreateByWallet finds a user by wallet address, or creates one if not found.
+func (s *UserService) FindOrCreateByWallet(walletAddress string) (*entities.User, *pkg.AppError) {
+	user, err := s.repo.FindByWalletAddress(walletAddress)
 	if err == nil {
-		// Update name/avatar if changed
-		if user.Name != name || user.Avatar != avatar {
-			user.Name = name
-			user.Avatar = avatar
-			s.repo.Update(user)
-		}
 		return user, nil
 	}
 
@@ -41,10 +34,7 @@ func (s *UserService) FindOrCreateFromFirebase(firebaseUID, email, name, avatar 
 	}
 
 	user = &entities.User{
-		FirebaseUID: firebaseUID,
-		Email:       email,
-		Name:        name,
-		Avatar:      avatar,
+		WalletAddress: walletAddress,
 	}
 
 	if err := s.repo.Create(user); err != nil {
@@ -52,15 +42,28 @@ func (s *UserService) FindOrCreateFromFirebase(firebaseUID, email, name, avatar 
 	}
 
 	return user, nil
-
 }
 
-func (s *UserService) GetByFirebaseUID(firebaseUID string) (*entities.User, *pkg.AppError) {
+// UpdateEmail sets the email for a user (optional, for trade notifications).
+func (s *UserService) UpdateEmail(walletAddress, email string) (*entities.User, *pkg.AppError) {
+	user, appErr := s.FindOrCreateByWallet(walletAddress)
+	if appErr != nil {
+		return nil, appErr
+	}
 
-	user, err := s.repo.FindByFirebaseUID(firebaseUID)
+	user.Email = email
+	if err := s.repo.Update(user); err != nil {
+		return nil, pkg.ErrInternal()
+	}
+
+	return user, nil
+}
+
+// GetByWalletAddress returns a user by wallet address.
+func (s *UserService) GetByWalletAddress(walletAddress string) (*entities.User, *pkg.AppError) {
+	user, err := s.repo.FindByWalletAddress(walletAddress)
 	if err != nil {
 		return nil, pkg.ErrNotFound(constants.DataNotFound)
 	}
 	return user, nil
-
 }

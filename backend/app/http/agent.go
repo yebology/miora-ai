@@ -1,4 +1,4 @@
-// Package http registers agent-related routes (requires Firebase auth).
+// Package http registers agent-related routes (requires wallet auth).
 package http
 
 import (

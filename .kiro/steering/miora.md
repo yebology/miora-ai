@@ -77,7 +77,7 @@ Chain: **Base only** (Base Sepolia for testnet).
 ### Agent Sidecar (Python)
 - FastAPI service wrapping `coinbase-agentkit`
 - Runs on port 8090, called by Go backend via HTTP
-- Handles: wallet creation, swap execution, balance queries
+- Handles: wallet creation, swap execution, balance queriester
 
 ## Current Priority (Hackathon — Due April 27)
 

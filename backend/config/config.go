@@ -22,7 +22,6 @@ type Config struct {
 	AlchemyAPIKey  string // Alchemy API key for EVM RPC (ALCHEMY_API_KEY)
 	MoralisAPIKey  string // Moralis API key for historical token prices (MORALIS_API_KEY)
 	GeminiAPIKey   string // Google Gemini API key for AI insights (GEMINI_API_KEY)
-	FirebaseCreds  string // Path to Firebase service account JSON (FIREBASE_CREDENTIALS)
 	AllowedOrigins string // Comma-separated CORS allowed origins (ALLOWED_ORIGINS)
 	ResendAPIKey   string // Resend API key for email notifications (RESEND_API_KEY)
 	ResendFrom     string // Sender email for Resend (RESEND_FROM_EMAIL)
@@ -65,7 +64,7 @@ func LoadConfig() (*Config, error) {
 	required := []string{
 		"APP_PORT", "DB_HOST", "DB_PORT",
 		"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB",
-		"ALCHEMY_API_KEY", "MORALIS_API_KEY", "GEMINI_API_KEY", "FIREBASE_CREDENTIALS", "ALLOWED_ORIGINS",
+		"ALCHEMY_API_KEY", "MORALIS_API_KEY", "GEMINI_API_KEY", "ALLOWED_ORIGINS",
 		"SCORING_LIQUIDITY_THRESHOLD", "SCORING_ENTRY_TIMING_MAX_AGE", "SCORING_TOKEN_QUALITY_LOG_BASE",
 	}
 
@@ -85,7 +84,6 @@ func LoadConfig() (*Config, error) {
 		AlchemyAPIKey:  os.Getenv("ALCHEMY_API_KEY"),
 		MoralisAPIKey:  os.Getenv("MORALIS_API_KEY"),
 		GeminiAPIKey:   os.Getenv("GEMINI_API_KEY"),
-		FirebaseCreds:  os.Getenv("FIREBASE_CREDENTIALS"),
 		AllowedOrigins: os.Getenv("ALLOWED_ORIGINS"),
 		ResendAPIKey:   os.Getenv("RESEND_API_KEY"),
 		ResendFrom:     getEnvDefault("RESEND_FROM_EMAIL", "Miora AI <onboarding@resend.dev>"),

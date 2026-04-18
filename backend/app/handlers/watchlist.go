@@ -82,15 +82,15 @@ func (h *WatchlistHandler) List(c *fiber.Ctx) error {
 
 }
 
-// getUser extracts the current user from Firebase locals.
+// getUser extracts the current user from wallet address locals.
 func (h *WatchlistHandler) getUser(c *fiber.Ctx) (*entities.User, *pkg.AppError) {
 
-	uid, _ := c.Locals("firebase_uid").(string)
-	if uid == "" {
+	walletAddress, _ := c.Locals("wallet_address").(string)
+	if walletAddress == "" {
 		return nil, pkg.ErrUnauthorized(constants.Unauthorized)
 	}
 
-	user, appErr := h.userService.GetByFirebaseUID(uid)
+	user, appErr := h.userService.FindOrCreateByWallet(walletAddress)
 	if appErr != nil {
 		return nil, appErr
 	}

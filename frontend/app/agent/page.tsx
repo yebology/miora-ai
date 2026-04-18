@@ -90,7 +90,7 @@ const DUMMY_TRADES: AgentTrade[] = [
 ];
 
 export default function AgentPage() {
-  const { user } = useAuth();
+  const { user, isConnected } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [config, setConfig] = useState<AgentConfig>(DUMMY_CONFIG);
   const [trades] = useState<AgentTrade[]>(DUMMY_TRADES);
@@ -150,18 +150,18 @@ export default function AgentPage() {
           </p>
         </div>
 
-        {!user ? (
+        {!isConnected ? (
           <>
             <div className="py-16 text-center">
               <Bot className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
               <p className="mb-4 text-sm text-muted-foreground">
-                Sign in to configure and start your AI trading agent.
+                Connect your wallet to configure and start your AI trading agent.
               </p>
               <button
                 onClick={() => setShowAuthModal(true)}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Sign in
+                Connect Wallet
               </button>
             </div>
             <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { useAppKit } from "@reown/appkit/react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { LogIn, Loader2 } from "lucide-react";
+import { Wallet } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -17,10 +17,10 @@ type Props = {
 };
 
 export function AuthGuardModal({ open, onOpenChange }: Props) {
-  const { signIn, loading } = useAuth();
+  const { open: openWallet } = useAppKit();
 
-  const handleSignIn = async () => {
-    await signIn();
+  const handleConnect = () => {
+    openWallet();
     onOpenChange(false);
   };
 
@@ -28,11 +28,10 @@ export function AuthGuardModal({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader className="items-center text-center">
-          <LogIn className="mb-2 h-10 w-10 text-primary" />
-          <DialogTitle>Sign in required</DialogTitle>
+          <Wallet className="mb-2 h-10 w-10 text-primary" />
+          <DialogTitle>Connect wallet required</DialogTitle>
           <DialogDescription>
-            You need to sign in with Google to use this feature. It only takes a
-            few seconds.
+            Connect your wallet to use this feature. Your wallet address is your identity on Miora.
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">
@@ -43,9 +42,9 @@ export function AuthGuardModal({ open, onOpenChange }: Props) {
           >
             Cancel
           </Button>
-          <Button className="flex-1 gap-2" onClick={handleSignIn} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
-            Sign in
+          <Button className="flex-1 gap-2" onClick={handleConnect}>
+            <Wallet className="h-4 w-4" />
+            Connect Wallet
           </Button>
         </div>
       </DialogContent>

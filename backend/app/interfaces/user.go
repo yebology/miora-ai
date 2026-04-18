@@ -7,13 +7,13 @@ import (
 
 // IUserService defines the business logic contract for user operations.
 type IUserService interface {
-	FindOrCreateFromFirebase(firebaseUID, email, name, avatar string) (*entities.User, *pkg.AppError)
-	GetByFirebaseUID(firebaseUID string) (*entities.User, *pkg.AppError)
+	FindOrCreateByWallet(walletAddress string) (*entities.User, *pkg.AppError)
+	UpdateEmail(walletAddress, email string) (*entities.User, *pkg.AppError)
 }
 
 // IUserRepository defines the data access contract for user operations.
 type IUserRepository interface {
-	FindByFirebaseUID(firebaseUID string) (*entities.User, error)
+	FindByWalletAddress(walletAddress string) (*entities.User, error)
 	FindByID(id uint) (*entities.User, error)
 	Create(user *entities.User) error
 	Update(user *entities.User) error

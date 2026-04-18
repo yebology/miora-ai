@@ -1,7 +1,7 @@
 // Package handlers contains the AI trading agent HTTP request handlers.
 //
-// All agent endpoints require Firebase authentication.
-// The user ID is extracted from the Firebase middleware context.
+// All agent endpoints require wallet authentication.
+// The user is identified by wallet address from the WalletAuth middleware.
 package handlers
 
 import (
@@ -10,6 +10,7 @@ import (
 	"miora-ai/app/dto/requests"
 	"miora-ai/app/interfaces"
 	"miora-ai/app/output"
+	"miora-ai/app/services"
 	"miora-ai/constants"
 	"miora-ai/utils"
 
@@ -19,25 +20,25 @@ import (
 // AgentHandler handles agent-related HTTP requests.
 type AgentHandler struct {
 	agentService interfaces.IAgentService
-	userService  interfaces.IUserService
+	userService  *services.UserService
 }
 
 // NewAgentHandler creates a new AgentHandler.
-func NewAgentHandler(agentService interfaces.IAgentService, userService interfaces.IUserService) *AgentHandler {
+func NewAgentHandler(agentService interfaces.IAgentService, userService *services.UserService) *AgentHandler {
 	return &AgentHandler{
 		agentService: agentService,
 		userService:  userService,
 	}
 }
 
-// getUserID extracts the user ID from the Firebase auth context.
+// getUserID extracts the user ID from the wallet auth context.
 func (h *AgentHandler) getUserID(c *fiber.Ctx) (uint, *fiber.Error) {
-	firebaseUID, ok := c.Locals("firebase_uid").(string)
-	if !ok || firebaseUID == "" {
+	walletAddress, _ := c.Locals("wallet_address").(string)
+	if walletAddress == "" {
 		return 0, fiber.NewError(fiber.StatusUnauthorized, constants.Unauthorized)
 	}
 
-	user, appErr := h.userService.GetByFirebaseUID(firebaseUID)
+	user, appErr := h.userService.FindOrCreateByWallet(walletAddress)
 	if appErr != nil {
 		return 0, fiber.NewError(fiber.StatusUnauthorized, constants.Unauthorized)
 	}
@@ -46,7 +47,6 @@ func (h *AgentHandler) getUserID(c *fiber.Ctx) (uint, *fiber.Error) {
 }
 
 // GetStatus handles GET /agent/status.
-// Returns the current agent configuration and status.
 func (h *AgentHandler) GetStatus(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -62,7 +62,6 @@ func (h *AgentHandler) GetStatus(c *fiber.Ctx) error {
 }
 
 // UpdateConfig handles PUT /agent/config.
-// Updates the agent configuration (budget, risk tolerance, conditions, etc.).
 func (h *AgentHandler) UpdateConfig(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -85,7 +84,6 @@ func (h *AgentHandler) UpdateConfig(c *fiber.Ctx) error {
 }
 
 // Start handles POST /agent/start.
-// Activates the AI trading agent.
 func (h *AgentHandler) Start(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -101,7 +99,6 @@ func (h *AgentHandler) Start(c *fiber.Ctx) error {
 }
 
 // Pause handles POST /agent/pause.
-// Pauses the AI trading agent.
 func (h *AgentHandler) Pause(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -117,7 +114,6 @@ func (h *AgentHandler) Pause(c *fiber.Ctx) error {
 }
 
 // GetTrades handles GET /agent/trades.
-// Returns the agent's trade history.
 func (h *AgentHandler) GetTrades(c *fiber.Ctx) error {
 	userID, err := h.getUserID(c)
 	if err != nil {

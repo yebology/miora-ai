@@ -1,25 +1,25 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { useAppKitAccount } from "@reown/appkit/react";
 
 type User = {
-  name: string;
-  email: string;
-  avatar: string;
+  walletAddress: string;
+  email?: string;
 };
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  signIn: () => Promise<void>;
-  signOut: () => void;
+  walletAddress: string | undefined;
+  isConnected: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
-  signIn: async () => {},
-  signOut: () => {},
+  walletAddress: undefined,
+  isConnected: false,
 });
 
 export function useAuth() {
@@ -27,43 +27,21 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { address, isConnected } = useAppKitAccount();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const signIn = useCallback(async () => {
-    setLoading(true);
-    try {
-      // TODO: Replace with real Firebase Google sign-in
-      // import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-      // const provider = new GoogleAuthProvider();
-      // const result = await signInWithPopup(auth, provider);
-      // const token = await result.user.getIdToken();
-      // const res = await fetch(`${API_URL}/api/auth/me`, {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
-      // const json = await res.json();
-
-      // Simulate sign-in
-      await new Promise((r) => setTimeout(r, 1000));
-      setUser({
-        name: "Yobel Nathaniel",
-        email: "yobel@example.com",
-        avatar: "YN",
-      });
-    } finally {
-      setLoading(false);
+  // When wallet connects/disconnects, update user state
+  useEffect(() => {
+    if (isConnected && address) {
+      setUser({ walletAddress: address.toLowerCase() });
+    } else {
+      setUser(null);
     }
-  }, []);
-
-  const signOut = useCallback(() => {
-    // TODO: Firebase sign out
-    // import { signOut as firebaseSignOut } from "firebase/auth";
-    // await firebaseSignOut(auth);
-    setUser(null);
-  }, []);
+  }, [isConnected, address]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, walletAddress: address, isConnected }}>
       {children}
     </AuthContext.Provider>
   );

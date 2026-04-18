@@ -1,17 +1,18 @@
 // Package services contains the AI trading agent background loop.
 //
 // AgentLoopService runs as a goroutine, polling for active agent configs
-// and monitoring top-scored wallets for new trades. When a trade is detected
-// that meets the agent's conditions, it executes a swap via the AgentKit
-// Python sidecar.
+// and monitoring wallets from the user's watchlist for new trades.
+// When a trade is detected that meets the agent's conditions, it executes
+// a swap via the AgentKit Python sidecar.
 //
 // Flow:
 //  1. Poll every 30 seconds
 //  2. Get all active agent configs
-//  3. For each config, check monitored wallets for new trades
-//  4. Evaluate: score >= minScore? conditions met? budget available? AI risk ok?
-//  5. If all pass → call Python sidecar to execute swap
-//  6. Record trade in database
+//  3. For each config, get user's watchlist (wallets they already follow)
+//  4. Check each watched wallet for new trades
+//  5. Evaluate: conditions met? budget available? AI risk ok?
+//  6. If all pass → call Python sidecar to execute swap
+//  7. Record trade in database
 package services
 
 import (
@@ -28,19 +29,21 @@ import (
 
 // AgentLoopService runs the background agent trading loop.
 type AgentLoopService struct {
-	agentRepo   interfaces.IAgentRepository
-	walletRepo  interfaces.IWalletRepository
-	evmClient   interfaces.BlockchainClient
-	dexScreener interfaces.IDexScreener
-	ai          *AIService
-	agentKit    *clients.AgentKitClient
-	interval    time.Duration
-	lastTxCount map[string]int // track tx counts per wallet to detect new trades
+	agentRepo     interfaces.IAgentRepository
+	watchlistRepo interfaces.IWatchlistRepository
+	walletRepo    interfaces.IWalletRepository
+	evmClient     interfaces.BlockchainClient
+	dexScreener   interfaces.IDexScreener
+	ai            *AIService
+	agentKit      *clients.AgentKitClient
+	interval      time.Duration
+	lastTxCount   map[string]int
 }
 
 // NewAgentLoopService creates a new AgentLoopService.
 func NewAgentLoopService(
 	agentRepo interfaces.IAgentRepository,
+	watchlistRepo interfaces.IWatchlistRepository,
 	walletRepo interfaces.IWalletRepository,
 	evmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
@@ -48,14 +51,15 @@ func NewAgentLoopService(
 	agentKit *clients.AgentKitClient,
 ) *AgentLoopService {
 	return &AgentLoopService{
-		agentRepo:   agentRepo,
-		walletRepo:  walletRepo,
-		evmClient:   evmClient,
-		dexScreener: dexScreener,
-		ai:          ai,
-		agentKit:    agentKit,
-		interval:    30 * time.Second,
-		lastTxCount: make(map[string]int),
+		agentRepo:     agentRepo,
+		watchlistRepo: watchlistRepo,
+		walletRepo:    walletRepo,
+		evmClient:     evmClient,
+		dexScreener:   dexScreener,
+		ai:            ai,
+		agentKit:      agentKit,
+		interval:      30 * time.Second,
+		lastTxCount:   make(map[string]int),
 	}
 }
 
@@ -63,7 +67,6 @@ func NewAgentLoopService(
 func (s *AgentLoopService) Start() {
 	log.Println("[AgentLoop] Started")
 
-	// Check if sidecar is available
 	if !s.agentKit.IsHealthy() {
 		log.Println("[AgentLoop] WARNING: AgentKit sidecar not available — agent trading disabled")
 	}
@@ -88,39 +91,53 @@ func (s *AgentLoopService) poll() {
 	}
 }
 
-// processConfig evaluates trades for a single agent config.
-func (s *AgentLoopService) processConfig(config *entities.AgentConfig) {
-	// Check budget
-	remaining := config.Budget - config.TotalSpent
-	if remaining < config.MaxPerTrade {
-		log.Printf("[AgentLoop] User %d: budget exhausted (%.2f/%.2f spent)", config.UserID, config.TotalSpent, config.Budget)
-		return
-	}
-
-	// Get top-scored wallets from database (score >= minScore)
-	// For now, we scan recent wallets — in production this would be optimized
-	topWallets := s.getTopScoredWallets(config.MinScore)
-	if len(topWallets) == 0 {
-		return
-	}
-
-	for _, wallet := range topWallets {
-		s.checkWalletForAgent(config, wallet)
-	}
-}
-
-// getTopScoredWallets returns wallets with score >= minScore.
-func (s *AgentLoopService) getTopScoredWallets(minScore int) []walletWithScore {
-	// This is a simplified approach — in production, use a dedicated query
-	// For hackathon: we check wallets that have been analyzed
-	return nil // Will be populated when wallets are analyzed
-}
-
 // walletWithScore holds a wallet address with its score for agent evaluation.
 type walletWithScore struct {
 	Address string
 	Chain   string
 	Score   int
+}
+
+// processConfig evaluates trades for a single agent config.
+// Only monitors wallets from the user's watchlist — not all wallets in the database.
+func (s *AgentLoopService) processConfig(config *entities.AgentConfig) {
+	// Check budget
+	remaining := config.Budget - config.TotalSpent
+	if remaining < config.MaxPerTrade {
+		return
+	}
+
+	// Get wallets from user's watchlist
+	watchlist, err := s.watchlistRepo.FindByUser(config.UserID)
+	if err != nil || len(watchlist) == 0 {
+		return
+	}
+
+	// For each watched wallet, get its score and check for new trades
+	for _, item := range watchlist {
+		wallet, err := s.walletRepo.FindByAddress(item.WalletAddress)
+		if err != nil || wallet == nil {
+			continue
+		}
+
+		metric, err := s.walletRepo.GetMetric(wallet.ID)
+		if err != nil || metric == nil {
+			continue
+		}
+
+		// Skip wallets below minScore
+		if int(metric.FinalScore) < config.MinScore {
+			continue
+		}
+
+		w := walletWithScore{
+			Address: item.WalletAddress,
+			Chain:   item.Chain,
+			Score:   int(metric.FinalScore),
+		}
+
+		s.checkWalletForAgent(config, w)
+	}
 }
 
 // checkWalletForAgent checks a wallet for new trades and evaluates them for the agent.
@@ -135,11 +152,11 @@ func (s *AgentLoopService) checkWalletForAgent(config *entities.AgentConfig, wal
 
 	if prevCount == 0 {
 		s.lastTxCount[key] = len(transfers)
-		return // First poll — just record count
+		return
 	}
 
 	if len(transfers) <= prevCount {
-		return // No new transactions
+		return
 	}
 
 	newTxs := transfers[:len(transfers)-prevCount]
@@ -155,12 +172,10 @@ func (s *AgentLoopService) checkWalletForAgent(config *entities.AgentConfig, wal
 
 // evaluateAndExecute evaluates a trade and executes it if all conditions pass.
 func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wallet walletWithScore, tx interfaces.TransferData) {
-	// Only act on buys (direction = "in")
 	if tx.Direction != "in" {
 		return
 	}
 
-	// Check conditions
 	dexChain := chainToDexScreenerID(wallet.Chain)
 	var tokenInfo *dto.TokenPairData
 	pairs, err := s.dexScreener.GetTokenPairs(dexChain, tx.ContractAddress)
@@ -173,7 +188,6 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 		return
 	}
 
-	// Check budget
 	remaining := config.Budget - config.TotalSpent
 	tradeAmount := config.MaxPerTrade
 	if tradeAmount > remaining {
@@ -181,7 +195,6 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 		return
 	}
 
-	// AI risk assessment
 	riskAssessment := ""
 	if s.ai != nil && tokenInfo != nil {
 		pairAgeHours := float64(0)
@@ -197,26 +210,23 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 		}
 	}
 
-	// Check risk tolerance
 	if config.RiskTolerance == "low" && tokenInfo != nil && tokenInfo.Liquidity < 100000 {
 		s.recordTrade(config, wallet, tx, "skipped", "risk too high for low tolerance", riskAssessment)
 		return
 	}
 
-	// Execute swap via AgentKit sidecar
 	if !s.agentKit.IsHealthy() {
 		s.recordTrade(config, wallet, tx, "failed", "agent sidecar unavailable", riskAssessment)
 		return
 	}
 
-	amountETH := fmt.Sprintf("%.6f", tradeAmount/2000) // Rough ETH conversion (placeholder)
+	amountETH := fmt.Sprintf("%.6f", tradeAmount/2000)
 	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountETH)
 	if err != nil {
 		s.recordTrade(config, wallet, tx, "failed", fmt.Sprintf("swap failed: %v", err), riskAssessment)
 		return
 	}
 
-	// Success — record trade and update budget
 	log.Printf("[AgentLoop] User %d: executed swap for %s (%.2f USD) triggered by wallet %s (score %d)",
 		config.UserID, tx.TokenSymbol, tradeAmount, wallet.Address, wallet.Score)
 
@@ -233,7 +243,7 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 // meetsAgentConditions checks if a token meets the agent's conditions.
 func (s *AgentLoopService) meetsAgentConditions(config *entities.AgentConfig, tokenInfo *dto.TokenPairData) bool {
 	if tokenInfo == nil {
-		return false // No data — skip for safety
+		return false
 	}
 
 	var conditions []string
