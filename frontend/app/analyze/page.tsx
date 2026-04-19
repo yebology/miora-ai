@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { WalletAnalysis } from "@/types/wallet";
+import type { WalletAnalysis } from "@/api/wallet/validation";
+import { analyzeWallet, getWallet } from "@/api/wallet/connector";
 import { AnalyzeForm } from "@/components/analyze/analyze-form";
 import { AnalysisResult } from "@/components/analyze/analysis-result";
-import { DUMMY_ANALYSIS, DUMMY_FULL_FOLLOW, DUMMY_AVOID } from "@/constants/dummy";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -29,21 +29,15 @@ export default function AnalyzePage() {
     setError(null);
     setResult(null);
 
-    // TODO: Replace with real API call
-    // First check if wallet already exists: GET /api/wallets/:address
-    // const checkRes = await fetch(`${API_URL}/api/wallets/${address}`);
-    // const checkJson = await checkRes.json();
-    // if (checkJson.status === "success" && checkJson.data) {
-    //   setPendingRequest({ address, chain });
-    //   setShowExistsConfirm(true);
-    //   return;
-    // }
-
-    // Simulate: type "b" to trigger "already exists" modal
-    if (address.toLowerCase() === "b") {
-      setPendingRequest({ address, chain });
-      setShowExistsConfirm(true);
-      return;
+    try {
+      const existing = await getWallet(address);
+      if (existing) {
+        setPendingRequest({ address, chain });
+        setShowExistsConfirm(true);
+        return;
+      }
+    } catch {
+      // Wallet not found — proceed to analyze
     }
 
     await doAnalyze(address, chain);
@@ -56,21 +50,8 @@ export default function AnalyzePage() {
     setShowExistsConfirm(false);
 
     try {
-      // TODO: POST /api/wallets/analyze { address, chain }
-      await new Promise((r) => setTimeout(r, 1500));
-
-      if (address.toLowerCase() === "error") {
-        throw new Error(
-          "Wallet not found. Please check the address and try again."
-        );
-      }
-
-      // Pick dummy data based on input for demo
-      let dummy = DUMMY_ANALYSIS; // default: conditional_follow
-      if (address.toLowerCase() === "c") dummy = DUMMY_FULL_FOLLOW;
-      else if (address.toLowerCase() === "d") dummy = DUMMY_AVOID;
-
-      setResult({ ...dummy, address, chain });
+      const data = await analyzeWallet(address, chain);
+      setResult(data);
     } catch (err) {
       setError(
         err instanceof Error

@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import type { AgentConfig } from "@/types/agent";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { AuthGuardModal } from "@/components/ui/auth-guard-modal";
 import { CreateBotForm } from "@/components/agent/create-bot-form";
 import { CreateConsensusForm } from "@/components/agent/create-consensus-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, Play, Pause, Trash2, ExternalLink, AlertTriangle, Zap, Wallet } from "lucide-react";
+import { Bot, Play, Pause, Trash2, ExternalLink, AlertTriangle, Zap, Wallet, Loader2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { DUMMY_WATCHLIST } from "@/constants/dummy-watchlist";
+import { listBots, createBot, deleteBot, startBot, pauseBot } from "@/api/agent/connector";
+import { getWatchlist } from "@/api/watchlist/connector";
+import type { AgentConfig } from "@/api/agent/validation";
+import type { WatchlistItem } from "@/api/watchlist/validation";
 
 function shortenAddress(addr: string) {
   if (addr.length <= 12) return addr;
@@ -27,55 +29,89 @@ const STATUS_STYLES = {
   stopped: { color: "text-red-400", bg: "bg-red-500/10", label: "Stopped" },
 };
 
-const DUMMY_BOTS: AgentConfig[] = [
-  {
-    id: 1, user_id: 1, bot_type: "wallet",
-    target_wallet_address: "0x1234567890abcdef1234567890abcdef12345678",
-    target_wallet_chain: "base", target_wallet_score: 87,
-    recommendation: "conditional_follow",
-    budget: 500, max_per_trade: 50, conditions: ["min_liquidity", "min_mcap"],
-    status: "active", agent_wallet_address: "", total_spent: 120, total_trades: 4,
-    created_at: "2025-12-01T10:00:00Z", updated_at: "2025-12-10T14:00:00Z",
-  },
-  {
-    id: 2, user_id: 1, bot_type: "consensus",
-    budget: 300, max_per_trade: 30, conditions: [],
-    status: "paused", agent_wallet_address: "", total_spent: 0, total_trades: 0,
-    consensus_threshold: 3, consensus_window_min: 60, min_score: 75,
-    created_at: "2025-12-05T14:30:00Z", updated_at: "2025-12-05T14:30:00Z",
-  },
-];
-
 export default function AgentPage() {
-  const { isConnected } = useAuth();
+  const { user, isConnected } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [bots, setBots] = useState<AgentConfig[]>(DUMMY_BOTS);
+  const [bots, setBots] = useState<AgentConfig[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [createMode, setCreateMode] = useState<"none" | "wallet" | "consensus">("none");
   const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [toggleTarget, setToggleTarget] = useState<AgentConfig | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isConnected || !user) return;
+    setLoading(true);
+    Promise.all([
+      listBots(user.walletAddress).catch(() => []),
+      getWatchlist(user.walletAddress).catch(() => []),
+    ])
+      .then(([botsData, watchlistData]) => {
+        setBots(botsData);
+        setWatchlist(watchlistData);
+      })
+      .finally(() => setLoading(false));
+  }, [isConnected, user]);
 
   const handleCreateWallet = async (data: any) => {
+    if (!user) return;
     setCreating(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      setBots((prev) => [{ id: Date.now(), user_id: 1, ...data, status: "paused", agent_wallet_address: "", total_spent: 0, total_trades: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as AgentConfig, ...prev]);
+      const bot = await createBot(user.walletAddress, {
+        ...data,
+        bot_type: "wallet",
+      });
+      setBots((prev) => [bot, ...prev]);
       setCreateMode("none");
-    } finally { setCreating(false); }
+    } catch {
+      // Silently fail
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleCreateConsensus = async (data: any) => {
+    if (!user) return;
     setCreating(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      setBots((prev) => [{ id: Date.now(), user_id: 1, ...data, conditions: [], status: "paused", agent_wallet_address: "", total_spent: 0, total_trades: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as AgentConfig, ...prev]);
+      const bot = await createBot(user.walletAddress, {
+        ...data,
+        bot_type: "consensus",
+        conditions: [],
+      });
+      setBots((prev) => [bot, ...prev]);
       setCreateMode("none");
-    } finally { setCreating(false); }
+    } catch {
+      // Silently fail
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const handleDelete = (id: number) => { setBots((prev) => prev.filter((b) => b.id !== id)); setDeleteTarget(null); };
-  const handleToggle = (id: number) => {
-    setBots((prev) => prev.map((b) => b.id === id ? { ...b, status: (b.status === "active" ? "paused" : "active") as AgentConfig["status"] } : b));
+  const handleDelete = async (id: number) => {
+    if (!user) return;
+    try {
+      await deleteBot(user.walletAddress, id);
+      setBots((prev) => prev.filter((b) => b.id !== id));
+    } catch {
+      // Silently fail
+    }
+    setDeleteTarget(null);
+  };
+
+  const handleToggle = async (id: number) => {
+    if (!user) return;
+    const bot = bots.find((b) => b.id === id);
+    if (!bot) return;
+    try {
+      const updated = bot.status === "active"
+        ? await pauseBot(user.walletAddress, id)
+        : await startBot(user.walletAddress, id);
+      setBots((prev) => prev.map((b) => (b.id === id ? updated : b)));
+    } catch {
+      // Silently fail
+    }
     setToggleTarget(null);
   };
 
@@ -98,12 +134,16 @@ export default function AgentPage() {
             </div>
             <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />
           </>
+        ) : loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
         ) : (
           <>
             {/* Create forms */}
             {createMode === "wallet" && (
               <div className="mb-6">
-                <CreateBotForm watchlist={DUMMY_WATCHLIST} onCreate={handleCreateWallet} creating={creating} onCancel={() => setCreateMode("none")} />
+                <CreateBotForm watchlist={watchlist} onCreate={handleCreateWallet} creating={creating} onCancel={() => setCreateMode("none")} />
               </div>
             )}
             {createMode === "consensus" && (

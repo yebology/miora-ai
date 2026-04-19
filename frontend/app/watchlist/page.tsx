@@ -1,33 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import type { WatchlistItem, Notification } from "@/types/watchlist";
+import { useState, useEffect } from "react";
+import type { Notification } from "@/types/watchlist";
 import { useAuth } from "@/components/providers/auth-provider";
 import { AuthGuardModal } from "@/components/ui/auth-guard-modal";
-import { DUMMY_WATCHLIST, DUMMY_NOTIFICATIONS } from "@/constants/dummy-watchlist";
+import { getWatchlist, unfollowWallet, updateWatchlist } from "@/api/watchlist/connector";
+import type { WatchlistItem } from "@/api/watchlist/validation";
 import { WatchlistCard } from "@/components/watchlist/watchlist-card";
 import { NotificationItem } from "@/components/watchlist/notification-item";
-import { Eye, Bell } from "lucide-react";
+import { Eye, Bell, Loader2 } from "lucide-react";
 
 export default function WatchlistPage() {
   const { user, isConnected } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(DUMMY_WATCHLIST);
-  const [notifications] = useState<Notification[]>(DUMMY_NOTIFICATIONS);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [notifications] = useState<Notification[]>([]);
   const [tab, setTab] = useState<"wallets" | "notifications">("wallets");
+  const [loading, setLoading] = useState(false);
 
-  const handleUnfollow = (address: string) => {
-    setWatchlist((prev) => prev.filter((w) => w.wallet_address !== address));
+  useEffect(() => {
+    if (!isConnected || !user) return;
+    setLoading(true);
+    getWatchlist(user.walletAddress)
+      .then(setWatchlist)
+      .catch(() => setWatchlist([]))
+      .finally(() => setLoading(false));
+  }, [isConnected, user]);
+
+  const handleUnfollow = async (address: string) => {
+    if (!user) return;
+    try {
+      await unfollowWallet(user.walletAddress, address);
+      setWatchlist((prev) => prev.filter((w) => w.wallet_address !== address));
+    } catch {
+      // Silently fail
+    }
   };
 
-  const handleToggleNotify = (address: string) => {
-    setWatchlist((prev) =>
-      prev.map((w) =>
-        w.wallet_address === address
-          ? { ...w, email_notify: !w.email_notify }
-          : w
-      )
-    );
+  const handleToggleNotify = async (address: string) => {
+    if (!user) return;
+    const item = watchlist.find((w) => w.wallet_address === address);
+    if (!item) return;
+    try {
+      await updateWatchlist(user.walletAddress, address, {
+        email_notify: !item.email_notify,
+      });
+      setWatchlist((prev) =>
+        prev.map((w) =>
+          w.wallet_address === address
+            ? { ...w, email_notify: !w.email_notify }
+            : w
+        )
+      );
+    } catch {
+      // Silently fail
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -94,7 +121,11 @@ export default function WatchlistPage() {
         {/* Content */}
         {tab === "wallets" && (
           <div className="space-y-3">
-            {watchlist.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : watchlist.length === 0 ? (
               <div className="py-16 text-center">
                 <Eye className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">

@@ -15,6 +15,8 @@ import { AlertTriangle, Eye, Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AttestationBadge } from "@/components/analyze/attestation-badge";
+import { followWallet } from "@/api/watchlist/connector";
+import { getReputation } from "@/api/reputation/connector";
 
 type Props = {
   data: WalletAnalysis;
@@ -57,14 +59,38 @@ export function AnalysisResult({ data }: Props) {
   const { user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [followed, setFollowed] = useState(false);
+  const [attestationUID, setAttestationUID] = useState<string | undefined>();
+  const [explorerURL, setExplorerURL] = useState<string | undefined>();
 
-  const handleFollow = () => {
+  // Fetch reputation (attestation) data on mount
+  useState(() => {
+    getReputation(data.address)
+      .then((rep) => {
+        setAttestationUID(rep.attestation_uid);
+        setExplorerURL(rep.explorer_url);
+      })
+      .catch(() => {
+        // No attestation yet — that's fine
+      });
+  });
+
+  const handleFollow = async () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-    // TODO: POST /api/watchlist/follow
-    setFollowed(true);
+    try {
+      await followWallet(user.walletAddress, {
+        wallet_address: data.address,
+        chain: data.chain,
+        recommendation: data.recommendation,
+        conditions: [],
+        email_notify: false,
+      });
+      setFollowed(true);
+    } catch {
+      // Silently fail
+    }
   };
 
   return (
@@ -107,7 +133,7 @@ export function AnalysisResult({ data }: Props) {
               {data.address}
             </p>
             <div className="mt-2">
-              <AttestationBadge attestationUID="0xdummy-attestation-uid-for-visual-review" />
+              <AttestationBadge attestationUID={attestationUID} explorerURL={explorerURL} />
             </div>
           </div>
         </CardContent>

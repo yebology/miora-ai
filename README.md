@@ -117,7 +117,7 @@ Both bot types:
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 16, Tailwind CSS v4, shadcn/ui, TypeScript, wagmi, viem |
+| Frontend | Next.js 16, Tailwind CSS v4, shadcn/ui, TypeScript, Zod, wagmi, viem |
 | Backend | Go, Fiber, GORM, WebSocket |
 | Agent Sidecar | Python, FastAPI, Coinbase AgentKit |
 | Database | PostgreSQL |
@@ -159,6 +159,12 @@ Both bot types:
 │   ├── main.py             # AgentKit sidecar (FastAPI + Coinbase AgentKit)
 │   └── requirements.txt    # Python dependencies
 ├── frontend/
+│   ├── api/                # API layer (per-module, Zod-validated)
+│   │   ├── client.ts       # Core fetch wrapper + response envelope validation
+│   │   ├── wallet/         # Wallet analysis API (validation.ts + connector.ts)
+│   │   ├── watchlist/      # Watchlist CRUD API (validation.ts + connector.ts)
+│   │   ├── reputation/     # Reputation API (validation.ts + connector.ts)
+│   │   └── agent/          # Bot management API (validation.ts + connector.ts)
 │   ├── app/                # Next.js App Router pages
 │   │   ├── page.tsx        # Landing page
 │   │   ├── analyze/        # Wallet analysis page
@@ -176,7 +182,7 @@ Both bot types:
 │   ├── constants/          # Static data + dummy data
 │   ├── hooks/              # Custom hooks
 │   ├── types/              # TypeScript types
-│   └── lib/                # Utilities (API client, helpers)
+│   └── lib/                # Utilities (cn helper)
 ├── Makefile                # Dev commands
 ├── README.md               # Project overview
 ├── USER_STORIES.md          # User stories with scenarios

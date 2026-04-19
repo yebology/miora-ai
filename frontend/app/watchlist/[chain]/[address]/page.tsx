@@ -4,8 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { WalletAnalysis } from "@/types/wallet";
 import type { Notification } from "@/types/watchlist";
-import { DUMMY_ANALYSIS } from "@/constants/dummy";
-import { DUMMY_NOTIFICATIONS } from "@/constants/dummy-watchlist";
+import { getWallet, analyzeWallet } from "@/api/wallet/connector";
 import { AnalysisResult } from "@/components/analyze/analysis-result";
 import { NotificationItem } from "@/components/watchlist/notification-item";
 import { Button } from "@/components/ui/button";
@@ -35,40 +34,29 @@ export default function WatchlistDetailPage() {
   const address = params.address as string;
 
   const [analysis, setAnalysis] = useState<WalletAnalysis | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [reanalyzeLimit, setReanalyzeLimit] = useState(20);
   const [tab, setTab] = useState<"analysis" | "activity">("analysis");
 
   useEffect(() => {
-    const load = async () => {
-      await new Promise((r) => setTimeout(r, 500));
-      setAnalysis({ ...DUMMY_ANALYSIS, address, chain });
-      setNotifications(
-        DUMMY_NOTIFICATIONS.filter(
-          (n) => n.wallet_address === address && n.chain === chain
-        )
-      );
-      setLoading(false);
-    };
-    load();
-  }, [address, chain]);
+    getWallet(address)
+      .then((data) => setAnalysis(data as WalletAnalysis))
+      .catch(() => setAnalysis(null))
+      .finally(() => setLoading(false));
+  }, [address]);
 
   const handleReanalyze = async () => {
     setShowConfirm(false);
     setReanalyzing(true);
     try {
-      await new Promise((r) => setTimeout(r, 2000));
-      setAnalysis({
-        ...DUMMY_ANALYSIS,
-        address,
-        chain,
-        final_score: Math.round(Math.random() * 30 + 50),
-      });
+      const data = await analyzeWallet(address, chain);
+      setAnalysis(data as WalletAnalysis);
       setShowSuccess(true);
+    } catch {
+      // Keep current analysis on error
     } finally {
       setReanalyzing(false);
     }
@@ -193,38 +181,6 @@ export default function WatchlistDetailPage() {
                 )}
               </DialogDescription>
             </DialogHeader>
-            <div className="flex items-center justify-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Transactions:</span>
-              <span className="group relative">
-                <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
-                <span className="absolute bottom-full left-1/2 z-50 mb-2 hidden w-56 -translate-x-1/2 rounded-lg border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-lg group-hover:block">
-                  How many recent transactions to analyze. More transactions = more accurate scoring, but takes longer.
-                </span>
-              </span>
-              {[
-                { value: 20, enabled: true },
-                { value: 50, enabled: false },
-                { value: 100, enabled: false },
-                { value: 200, enabled: false },
-              ].map((l) => (
-                <button
-                  key={l.value}
-                  type="button"
-                  disabled={!l.enabled}
-                  onClick={() => l.enabled && setReanalyzeLimit(l.value)}
-                  className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-                    reanalyzeLimit === l.value
-                      ? "bg-primary text-primary-foreground"
-                      : l.enabled
-                        ? "bg-muted text-muted-foreground hover:text-foreground"
-                        : "cursor-not-allowed bg-muted/50 text-muted-foreground/30 line-through"
-                  }`}
-                >
-                  {l.value}
-                  {!l.enabled && " 🔒"}
-                </button>
-              ))}
-            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"

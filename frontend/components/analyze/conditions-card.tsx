@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Check, ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { followWallet } from "@/api/watchlist/connector";
 
 type Props = {
   conditions: Condition[];
@@ -38,8 +39,18 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
       return;
     }
 
-    // TODO: Replace with real API call
-    setFollowed(true);
+    try {
+      await followWallet(user.walletAddress, {
+        wallet_address: address,
+        chain,
+        recommendation: "conditional_follow",
+        conditions: Array.from(selected),
+        email_notify: false,
+      });
+      setFollowed(true);
+    } catch {
+      // Silently fail — user can retry
+    }
   };
 
   return (

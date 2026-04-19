@@ -5,6 +5,7 @@ import { Brain, RefreshCw, ChevronDown, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { regenerateInsight } from "@/api/wallet/connector";
 
 const TONES = [
   { value: "simple", label: "Simple", emoji: "💬" },
@@ -32,24 +33,13 @@ export function AiInsightCard({ insight, address, chain }: Props) {
     setActiveTone(tone);
 
     try {
-      // TODO: Replace with real API call
-      // const res = await fetch(`${API_URL}/api/wallets/regenerate-insight`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ address, chain, tone, custom_prompt: prompt }),
-      // });
-      // const json = await res.json();
-      // setCurrentInsight(json.data.ai_insight);
-
-      await new Promise((r) => setTimeout(r, 1000));
-      const dummyInsights: Record<string, string> = {
-        simple:
-          "This wallet is a disciplined trader with a 68% win rate across 47 transactions. It focuses on mid-cap tokens and enters positions early. However, 15% of trades involve low-liquidity tokens which adds risk. Follow with caution — stick to tokens with liquidity above $100k.",
-        eli5:
-          "Imagine this wallet is like a kid trading baseball cards at school. They're pretty good at it — they make good trades about 7 out of 10 times! They like to find new cards before everyone else wants them, which is smart. But sometimes they trade for cards that nobody else wants, which is a bit risky. Overall, they're a good trader to watch, but don't copy everything they do — only copy the trades with popular cards!",
-        custom: `Based on your question "${prompt}": This wallet scores 73/100 with a 68% win rate. The trading pattern shows early entries into mid-cap tokens with moderate risk exposure at 15.3%. The profit consistency of 72.5 suggests relatively stable returns across trades.`,
-      };
-      setCurrentInsight(dummyInsights[tone] || insight);
+      const res = await regenerateInsight(
+        address,
+        chain,
+        tone as "simple" | "eli5" | "custom",
+        prompt,
+      );
+      setCurrentInsight(res.ai_insight);
       if (tone === "custom") setShowCustomInput(false);
     } catch {
       // Keep current insight on error
