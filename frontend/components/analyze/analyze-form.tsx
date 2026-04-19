@@ -40,7 +40,10 @@ export function AnalyzeForm({ onAnalyze, loading, error }: Props) {
       </div>
 
       {error && (
-        <p className="mt-3 text-center text-sm text-red-400">{error}</p>
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-red-500/10 px-4 py-2.5 text-sm text-red-400">
+          <Search className="h-4 w-4 shrink-0" />
+          {error}
+        </div>
       )}
     </form>
   );

@@ -14,6 +14,9 @@ type WalletMetric struct {
 	TradeDiscipline   float64   `json:"trade_discipline"`
 	FinalScore        float64   `json:"final_score"`
 	Recommendation    string    `json:"recommendation"`
+	AiInsight         string    `json:"ai_insight,omitempty"`          // Stored AI insight text
+	AiInsightTone     string    `json:"ai_insight_tone,omitempty"`     // Tone used: simple, eli5, custom
+	AiInsightPrompt   string    `json:"ai_insight_prompt,omitempty"`   // Custom prompt (only if tone=custom)
 	AttestationUID    string    `json:"attestation_uid,omitempty"`     // EAS attestation UID on Base Sepolia
 	AttestationTxHash string    `json:"attestation_tx_hash,omitempty"` // Transaction hash of the attestation
 	UpdatedAt         time.Time `json:"updated_at"`

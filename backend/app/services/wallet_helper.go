@@ -82,6 +82,9 @@ func (s *WalletService) fetchAndSaveTransactions(wallet *entities.Wallet, chain 
 		})
 	}
 
+	// Delete old transactions before saving (handles re-analyze case)
+	s.repo.DeleteTransactions(wallet.ID)
+
 	if err := s.repo.SaveTransactions(txEntities); err != nil {
 		return nil, pkg.ErrInternal()
 	}

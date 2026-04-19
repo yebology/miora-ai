@@ -15,6 +15,8 @@ type WalletAnalysis struct {
 	FinalScore        float64       `json:"final_score"`
 	Recommendation    string        `json:"recommendation"`
 	AiInsight         string        `json:"ai_insight,omitempty"`
+	AiInsightTone     string        `json:"ai_insight_tone,omitempty"`
+	AiInsightPrompt   string        `json:"ai_insight_prompt,omitempty"`
 	TradedTokens      []TradedToken `json:"traded_tokens,omitempty"`
 	Conditions        []Condition   `json:"conditions,omitempty"`
 }

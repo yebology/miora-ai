@@ -98,3 +98,19 @@ func (r *WalletRepository) FindAllWithMetrics(minScore int) ([]entities.Wallet, 
 	}
 	return wallets, nil
 }
+
+// Delete removes a wallet and its associated transactions by wallet ID.
+func (r *WalletRepository) Delete(walletID uint) error {
+	r.db.Where("wallet_id = ?", walletID).Delete(&entities.Transaction{})
+	return r.db.Delete(&entities.Wallet{}, walletID).Error
+}
+
+// DeleteTransactions removes all transactions for a wallet ID.
+func (r *WalletRepository) DeleteTransactions(walletID uint) error {
+	return r.db.Where("wallet_id = ?", walletID).Delete(&entities.Transaction{}).Error
+}
+
+// DeleteMetric removes the wallet metric for a wallet ID.
+func (r *WalletRepository) DeleteMetric(walletID uint) error {
+	return r.db.Where("wallet_id = ?", walletID).Delete(&entities.WalletMetric{}).Error
+}

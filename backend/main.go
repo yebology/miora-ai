@@ -52,7 +52,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:  cfg.AllowedOrigins,
 		AllowMethods:  "*",
-		AllowHeaders:  "Origin,Content-Type,Accept,Authorization",
+		AllowHeaders:  "Origin,Content-Type,Accept,Authorization,X-Wallet-Address",
 		ExposeHeaders: "Content-Length",
 	}))
 

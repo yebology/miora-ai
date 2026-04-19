@@ -35,37 +35,37 @@ export const FEATURES: Feature[] = [
     icon: Fingerprint,
     title: "On-chain Reputation (EAS)",
     description:
-      "Trading scores published on-chain via Ethereum Attestation Service on Base. Verifiable by any protocol, agent, or dApp.",
+      "Every trading score is published as an EAS attestation on Base. Queryable by any protocol, agent, or dApp — a composable reputation primitive.",
   },
   {
     icon: Brain,
     title: "AI-Powered Insights",
     description:
-      "Understand any wallet's trading behavior in plain language. No charts, no jargon — just clear, actionable analysis.",
+      "Gemini AI translates complex scoring data into plain-language analysis. Ask in simple, ELI5, or custom tone — no charts or jargon needed.",
   },
   {
     icon: Shield,
-    title: "Smart Recommendations",
+    title: "Dynamic Conditions",
     description:
-      "Get Full Follow, Conditional Follow, or Avoid ratings with AI-generated conditions for every wallet.",
+      "Full Follow, Conditional Follow, or Avoid — with filter thresholds computed from the wallet's own trading data, not hardcoded numbers.",
   },
   {
     icon: Bell,
-    title: "Real-Time Alerts",
+    title: "Smart Alerts + AI Risk",
     description:
-      "Follow wallets and get notified instantly when they trade, filtered by your custom conditions.",
+      "Get notified when followed wallets trade. Each alert includes an AI risk assessment evaluating liquidity, market cap, and pair age before you act.",
   },
   {
     icon: Bot,
-    title: "AI Trading Bots",
+    title: "AI Trading Bots (AgentKit)",
     description:
-      "Two bot types: Wallet Bot copies one trader's moves. Consensus Bot trades when multiple top wallets agree. Powered by Coinbase AgentKit.",
+      "Wallet Bot copies one trader's buys and sells. Consensus Bot trades when 3+ top wallets agree. Each bot has its own Agentic Wallet on Base.",
   },
   {
     icon: DollarSign,
     title: "Auto Profit Transfer",
     description:
-      "Sell proceeds are automatically transferred to your connected wallet. No manual withdrawal needed.",
+      "When a bot sells, proceeds are automatically transferred on-chain to your connected wallet. No manual withdrawal needed.",
   },
 ];
 
@@ -77,21 +77,21 @@ export const STEPS: Step[] = [
   {
     step: "01",
     title: "Analyze",
-    description: "Paste any wallet address on Base to get a multi-factor trading score.",
+    description: "Paste any wallet address on Base. Get a multi-factor score, recommendation, and AI insight in seconds.",
     icon: Search,
   },
   {
     step: "02",
-    title: "Follow or Agent",
+    title: "Follow or Automate",
     description:
-      "Follow the wallet with smart conditions, or let the AI agent trade for you automatically.",
+      "Follow with smart conditions and get AI-assessed alerts, or create a bot that trades for you automatically.",
     icon: BarChart3,
   },
   {
     step: "03",
     title: "Verified On-chain",
     description:
-      "Every score is published as an EAS attestation on Base — verifiable by anyone.",
+      "Every score is published as an EAS attestation on Base — verifiable and queryable by anyone.",
     icon: MousePointerClick,
   },
 ];

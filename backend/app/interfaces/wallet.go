@@ -24,4 +24,7 @@ type IWalletRepository interface {
 	GetTransactions(walletID uint) ([]entities.Transaction, error)
 	SaveMetric(metric *entities.WalletMetric) error
 	GetMetric(walletID uint) (*entities.WalletMetric, error)
+	Delete(walletID uint) error
+	DeleteTransactions(walletID uint) error
+	DeleteMetric(walletID uint) error
 }

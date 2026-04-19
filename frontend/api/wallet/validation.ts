@@ -37,6 +37,8 @@ export const walletAnalysisSchema = z.object({
   final_score: z.number(),
   recommendation: z.enum(["full_follow", "conditional_follow", "avoid"]),
   ai_insight: z.string().optional(),
+  ai_insight_tone: z.string().optional(),
+  ai_insight_prompt: z.string().optional(),
   traded_tokens: z.array(tradedTokenSchema).optional(),
   conditions: z.array(conditionSchema).optional(),
 });

@@ -33,6 +33,8 @@ export type WalletAnalysis = {
   final_score: number;
   recommendation: "full_follow" | "conditional_follow" | "avoid";
   ai_insight?: string;
+  ai_insight_tone?: string;
+  ai_insight_prompt?: string;
   traded_tokens?: TradedToken[];
   conditions?: Condition[];
 };

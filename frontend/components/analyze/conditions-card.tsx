@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Eye, Check, ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { followWallet } from "@/api/watchlist/connector";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 type Props = {
   conditions: Condition[];
@@ -22,6 +25,8 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
   );
   const [followed, setFollowed] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const { user } = useAuth();
 
   const toggle = (id: string) => {
@@ -33,14 +38,18 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
     });
   };
 
-  const handleFollow = async () => {
+  const handleFollow = () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
+    setShowConfirm(true);
+  };
 
+  const confirmFollow = async () => {
+    setFollowLoading(true);
     try {
-      await followWallet(user.walletAddress, {
+      await followWallet(user!.walletAddress, {
         wallet_address: address,
         chain,
         recommendation: "conditional_follow",
@@ -49,7 +58,10 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
       });
       setFollowed(true);
     } catch {
-      // Silently fail — user can retry
+      // Silently fail
+    } finally {
+      setFollowLoading(false);
+      setShowConfirm(false);
     }
   };
 
@@ -134,6 +146,26 @@ export function ConditionsCard({ conditions, address, chain }: Props) {
             )}
           </Button>
         )}
+
+        {/* Follow Confirmation */}
+        <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader className="items-center text-center">
+              <ShieldAlert className="mb-2 h-10 w-10 text-yellow-400" />
+              <DialogTitle>Follow with {selected.size} condition{selected.size !== 1 ? "s" : ""}?</DialogTitle>
+              <DialogDescription>
+                You&apos;ll only get notified when this wallet trades tokens that match your selected conditions.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={confirmFollow} disabled={followLoading}>
+                {followLoading ? "Following..." : "Follow"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />
       </CardContent>
     </Card>

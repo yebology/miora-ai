@@ -17,6 +17,9 @@ import { cn } from "@/lib/utils";
 import { AttestationBadge } from "@/components/analyze/attestation-badge";
 import { followWallet } from "@/api/watchlist/connector";
 import { getReputation } from "@/api/reputation/connector";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 type Props = {
   data: WalletAnalysis;
@@ -59,6 +62,8 @@ export function AnalysisResult({ data }: Props) {
   const { user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [followed, setFollowed] = useState(false);
+  const [showFollowConfirm, setShowFollowConfirm] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [attestationUID, setAttestationUID] = useState<string | undefined>();
   const [explorerURL, setExplorerURL] = useState<string | undefined>();
 
@@ -79,8 +84,13 @@ export function AnalysisResult({ data }: Props) {
       setShowAuthModal(true);
       return;
     }
+    setShowFollowConfirm(true);
+  };
+
+  const confirmFollow = async () => {
+    setFollowLoading(true);
     try {
-      await followWallet(user.walletAddress, {
+      await followWallet(user!.walletAddress, {
         wallet_address: data.address,
         chain: data.chain,
         recommendation: data.recommendation,
@@ -90,6 +100,9 @@ export function AnalysisResult({ data }: Props) {
       setFollowed(true);
     } catch {
       // Silently fail
+    } finally {
+      setFollowLoading(false);
+      setShowFollowConfirm(false);
     }
   };
 
@@ -145,6 +158,8 @@ export function AnalysisResult({ data }: Props) {
           insight={data.ai_insight}
           address={data.address}
           chain={data.chain}
+          tone={data.ai_insight_tone}
+          prompt={data.ai_insight_prompt}
         />
       )}
 
@@ -161,10 +176,6 @@ export function AnalysisResult({ data }: Props) {
               tooltip={m.tooltip}
             />
           ))}
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            Risk Exposure: {data.risk_exposure.toFixed(1)}% (informational)
-          </div>
         </CardContent>
       </Card>
 
@@ -186,6 +197,25 @@ export function AnalysisResult({ data }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* Follow Confirmation */}
+      <Dialog open={showFollowConfirm} onOpenChange={setShowFollowConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader className="items-center text-center">
+            <Eye className="mb-2 h-10 w-10 text-purple-400" />
+            <DialogTitle>Follow this wallet?</DialogTitle>
+            <DialogDescription>
+              You&apos;ll get real-time notifications when this wallet makes a trade on Base.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setShowFollowConfirm(false)}>Cancel</Button>
+            <Button className="flex-1" onClick={confirmFollow} disabled={followLoading}>
+              {followLoading ? "Following..." : "Follow"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AuthGuardModal open={showAuthModal} onOpenChange={setShowAuthModal} />
     </div>

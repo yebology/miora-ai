@@ -17,11 +17,13 @@ type Props = {
   insight: string;
   address: string;
   chain: string;
+  tone?: string;
+  prompt?: string;
 };
 
-export function AiInsightCard({ insight, address, chain }: Props) {
+export function AiInsightCard({ insight, address, chain, tone, prompt }: Props) {
   const [currentInsight, setCurrentInsight] = useState(insight);
-  const [activeTone, setActiveTone] = useState("simple");
+  const [activeTone, setActiveTone] = useState(tone || "simple");
   const [loading, setLoading] = useState(false);
   const [showTones, setShowTones] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);

@@ -55,9 +55,8 @@ type ScoringConfig struct {
 // Returns an error if the .env file is missing or any required key is empty.
 func LoadConfig() (*Config, error) {
 
-	if err := godotenv.Load(); err != nil {
-		return nil, fmt.Errorf("error loading .env: %w", err)
-	}
+	// Load .env file if it exists (local dev). In Docker, env vars are injected via env_file.
+	_ = godotenv.Load()
 
 	required := []string{
 		"APP_PORT", "DB_HOST", "DB_PORT",

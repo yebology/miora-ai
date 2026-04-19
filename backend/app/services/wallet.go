@@ -70,6 +70,16 @@ type tradeResult struct {
 // AnalyzeWallet orchestrates the full analysis flow and returns scoring.
 func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*responses.WalletAnalysis, *pkg.AppError) {
 
+	// Validate address format: must be 0x + 40 hex characters
+	if len(address) != 42 || address[:2] != "0x" {
+		return nil, pkg.ErrBadReq("Invalid wallet address. Must be a valid EVM address (0x + 40 hex characters).")
+	}
+	for _, c := range address[2:] {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return nil, pkg.ErrBadReq("Invalid wallet address. Must be a valid EVM address (0x + 40 hex characters).")
+		}
+	}
+
 	if !constants.IsValidTransactionLimit(chain, limit) {
 		limit = constants.GetTransactionLimits(chain).Default
 	}
@@ -84,10 +94,21 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 		return nil, appErr
 	}
 
+	// Don't save wallets with 0 transactions — prevents DB pollution from random inputs
+	if len(txEntities) == 0 {
+		// Clean up the empty wallet record
+		s.repo.Delete(wallet.ID)
+		return nil, pkg.ErrBadReq("No transactions found for this wallet on Base. Please check the address and try again.")
+	}
+
 	tokenData := s.fetchTokenData(chain, txEntities)
 	trades := s.calculateTrades(chain, txEntities)
 
 	metric := s.calculateMetrics(wallet.ID, txEntities, tokenData, trades)
+
+	// Delete old metric before saving (handles re-analyze case)
+	s.repo.DeleteMetric(wallet.ID)
+
 	if err := s.repo.SaveMetric(metric); err != nil {
 		return nil, pkg.ErrInternal()
 	}
@@ -119,6 +140,10 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 	// Generate AI insight (non-blocking — if it fails, return without insight)
 	if insight, err := s.ai.GenerateInsight(result, "simple"); err == nil {
 		result.AiInsight = insight
+		metric.AiInsight = insight
+		metric.AiInsightTone = "simple"
+		metric.AiInsightPrompt = ""
+		s.repo.SaveMetric(metric)
 	} else {
 		log.Printf("AI insight failed: %v", err)
 	}
@@ -153,6 +178,7 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 }
 
 // GetWallet retrieves a previously analyzed wallet by address.
+// Rebuilds traded_tokens and conditions from stored transactions and token data.
 func (s *WalletService) GetWallet(address string) (*responses.WalletAnalysis, *pkg.AppError) {
 
 	wallet, err := s.repo.FindByAddress(address)
@@ -165,7 +191,7 @@ func (s *WalletService) GetWallet(address string) (*responses.WalletAnalysis, *p
 		return nil, pkg.ErrNotFound(constants.DataNotFound)
 	}
 
-	return &responses.WalletAnalysis{
+	result := &responses.WalletAnalysis{
 		Address:           wallet.Address,
 		Chain:             wallet.Chain,
 		TotalTransactions: metric.TotalTransactions,
@@ -177,11 +203,33 @@ func (s *WalletService) GetWallet(address string) (*responses.WalletAnalysis, *p
 		TradeDiscipline:   metric.TradeDiscipline,
 		FinalScore:        metric.FinalScore,
 		Recommendation:    metric.Recommendation,
-	}, nil
+		AiInsight:         metric.AiInsight,
+		AiInsightTone:     metric.AiInsightTone,
+		AiInsightPrompt:   metric.AiInsightPrompt,
+	}
+
+	// Rebuild traded tokens and conditions from stored transactions
+	txEntities, txErr := s.repo.GetTransactions(wallet.ID)
+	if txErr == nil && len(txEntities) > 0 {
+		tokenData := s.fetchTokenData(wallet.Chain, txEntities)
+		trades := s.calculateTrades(wallet.Chain, txEntities)
+		result.TradedTokens = buildTradedTokens(wallet.Chain, trades, txEntities)
+
+		if metric.Recommendation == "conditional_follow" {
+			result.Conditions = buildConditions(
+				tokenData,
+				metric.RiskExposure, metric.EntryTiming, metric.TokenQuality,
+				s.scoring,
+			)
+		}
+	}
+
+	return result, nil
 
 }
 
 // RegenerateInsight regenerates the AI insight for a previously analyzed wallet with a different tone.
+// Saves the new insight to DB so it persists on page reload.
 func (s *WalletService) RegenerateInsight(address, chain, tone, customPrompt string) (string, *pkg.AppError) {
 
 	result, appErr := s.GetWallet(address)
@@ -201,6 +249,22 @@ func (s *WalletService) RegenerateInsight(address, chain, tone, customPrompt str
 
 	if err != nil {
 		return "", pkg.ErrInternal()
+	}
+
+	// Save to DB
+	wallet, wErr := s.repo.FindByAddress(address)
+	if wErr == nil {
+		metric, mErr := s.repo.GetMetric(wallet.ID)
+		if mErr == nil {
+			metric.AiInsight = insight
+			metric.AiInsightTone = tone
+			if tone == "custom" {
+				metric.AiInsightPrompt = customPrompt
+			} else {
+				metric.AiInsightPrompt = ""
+			}
+			s.repo.SaveMetric(metric)
+		}
 	}
 
 	return insight, nil
