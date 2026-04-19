@@ -109,8 +109,7 @@ services/monitor.go → Start() [goroutine, ticker 30s]
         ├── monitor_helper.go → meetsConditions() → check user's conditions
         │
         ├── ws/hub.go → SendToUser(userID, message) → WebSocket push
-        ├── repositories/notification.go → Create() → save to DB
-        └── clients/resend.go → SendTradeAlert() → async email
+        └── repositories/notification.go → Create() → save to DB
 ```
 
 ---
@@ -286,7 +285,7 @@ agent_trades
 | Interfaces | `backend/app/interfaces/*.go` (7 contracts) |
 | Repositories | `backend/app/repositories/*.go` (4 repos) |
 | Services | `backend/app/services/*.go` (scoring, wallet, ai, watchlist, monitor, agent, agent_loop) |
-| Clients | `backend/app/clients/*.go` (evm, dexscreener, moralis, gemini, resend, eas, agentkit) |
+| Clients | `backend/app/clients/*.go` (evm, dexscreener, moralis, gemini, eas, agentkit) |
 | Handlers | `backend/app/handlers/*.go` (auth, wallet, watchlist, reputation, agent) |
 | Routes | `backend/app/http/*.go` + `backend/router/routes.go` |
 | Middleware | `backend/app/middleware/wallet_auth.go` |

@@ -22,7 +22,7 @@ export function CtaSection() {
       >
         <h2 className="text-2xl font-bold tracking-tight">Ready to start?</h2>
         <p className="text-sm text-muted-foreground">
-          Analyze wallets and trade smarter — free to use.
+          Score traders. Follow the best. Let bots handle the rest.
         </p>
         <Link
           href="/analyze"

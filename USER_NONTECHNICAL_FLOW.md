@@ -38,9 +38,8 @@ Kamu mau dapat notifikasi kalau wallet ini trade:
 
 1. Pilih conditions yang mau aktif (liquidity, market cap, dll)
 2. Klik **Follow Wallet**
-3. Opsional: isi email untuk dapat notifikasi email
 
-Sekarang kamu ada di **Watchlist**. Setiap kali wallet 0xABC trade token yang match conditions kamu, kamu dapat notifikasi real-time di browser + email.
+Sekarang kamu ada di **Watchlist**. Setiap kali wallet 0xABC trade token yang match conditions kamu, kamu dapat notifikasi real-time di browser.
 
 ---
 

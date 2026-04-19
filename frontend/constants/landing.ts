@@ -3,7 +3,6 @@ import {
   Shield,
   Bell,
   Bot,
-  Zap,
   Search,
   BarChart3,
   MousePointerClick,
@@ -58,15 +57,15 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Bot,
-    title: "AI Trading Agent",
+    title: "AI Trading Bots",
     description:
-      "Autonomous agent monitors top wallets, evaluates trades, and executes swaps on Base via Coinbase AgentKit.",
+      "Two bot types: Wallet Bot copies one trader's moves. Consensus Bot trades when multiple top wallets agree. Powered by Coinbase AgentKit.",
   },
   {
     icon: DollarSign,
-    title: "x402 Reputation API",
+    title: "Auto Profit Transfer",
     description:
-      "Other protocols and AI agents can query Miora scores via USDC micropayments. No API keys needed.",
+      "Sell proceeds are automatically transferred to your connected wallet. No manual withdrawal needed.",
   },
 ];
 

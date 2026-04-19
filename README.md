@@ -42,7 +42,6 @@ Miora combines three layers into one cohesive product:
 ### 🔔 Real-time Smart Alerts
 - WebSocket notifications when followed wallets trade
 - Each alert includes AI risk assessment
-- Email notifications via Resend (async, non-blocking)
 - Notification history saved to database
 
 ### 🤖 AI Trading Bots (AgentKit)
@@ -68,7 +67,7 @@ Both bot types:
 ### 🔐 Authentication
 - Wallet-based auth via MetaMask connect (wagmi/viem)
 - `X-Wallet-Address` header for API authentication
-- No Firebase — no Google login required
+- No Firebase — wallet connect only
 
 ---
 
@@ -128,7 +127,6 @@ Both bot types:
 | On-chain | EAS (Ethereum Attestation Service) on Base Sepolia |
 | Agent | Coinbase AgentKit + Agentic Wallets |
 | Infra | Docker, Docker Compose |
-| Email | Resend |
 | API Testing | Bruno |
 
 ---

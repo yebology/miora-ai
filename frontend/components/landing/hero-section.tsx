@@ -34,7 +34,7 @@ export function HeroSection() {
 
         <p className="max-w-lg text-muted-foreground">
           Analyze wallets, get AI-powered reputation scores, follow the best
-          traders, and get notified when they move.
+          traders, and let bots trade for you — all on Base.
         </p>
 
         <div className="flex gap-3 pt-2">

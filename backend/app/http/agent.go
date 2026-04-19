@@ -29,4 +29,5 @@ func RegisterAgentProtectedRoutes(r fiber.Router, h *handlers.AgentHandler) {
 	bots.Post("/:id/start", h.StartBot)
 	bots.Post("/:id/pause", h.PauseBot)
 	bots.Get("/:id/trades", h.GetTrades)
+	r.Post("/agent/withdraw", h.Withdraw)
 }

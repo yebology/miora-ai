@@ -40,7 +40,6 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 | `services/monitor_helper.go` | ✅ Done | Condition checking, notification dispatch logic |
 | `ws/hub.go` | ✅ Done | WebSocket connection hub (broadcast trade notifications) |
 | `ws/handler.go` | ✅ Done | WebSocket upgrade and connection handlers |
-| `clients/resend.go` | ✅ Done | Email notifications via Resend (async, non-blocking) |
 | — | ✅ Done | AI risk assessment per trade notification (Gemini evaluates token before notifying) |
 
 ### ✅ Watchlist System — DONE, No Changes Needed
@@ -132,8 +131,8 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Wire EAS client into `router/container.go`
 - [x] Register reputation routes in `router/routes.go`
 - [x] Update `migrations/migrations.go` to auto-migrate updated WalletMetric
-- [ ] Register EAS schema on Base Sepolia → run `make register-schema` (needs testnet ETH in attester wallet)
-- [ ] Set `EAS_SCHEMA_UID` in `.env` (printed by register-schema command)
+- [x] Register EAS schema on Base Sepolia → run `make register-schema` (needs testnet ETH in attester wallet)
+- [x] Set `EAS_SCHEMA_UID` in `.env` (printed by register-schema command)
 - [ ] Test end-to-end: analyze wallet → attestation published → verify on [BaseScan](https://base-sepolia.easscan.org)
 
 ### 🆕 V2 Backend — Layer 3: AI Trading Bots (AgentKit)
@@ -157,7 +156,7 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Add swap endpoint to Python sidecar (`POST /swap`)
 - [x] Add `make setup-agent` and `make run-agent` to Makefile
 - [x] Create bot from watchlist: user selects wallet from watchlist → conditions auto-filled from analyze result
-- [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
+- [x] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
 - [ ] Test end-to-end: bot detects trade → evaluates → executes swap on Base Sepolia
 
 ---
@@ -244,11 +243,11 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 > Do this after all V2 UI is built and backend is running. Currently using dummy data so the UI can be reviewed visually first.
 
 #### Auth Provider (`components/providers/auth-provider.tsx`)
-- [ ] Replace simulated sign-in with real wallet connect (MetaMask via wagmi)
-- [ ] Send X-Wallet-Address header with all API calls
-- [ ] Call `getMe()` after wallet connect to sync user with backend
-- [ ] Replace simulated sign-out with wallet disconnect
-- [ ] Add `getWalletAddress()` method to auth context for components to use
+- [x] Replace simulated sign-in with real wallet connect (MetaMask via wagmi)
+- [x] Send X-Wallet-Address header with all API calls (in lib/api.ts)
+- [x] Call `getMe()` after wallet connect to sync user with backend (ready in api.ts)
+- [x] Replace simulated sign-out with wallet disconnect
+- [x] Add `walletAddress` to auth context for components to use
 
 #### Analyze Page (`app/analyze/page.tsx`)
 - [ ] Replace dummy data simulation with real `analyzeWallet()` call from `lib/api.ts`
@@ -301,6 +300,6 @@ Miora has pivoted from a multi-chain wallet analyzer + DEX aggregator (V1) to a 
 - [x] Remove `ONEINCH_API_KEY` from config (swap system removed)
 - [x] Update `constants/chains.go` to Base only
 - [x] Remove Firebase config from `backend/config/config.go`
-- [ ] Add EAS env vars to `backend/.env` (actual values)
-- [ ] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
-- [ ] Update `frontend/.env` with any new public env vars
+- [x] Add EAS env vars to `backend/.env` (actual values)
+- [x] Add `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` to `agent/.env`
+- [x] Update `frontend/.env` with new public env vars

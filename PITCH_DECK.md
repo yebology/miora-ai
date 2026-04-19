@@ -45,8 +45,8 @@ Miora turns any wallet address into a simple answer:
 - "Avoid" (score <40)
 
 Then you choose what happens next:
-- **Watch** — get notified when they trade, with AI risk assessment
-- **Automate** — let a bot copy their trades with your budget and rules
+- **Watch** — get notified when they trade, with AI risk assessment per alert
+- **Automate** — let a bot copy their trades with your budget and rules. Sell proceeds auto-transfer to your connected wallet.
 
 Every score is published on-chain via EAS on Base — verifiable by anyone, queryable by any protocol.
 
@@ -58,9 +58,9 @@ What makes Miora's scoring different from "just another analytics tool":
 
 - **FIFO PnL matching** — actual profit calculation, not just balance snapshots
 - **6 scoring factors** — win rate, profit consistency, entry timing, token quality, trade discipline, risk exposure
-- **Dynamic conditions** — thresholds computed from the wallet's own data, not hardcoded
-- **AI risk assessment** — Gemini generates a plain-language risk opinion for every trade and notification, recorded in trade history for user review
-- **On-chain proof** — scores published as EAS attestations, not just a number in our database
+- **Dynamic conditions** — thresholds computed from the wallet's own data (median liquidity, mcap, volume, pair age), not hardcoded
+- **AI risk assessment** — Gemini generates a plain-language risk opinion for every trade notification, recorded in trade history for user review
+- **On-chain proof** — scores published as EAS attestations on Base, not just a number in our database
 
 ---
 
@@ -69,19 +69,20 @@ What makes Miora's scoring different from "just another analytics tool":
 Two bot types, powered by **Coinbase AgentKit + Agentic Wallets**:
 
 **What is an Agentic Wallet?**
-A wallet created and managed by Coinbase's AgentKit — the bot has its own wallet on Base to trade with. User deposits funds, bot manages them autonomously. Key management handled by Coinbase Developer Platform.
+A wallet created and managed by Coinbase's AgentKit on Base. The bot has its own wallet to trade with. Key management handled by Coinbase Developer Platform — we never touch the private key.
 
 **Wallet Bot**
 - Pick a wallet from your watchlist
 - Bot copies its buys AND sells automatically
-- Conditions auto-filled from analyze result
+- Conditions auto-filled from analyze result (e.g., min liquidity, min mcap)
 - Set budget + max per trade → bot handles the rest
+- Sell proceeds auto-transfer to your connected wallet
 
 **Consensus Bot (Premium)**
 - Scans ALL wallets analyzed by Miora
 - Trades only when 3+ high-score wallets buy the same token within a time window
 - Higher confidence — crowd intelligence, not just one wallet
-- Revenue stream: premium feature
+- Configurable: min score, consensus threshold, time window
 
 ---
 
@@ -90,7 +91,8 @@ A wallet created and managed by Coinbase's AgentKit — the bot has its own wall
 Built exclusively on Base's own infrastructure:
 
 - **EAS** (Ethereum Attestation Service) — on-chain reputation scores, same standard used by Coinbase Verifications
-- **Coinbase AgentKit** — autonomous trading via Agentic Wallets
+- **Coinbase AgentKit** — autonomous trading via Agentic Wallets on Base
+- **Wallet-based auth** — MetaMask connect via wagmi/viem, no centralized auth
 - Base is the #1 L2 by revenue, 46% of all L2 DeFi TVL (Sherlock, 2026)
 - $17T stablecoin volume on Base in 2025 (Base 2026 Strategy)
 - 10-11M daily transactions, 34M+ monthly active users (BaseScan/CoinLedger, 2025)
@@ -116,6 +118,7 @@ Nobody owns "trading quality reputation" on Base.
 | AI risk assessment | ❌ | ❌ | ❌ | ✅ |
 | Smart conditions | ❌ | ❌ | ❌ | ✅ |
 | Autonomous trading | ❌ | ✅ (blind) | ❌ | ✅ (intelligent) |
+| Auto profit transfer | ❌ | ❌ | ❌ | ✅ |
 | Base-native | ❌ | ❌ | Multi-chain | ✅ |
 
 Competitors focus on credit risk (Cred Protocol), fraud detection (ChainAware), or general reputation (Nomis). Nobody focuses on **trading quality reputation**.
@@ -128,8 +131,8 @@ Sources: [Cred Protocol](https://credprotocol.com), [ChainAware](https://chainaw
 
 **Free tier**
 - Analyze wallets (unlimited)
-- Follow wallets + notifications
-- Wallet bot (copy one wallet)
+- Follow wallets + real-time notifications with AI risk assessment
+- Wallet bot (copy one wallet's trades, auto profit transfer)
 
 **Premium (Consensus Bot)**
 - Scan all Miora wallets for consensus signals
@@ -137,9 +140,10 @@ Sources: [Cred Protocol](https://credprotocol.com), [ChainAware](https://chainaw
 - Subscription or per-trade fee
 
 **B2B (Reputation API) — Future**
+- Public reputation endpoint: `GET /api/reputation/:address`
 - Lending protocols query Miora scores to assess borrowers
 - AI agents check wallet reputation before copy-trading
-- Public API endpoint — monetization via subscription or per-query fees
+- Monetization via subscription or per-query fees at scale
 
 ---
 
@@ -154,14 +158,16 @@ Sources: [Cred Protocol](https://credprotocol.com), [ChainAware](https://chainaw
 ## Slide 10: Roadmap
 
 **Now (Student Track)**
-- Deploy EAS attestation on Base Sepolia
-- Bot PoC: wallet bot + consensus bot
-- Connect frontend to backend
+- ✅ EAS attestation deployed on Base Sepolia
+- ✅ Two bot types: wallet bot + consensus bot (AgentKit)
+- ✅ Full backend + frontend built
+- 🔄 Connecting frontend to backend API
 
 **Post-Program**
 - Base mainnet deployment
 - Consensus bot as paid premium feature
-- Full DEX integration (Aerodrome/Uniswap)
+- Full DEX integration for bot swaps (Aerodrome/Uniswap)
 - Reputation leaderboard
+- Multi-bot portfolio tracking
 
 **Miora AI — Score. Follow. Bot. On Base.**

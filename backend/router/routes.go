@@ -23,7 +23,7 @@ import (
 func SetUp(app *fiber.App, db *gorm.DB, cfg *config.Config, hub *ws.Hub) {
 
 	api := app.Group("/api")
-	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.GeminiAPIKey, cfg.ResendAPIKey, cfg.ResendFrom, cfg.Scoring, cfg.EAS, hub)
+	container := NewContainer(db, cfg.AlchemyAPIKey, cfg.MoralisAPIKey, cfg.GeminiAPIKey, cfg.Scoring, cfg.EAS, hub)
 
 	// Start wallet monitor in background
 	go container.Monitor.Start()

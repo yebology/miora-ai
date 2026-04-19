@@ -117,3 +117,30 @@ func (c *AgentKitClient) ExecuteSwap(tokenAddress, tokenSymbol, amountETH, direc
 
 	return &result, nil
 }
+
+// ExecuteTransfer calls the Python sidecar to transfer ETH from agent wallet to a destination.
+func (c *AgentKitClient) ExecuteTransfer(toAddress, amountETH string) (string, error) {
+	payload, _ := json.Marshal(map[string]string{
+		"to_address": toAddress,
+		"amount_eth": amountETH,
+	})
+
+	resp, err := c.httpClient.Post(c.baseURL+"/transfer", "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("agent sidecar unreachable: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("transfer failed: %s", string(body))
+	}
+
+	var result struct {
+		Status string `json:"status"`
+		Result string `json:"result"`
+	}
+	json.Unmarshal(body, &result)
+
+	return result.Result, nil
+}

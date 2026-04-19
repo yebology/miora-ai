@@ -8,8 +8,3 @@ type INotificationRepository interface {
 	FindByUser(userID uint) ([]entities.Notification, error)
 	MarkAsRead(id, userID uint) error
 }
-
-// IEmailClient defines the contract for sending emails.
-type IEmailClient interface {
-	SendTradeAlert(to, walletAddress, chain, tokenSymbol, direction, value string, liquidity, marketCap float64) error
-}

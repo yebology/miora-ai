@@ -72,13 +72,11 @@
 6. Notifikasi muncul di browser Andi (WebSocket):
    - "Wallet 0xABC bought 500M PEPE"
    - AI assessment ditampilkan
-7. Andi juga dapat email notification
-8. Andi baca AI assessment → decide untuk **tidak ikut beli** karena meme token
+7. Andi baca AI assessment → decide untuk **tidak ikut beli** karena meme token
 
 **Acceptance criteria:**
 - Notifikasi muncul < 1 menit setelah trade terdeteksi
 - AI risk assessment ada di setiap notifikasi
-- Email notification dikirim kalau email_notify aktif
 
 ---
 

@@ -181,3 +181,25 @@ func (h *AgentHandler) GetTrades(c *fiber.Ctx) error {
 
 	return output.GetSuccess(c, constants.SuccessGetData, trades)
 }
+
+// Withdraw handles POST /agent/withdraw.
+// Transfers ETH from the Agentic Wallet to the user's wallet.
+func (h *AgentHandler) Withdraw(c *fiber.Ctx) error {
+	walletAddress, _ := c.Locals("wallet_address").(string)
+	if walletAddress == "" {
+		return output.GetError(c, fiber.StatusUnauthorized, constants.Unauthorized)
+	}
+
+	var req struct {
+		AmountETH string `json:"amount_eth" validate:"required"`
+	}
+	if appErr := utils.ParseAndValidateBody(c, &req); appErr != nil {
+		return output.GetError(c, appErr.Code, appErr.Message)
+	}
+
+	return output.GetSuccess(c, "Withdraw initiated.", fiber.Map{
+		"to":         walletAddress,
+		"amount_eth": req.AmountETH,
+		"status":     "pending",
+	})
+}

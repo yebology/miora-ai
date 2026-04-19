@@ -32,6 +32,7 @@ import (
 type AgentLoopService struct {
 	agentRepo   interfaces.IAgentRepository
 	walletRepo  interfaces.IWalletRepository
+	userRepo    interfaces.IUserRepository
 	evmClient   interfaces.BlockchainClient
 	dexScreener interfaces.IDexScreener
 	ai          *AIService
@@ -44,6 +45,7 @@ type AgentLoopService struct {
 func NewAgentLoopService(
 	agentRepo interfaces.IAgentRepository,
 	walletRepo interfaces.IWalletRepository,
+	userRepo interfaces.IUserRepository,
 	evmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
 	ai *AIService,
@@ -52,6 +54,7 @@ func NewAgentLoopService(
 	return &AgentLoopService{
 		agentRepo:   agentRepo,
 		walletRepo:  walletRepo,
+		userRepo:    userRepo,
 		evmClient:   evmClient,
 		dexScreener: dexScreener,
 		ai:          ai,
@@ -343,6 +346,17 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 
 	if direction == "buy" {
 		config.TotalSpent += config.MaxPerTrade
+	} else {
+		// Auto-transfer sell proceeds to user's connected wallet
+		user, err := s.userRepo.FindByID(config.UserID)
+		if err == nil && user.WalletAddress != "" {
+			amountToTransfer := fmt.Sprintf("%.6f", config.MaxPerTrade/2000)
+			if _, transferErr := s.agentKit.ExecuteTransfer(user.WalletAddress, amountToTransfer); transferErr != nil {
+				log.Printf("[AgentLoop] Auto-transfer to %s failed: %v", user.WalletAddress, transferErr)
+			} else {
+				log.Printf("[AgentLoop] Auto-transferred %s ETH to user %s", amountToTransfer, user.WalletAddress)
+			}
+		}
 	}
 	config.TotalTrades++
 	s.agentRepo.UpdateConfig(config)

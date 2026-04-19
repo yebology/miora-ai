@@ -41,7 +41,7 @@ type Container struct {
 
 // NewContainer creates all dependencies and returns a fully wired Container.
 // Initialization order: clients → repositories → services → handlers.
-func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, resendAPIKey, resendFrom string, scoring config.ScoringConfig, easCfg config.EASConfig, hub *ws.Hub) *Container {
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey string, scoring config.ScoringConfig, easCfg config.EASConfig, hub *ws.Hub) *Container {
 
 	// Clients
 	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
@@ -71,12 +71,11 @@ func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey, resen
 	agentService := services.NewAgentService(agentRepo)
 
 	// Monitor
-	resendClient := clients.NewResend(resendAPIKey, resendFrom)
-	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, dexScreener, aiService, resendClient, hub)
+	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, dexScreener, aiService, hub)
 
 	// Agent Loop (background trading)
 	agentKitClient := clients.NewAgentKitClient("")
-	agentLoop := services.NewAgentLoopService(agentRepo, walletRepo, evmClient, dexScreener, aiService, agentKitClient)
+	agentLoop := services.NewAgentLoopService(agentRepo, walletRepo, userRepo, evmClient, dexScreener, aiService, agentKitClient)
 
 	// Handlers
 	walletHandler := handlers.NewWalletHandler(walletService)

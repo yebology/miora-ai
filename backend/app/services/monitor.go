@@ -1,6 +1,6 @@
 // monitor.go runs a background job that polls watched wallets for new trades.
 // When a new trade is detected, it checks user conditions and sends notifications
-// via WebSocket (real-time) and email (async).
+// via WebSocket (real-time).
 //
 // Helper methods (poll, checkWallet, notifyFollowers, etc.) are in monitor_helper.go.
 package services
@@ -21,7 +21,6 @@ type MonitorService struct {
 	evmClient     interfaces.BlockchainClient
 	dexScreener   interfaces.IDexScreener
 	ai            *AIService
-	emailClient   interfaces.IEmailClient
 	hub           *ws.Hub
 	interval      time.Duration
 	lastTxCount   map[string]int
@@ -35,7 +34,6 @@ func NewMonitorService(
 	evmClient interfaces.BlockchainClient,
 	dexScreener interfaces.IDexScreener,
 	ai *AIService,
-	emailClient interfaces.IEmailClient,
 	hub *ws.Hub,
 ) *MonitorService {
 
@@ -46,7 +44,6 @@ func NewMonitorService(
 		evmClient:     evmClient,
 		dexScreener:   dexScreener,
 		ai:            ai,
-		emailClient:   emailClient,
 		hub:           hub,
 		interval:      30 * time.Second,
 		lastTxCount:   make(map[string]int),

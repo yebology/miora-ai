@@ -29,7 +29,7 @@ export function AgentStatusCard({ config, onStart, onPause, loading }: Props) {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-purple-400" />
-            <h3 className="text-sm font-medium">Agent Status</h3>
+            <h3 className="text-sm font-medium">Bot Status</h3>
           </div>
           <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", status.bg, status.color)}>
             {status.label}
@@ -61,16 +61,20 @@ export function AgentStatusCard({ config, onStart, onPause, loading }: Props) {
           </div>
         )}
 
+        <p className="mb-4 rounded-lg bg-blue-500/10 px-3 py-2 text-xs text-blue-400">
+          Sell proceeds are automatically transferred to your connected wallet.
+        </p>
+
         <div className="flex gap-2">
           {config.status === "active" ? (
             <Button variant="outline" className="flex-1 gap-1.5" onClick={onPause} disabled={loading}>
               <Pause className="h-3.5 w-3.5" />
-              Pause Agent
+              Pause Bot
             </Button>
           ) : (
             <Button className="flex-1 gap-1.5" onClick={onStart} disabled={loading || config.budget <= 0}>
               <Play className="h-3.5 w-3.5" />
-              Start Agent
+              Start Bot
             </Button>
           )}
         </div>
