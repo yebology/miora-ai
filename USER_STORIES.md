@@ -2,7 +2,7 @@
 
 ## Persona
 
-**Andi** — Mahasiswa 22 tahun, baru mulai trading di Base 3 bulan lalu. Punya $500 di wallet MetaMask. Sering lihat "whale alerts" di Twitter tapi tidak tahu cara evaluasi apakah wallet itu benar-benar bagus. Pernah rugi $150 karena ikut-ikutan beli token yang ternyata rug pull.
+**Andi** — Mahasiswa 22 tahun, baru mulai trading di Base 3 bulan lalu. Punya 500 USDT di wallet MetaMask. Sering lihat "whale alerts" di Twitter tapi tidak tahu cara evaluasi apakah wallet itu benar-benar bagus. Pernah rugi 150 USDT karena ikut-ikutan beli token yang ternyata rug pull.
 
 ---
 
@@ -19,8 +19,7 @@
 5. Miora tampilkan:
    - Score: **73/100** — Conditional Follow
    - Win rate: 68% — "Lumayan, tapi bukan yang terbaik"
-   - Risk exposure: 15% — "Ada beberapa trade di token low-liquidity"
-   - AI insight: "Wallet ini disiplin dengan 68% win rate. Tapi 15% trade-nya di token berisiko. Follow dengan filter — hanya perhatikan token dengan liquidity di atas $100k."
+   - AI insight: "Wallet ini disiplin dengan 68% win rate. Tapi beberapa trade-nya di token berisiko. Follow dengan filter — hanya perhatikan token dengan liquidity di atas $100k."
 6. Andi sekarang tahu: wallet ini **oke tapi perlu hati-hati**, bukan blindly follow
 
 **Acceptance criteria:**
@@ -95,19 +94,19 @@
    - ✅ Min mcap: $1M
    - ✅ Min pair age: 6 hours
 6. Andi isi parameter:
-   - Budget: $200
-   - Max per trade: $20
-   - Min score: 75
-7. Klik "Create Bot" → bot dibuat
-8. Klik "Start" → bot mulai jalan di background
-9. 2 jam kemudian:
+   - Budget: 200 USDT
+   - Max per trade: 20 USDT
+7. Klik "Create Bot"
+8. Miora popup MetaMask → Andi deposit 200 USDT (MockUSDT) ke Agentic Wallet bot
+9. Deposit confirmed → bot auto-start dan mulai jalan di background
+10. 2 jam kemudian:
    - Wallet 0xDEF beli LINK
    - Bot evaluate: liquidity $95M ✅, mcap $8.5B ✅, pair age OK ✅, budget cukup ✅
    - AI assessment: "Very low risk — top-tier token"
-   - Bot execute: beli $20 LINK via Agentic Wallet
-10. Andi buka Bot page → lihat trade history:
-    - "✅ LINK — $20 — Bought because wallet 0xDEF (score 88) bought it"
-11. 3 jam kemudian:
+   - Bot execute: beli 20 USDT LINK via Agentic Wallet
+11. Andi buka Bot page → lihat trade history:
+    - "✅ LINK — 20 USDT — Bought because wallet 0xDEF (score 88) bought it"
+12. 3 jam kemudian:
     - Wallet 0xDEF jual LINK
     - Bot evaluate: conditions pass ✅
     - Bot execute: jual LINK via Agentic Wallet
@@ -131,8 +130,8 @@
 
 1. Andi buka halaman Agent → klik "Create Bot" → pilih type: **Consensus Bot**
 2. Isi parameter:
-   - Budget: $300
-   - Max per trade: $30
+   - Budget: 300 USDT
+   - Max per trade: 30 USDT
    - Min score: 70 (hanya pertimbangkan wallet score tinggi)
    - Consensus threshold: 3 (minimal 3 wallet harus beli token yang sama)
    - Time window: 60 menit (dalam 60 menit terakhir)
@@ -145,9 +144,9 @@
    - 3 wallet dalam 60 menit → threshold tercapai ✅
    - Bot evaluate conditions: liquidity OK ✅, mcap OK ✅
    - AI assessment: "Multiple high-score wallets buying — strong consensus signal"
-   - Bot execute: beli $30 TOKEN_X
+   - Bot execute: beli 30 USDT TOKEN_X
 6. Andi lihat di trade history:
-   - "✅ TOKEN_X — $30 — Consensus: 3 wallets (0xAAA, 0xBBB, 0xCCC) bought within 60min"
+   - "✅ TOKEN_X — 30 USDT — Consensus: 3 wallets (0xAAA, 0xBBB, 0xCCC) bought within 60min"
 
 **Acceptance criteria:**
 - Consensus bot is a separate bot type (not a toggle inside wallet bot)
@@ -224,8 +223,8 @@
 1. Andi lihat berita: "Base DeFi market crash 20%"
 2. Buka halaman Agent
 3. Andi punya 2 bot:
-   - Wallet Bot (0xDEF): Active, 8 trades executed, $160 spent
-   - Consensus Bot: Active, 3 trades executed, $90 spent
+   - Wallet Bot (0xDEF): Active, 8 trades executed, 160 USDT spent
+   - Consensus Bot: Active, 3 trades executed, 90 USDT spent
 4. Klik "Pause" di kedua bot
 5. Kedua bot langsung berhenti polling
 6. Tidak ada trade baru yang dieksekusi

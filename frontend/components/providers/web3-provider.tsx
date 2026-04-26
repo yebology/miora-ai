@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiProvider } from "wagmi";
-import { base } from "@reown/appkit/networks";
+import { baseSepolia } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import type { ReactNode } from "react";
@@ -19,7 +19,7 @@ const metadata = {
   icons: [],
 };
 
-const networks = [base] as const;
+const networks = [baseSepolia] as const;
 
 const wagmiAdapter = new WagmiAdapter({
   networks: [...networks],

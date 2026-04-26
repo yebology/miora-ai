@@ -45,7 +45,7 @@ export function AgentTradeHistory({ trades }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{trade.token_symbol}</span>
-                    <span className="text-xs text-muted-foreground">${trade.amount_usd.toFixed(2)}</span>
+                    <span className="text-xs text-muted-foreground">{trade.amount_usd.toFixed(2)} USDT</span>
                     <span className={cn(
                       "rounded-full px-1.5 py-0.5 text-xs",
                       trade.status === "executed" && "bg-green-500/10 text-green-400",

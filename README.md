@@ -2,6 +2,8 @@
 
 > **Score any trader on Base. Let AI ride the winners for you.**
 
+🎬 **[Watch Founder Video](https://drive.google.com/file/d/1NrBd72H5XUzvQeBCYdTPXT7oHo86flpK/view?usp=sharing)** | 🖥️ **[Watch Demo Video](https://drive.google.com/file/d/1V73h7VNh0EZggx8mVDi0BXFlDTV8oL_1/view?usp=sharing)**
+
 **Miora AI** is a trading reputation protocol on Base that analyzes any wallet's trading behavior, publishes scores on-chain as EAS attestations, and runs AI bots that trade autonomously based on the best wallets — with your rules, your budget, your conditions.
 
 Instead of raw on-chain data, Miora transforms complex blockchain activity into actionable intelligence: a score, a recommendation, and a bot that acts on it.
@@ -23,7 +25,7 @@ Miora combines three layers into one cohesive product:
 ## 🎯 Key Features
 
 ### 🏆 On-chain Trading Reputation (EAS)
-- Multi-factor scoring engine: win rate, profit consistency, entry timing, token quality, trade discipline, risk exposure
+- Multi-factor scoring engine: win rate, profit consistency, entry timing, token quality, trade discipline
 - FIFO buy-sell matching for accurate PnL calculation
 - 3-tier recommendation: Full Follow (80-100), Conditional Follow (40-79), Avoid (<40)
 - Scores published on-chain via Ethereum Attestation Service (EAS) on Base Sepolia
@@ -90,7 +92,7 @@ Both bot types:
 │         │                                       │            │
 │  ┌──────▼───────────────────────────────────────▼─────────┐  │
 │  │              On-chain Layer (Base Sepolia)               │  │
-│  │  EAS Attestation · Agentic Wallet                       │  │
+│  │  EAS Attestation · CDP Server Wallet · MockUSDT         │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────────┐  │
@@ -100,7 +102,7 @@ Both bot types:
 │                                                              │
 │  ┌─────────────────────────────────────────────────────────┐  │
 │  │              Agent Sidecar (Python + AgentKit)            │  │
-│  │  Coinbase AgentKit · Agentic Wallet · Swap Execution     │  │
+│  │  Coinbase AgentKit · CDP Server Wallet · Swap Execution  │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────────┐  │
@@ -122,12 +124,12 @@ Both bot types:
 | Agent Sidecar | Python, FastAPI, Coinbase AgentKit |
 | Database | PostgreSQL |
 | Auth | Wallet-based (MetaMask connect, X-Wallet-Address header) |
-| AI | Google Gemini (gemini-2.0-flash) |
+| AI | Google Gemini (gemini-2.5-flash) |
 | Blockchain Data | Alchemy, DexScreener, Moralis |
 | On-chain | EAS (Ethereum Attestation Service) on Base Sepolia |
-| Agent | Coinbase AgentKit + Agentic Wallets |
+| Agent | Coinbase AgentKit + CDP Server Wallet |
+| Token | MockUSDT (ERC-20, 6 decimals) on Base Sepolia |
 | Infra | Docker, Docker Compose |
-| API Testing | Bruno |
 
 ---
 
@@ -183,6 +185,9 @@ Both bot types:
 │   ├── hooks/              # Custom hooks
 │   ├── types/              # TypeScript types
 │   └── lib/                # Utilities (cn helper)
+├── contracts/
+│   ├── src/MockUSDT.sol     # MockUSDT ERC-20 token (6 decimals)
+│   └── script/              # Foundry deploy scripts
 ├── Makefile                # Dev commands
 ├── README.md               # Project overview
 ├── USER_STORIES.md          # User stories with scenarios
@@ -196,13 +201,10 @@ Both bot types:
 ## 🧭 How to Run
 
 ### 📦 Prerequisites
-- Go 1.25+
-- Python 3.10+ (for AgentKit sidecar)
 - Docker & Docker Compose
-- Node.js 18+ (for frontend)
-- Alchemy, Moralis, Gemini API keys
-- MetaMask wallet (for authentication)
-- Coinbase Developer Platform (CDP) API keys (for AgentKit)
+- MetaMask wallet (for authentication, connected to Base Sepolia)
+- API keys: Alchemy, Moralis, Gemini
+- Coinbase Developer Platform (CDP) credentials (API key + Wallet Secret)
 
 ### 🔨 1. Clone Repository
 
@@ -213,17 +215,22 @@ cd miora-ai
 
 ### 🔐 2. Configure Environment
 
+Fill in the `.env` files:
+- `backend/.env` — DB, Alchemy, Moralis, Gemini, EAS, MockUSDT
+- `agent/.env` — CDP API key, CDP wallet secret
+- `frontend/.env` — API URL, Reown project ID, MockUSDT address
+
+### 🚀 3. Run Everything (Docker)
+
 ```bash
-cp backend/.env.example backend/.env
-cp agent/.env.example agent/.env
-# Fill in all API keys and credentials
+make docker-up
 ```
 
-### 🐘 3. Start Database
-
-```bash
-cd backend && docker compose up -d
-```
+This builds and starts all 4 services:
+- **db** — PostgreSQL on port 5432
+- **backend** — Go API on port 8082
+- **agent** — AgentKit sidecar on port 8090
+- **frontend** — Next.js on port 3002
 
 ### 📋 4. Register EAS Schema (one-time)
 
@@ -232,24 +239,15 @@ make register-schema
 # Copy the printed schema UID to EAS_SCHEMA_UID in backend/.env
 ```
 
-### 🚀 5. Run Backend
+### 🌱 5. Seed Demo Data (optional)
 
 ```bash
-make run-be
+make db-seed
 ```
 
-### 🤖 6. Run Agent Sidecar
+### 🌐 6. Open App
 
-```bash
-make setup-agent  # Install Python dependencies (first time only)
-make run-agent    # Start AgentKit sidecar on port 8090
-```
-
-### 🌐 7. Run Frontend
-
-```bash
-make run-fe
-```
+Visit `http://localhost:3002` and connect MetaMask (Base Sepolia network).
 
 ---
 
@@ -290,10 +288,12 @@ make run-fe
 
 ## 🗺️ Roadmap
 
-### Now (Hackathon)
-- Deploy EAS schema + attestation on Base Sepolia
-- Bot PoC: wallet bot (copy trades) + consensus bot (multi-wallet agreement)
-- Connect frontend to backend API
+### ✅ Hackathon (Done)
+- EAS schema registered + attestation working on Base Sepolia
+- Wallet bot + consensus bot working via Coinbase AgentKit
+- Frontend connected to backend API (Zod-validated)
+- MockUSDT deployed on Base Sepolia for bot deposits
+- CDP Server Wallet integration for agent trading
 
 ### Post-Hackathon
 - Deploy to Base mainnet

@@ -6,7 +6,9 @@ package services
 
 import (
 	"encoding/json"
+	"log"
 
+	"miora-ai/app/clients"
 	"miora-ai/app/entities"
 	"miora-ai/app/interfaces"
 	"miora-ai/constants"
@@ -14,11 +16,12 @@ import (
 )
 
 type AgentService struct {
-	repo interfaces.IAgentRepository
+	repo     interfaces.IAgentRepository
+	agentKit *clients.AgentKitClient
 }
 
-func NewAgentService(repo interfaces.IAgentRepository) *AgentService {
-	return &AgentService{repo: repo}
+func NewAgentService(repo interfaces.IAgentRepository, agentKit *clients.AgentKitClient) *AgentService {
+	return &AgentService{repo: repo, agentKit: agentKit}
 }
 
 // CreateBot creates a new bot.
@@ -96,11 +99,21 @@ func (s *AgentService) DeleteBot(botID, userID uint) *pkg.AppError {
 	return nil
 }
 
-// StartBot activates a bot.
+// StartBot activates a bot and fetches the agent wallet address from the sidecar.
 func (s *AgentService) StartBot(botID, userID uint) (*entities.AgentConfig, *pkg.AppError) {
 	config, err := s.repo.FindByID(botID)
 	if err != nil || config.UserID != userID {
 		return nil, pkg.ErrNotFound(constants.DataNotFound)
+	}
+
+	// Fetch agent wallet address from sidecar if not already set
+	if config.AgentWalletAddress == "" && s.agentKit != nil {
+		walletInfo, err := s.agentKit.GetWallet()
+		if err == nil && walletInfo.Address != "" {
+			config.AgentWalletAddress = walletInfo.Address
+		} else {
+			log.Printf("[AgentService] Could not fetch agent wallet: %v", err)
+		}
 	}
 
 	config.Status = "active"

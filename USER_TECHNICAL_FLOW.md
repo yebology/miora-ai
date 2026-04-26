@@ -19,7 +19,7 @@ Backend (Go + Fiber)
     ▼ HTTP (localhost:8090)
 Agent Sidecar (Python + FastAPI + AgentKit)
     │
-    └── Coinbase AgentKit → Agentic Wallet → Base Sepolia
+    └── Coinbase AgentKit → CDP Server Wallet → Base Sepolia
 ```
 
 ---
@@ -46,8 +46,8 @@ POST /api/wallets/analyze { address: "0x...", chain: "base" }
     │      FIFO buy-sell matching → []tradeResult (buyPrice, exitPrice, pnl%)
     │
     ├── 5. services/scoring.go → calculateMetrics()
-    │      6 factors → WalletMetric (winRate, profitConsistency, entryTiming,
-    │      tokenQuality, tradeDiscipline, riskExposure, finalScore, recommendation)
+    │      5 factors → WalletMetric (winRate, profitConsistency, entryTiming,
+    │      tokenQuality, tradeDiscipline, finalScore, recommendation)
     │
     ├── 6. repositories/wallet.go → SaveMetric()
     │      Upsert to PostgreSQL
@@ -243,13 +243,16 @@ wallets
   id, address (unique), chain, created_at, updated_at
 
 transactions
-  id, wallet_id (FK), hash (unique), chain, from, to, value,
+  id, wallet_id (FK), hash, chain, from, to, value,
   token_symbol, contract_address, direction, block_number, timestamp
+  (unique: hash + direction)
 
 wallet_metrics
   id, wallet_id (unique FK), total_transactions,
-  profit_consistency, win_rate, risk_exposure, entry_timing,
+  profit_consistency, win_rate, entry_timing,
   token_quality, trade_discipline, final_score, recommendation,
+  ai_insight, ai_tone, ai_prompt,
+  conditions_json, traded_tokens_json,
   attestation_uid, attestation_tx_hash, updated_at
 
 watchlists
@@ -289,6 +292,6 @@ agent_trades
 | Handlers | `backend/app/handlers/*.go` (auth, wallet, watchlist, reputation, agent) |
 | Routes | `backend/app/http/*.go` + `backend/router/routes.go` |
 | Middleware | `backend/app/middleware/wallet_auth.go` |
-| Agent Sidecar | `agent/main.py` (FastAPI + AgentKit) |
+| Agent Sidecar | `agent/main.py` (FastAPI + Coinbase AgentKit + CDP Server Wallet) |
 | Frontend Pages | `frontend/app/` (landing, analyze, watchlist, agent, login) |
 | Frontend Components | `frontend/components/` (analyze, watchlist, agent, landing, layout, ui) |

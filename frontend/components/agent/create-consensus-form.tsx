@@ -57,13 +57,13 @@ export function CreateConsensusForm({ onCreate, creating, onCancel }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label className="text-xs text-muted-foreground">Budget (USD)</Label>
-              <Input type="number" min={0} step={10} value={budget}
+              <Label className="text-xs text-muted-foreground">Budget (USDT)</Label>
+              <Input type="number" min={0} step={1} value={budget}
                 onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 500" className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Max Per Trade (USD)</Label>
-              <Input type="number" min={0} step={5} value={maxPerTrade}
+              <Label className="text-xs text-muted-foreground">Max Per Trade (USDT)</Label>
+              <Input type="number" min={0} step={1} value={maxPerTrade}
                 onChange={(e) => setMaxPerTrade(e.target.value)} placeholder="e.g. 50" className="mt-1" />
             </div>
           </div>

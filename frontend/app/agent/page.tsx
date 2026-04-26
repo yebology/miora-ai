@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import { AuthGuardModal } from "@/components/ui/auth-guard-modal";
 import { CreateBotForm } from "@/components/agent/create-bot-form";
 import { CreateConsensusForm } from "@/components/agent/create-consensus-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, Play, Pause, Trash2, ExternalLink, AlertTriangle, Zap, Wallet, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Bot, Play, Pause, Trash2, ExternalLink, AlertTriangle, Zap, Wallet, Loader2, CheckCircle } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -15,8 +18,24 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { listBots, createBot, deleteBot, startBot, pauseBot } from "@/api/agent/connector";
 import { getWatchlist } from "@/api/watchlist/connector";
+import { useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { encodeFunctionData, parseUnits } from "viem";
 import type { AgentConfig } from "@/api/agent/validation";
 import type { WatchlistItem } from "@/api/watchlist/validation";
+
+const MUSDT_ADDRESS = process.env.NEXT_PUBLIC_MUSDT_ADDRESS as `0x${string}`;
+
+const ERC20_TRANSFER_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const;
 
 function shortenAddress(addr: string) {
   if (addr.length <= 12) return addr;
@@ -31,6 +50,7 @@ const STATUS_STYLES = {
 
 export default function AgentPage() {
   const { user, isConnected } = useAuth();
+  const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bots, setBots] = useState<AgentConfig[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
@@ -39,6 +59,13 @@ export default function AgentPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [toggleTarget, setToggleTarget] = useState<AgentConfig | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Deposit flow state
+  const [depositBot, setDepositBot] = useState<AgentConfig | null>(null);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const { sendTransaction, isPending: isSending } = useSendTransaction();
+  const { isLoading: isConfirming, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {
     if (!isConnected || !user) return;
@@ -62,7 +89,11 @@ export default function AgentPage() {
         ...data,
         bot_type: "wallet",
       });
-      setBots((prev) => [bot, ...prev]);
+      const started = await startBot(user.walletAddress, bot.id);
+      // Show deposit dialog with budget pre-filled
+      setDepositBot(started);
+      setDepositAmount(String(data.budget));
+      setTxHash(undefined);
       setCreateMode("none");
     } catch {
       // Silently fail
@@ -80,13 +111,39 @@ export default function AgentPage() {
         bot_type: "consensus",
         conditions: [],
       });
-      setBots((prev) => [bot, ...prev]);
+      const started = await startBot(user.walletAddress, bot.id);
+      // Show deposit dialog with budget pre-filled
+      setDepositBot(started);
+      setDepositAmount(String(data.budget));
+      setTxHash(undefined);
       setCreateMode("none");
     } catch {
       // Silently fail
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleDeposit = () => {
+    if (!depositBot?.agent_wallet_address || !depositAmount || !MUSDT_ADDRESS) return;
+
+    const data = encodeFunctionData({
+      abi: ERC20_TRANSFER_ABI,
+      functionName: "transfer",
+      args: [depositBot.agent_wallet_address as `0x${string}`, parseUnits(depositAmount, 6)],
+    });
+
+    sendTransaction(
+      { to: MUSDT_ADDRESS, data },
+      { onSuccess: (hash) => setTxHash(hash) },
+    );
+  };
+
+  const handleDepositDone = () => {
+    if (depositBot) {
+      router.push(`/agent/${depositBot.id}`);
+    }
+    setDepositBot(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -214,9 +271,9 @@ export default function AgentPage() {
                               <span className={cn("rounded-full px-2 py-0.5 text-xs", status.bg, status.color)}>{status.label}</span>
                             </div>
                             <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-                              <span>${remaining.toFixed(0)} remaining</span>
+                              <span>{remaining.toFixed(0)} USDT remaining</span>
                               <span>{bot.total_trades} trades</span>
-                              <span>${bot.total_spent.toFixed(0)} spent</span>
+                              <span>{bot.total_spent.toFixed(0)} USDT spent</span>
                             </div>
                           </div>
                           <div className="flex shrink-0 gap-1">
@@ -269,6 +326,72 @@ export default function AgentPage() {
                   <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>Cancel</Button>
                   <Button variant="destructive" className="flex-1" onClick={() => deleteTarget && handleDelete(deleteTarget)}>Delete</Button>
                 </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Deposit dialog — shown after bot creation */}
+            <Dialog open={depositBot !== null} onOpenChange={(open) => { if (!open) handleDepositDone(); }}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader className="items-center text-center">
+                  <Wallet className="mb-2 h-10 w-10 text-purple-400" />
+                  <DialogTitle>Deposit USDT to Bot</DialogTitle>
+                  <DialogDescription>
+                    Transfer USDT to the bot&apos;s wallet so it can start trading.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {depositBot?.agent_wallet_address && (
+                  <div className="rounded-lg bg-muted/30 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Agent Wallet</p>
+                    <p className="font-mono text-xs break-all">{depositBot.agent_wallet_address}</p>
+                  </div>
+                )}
+
+                {isDepositSuccess ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-2 rounded-lg bg-green-500/10 px-4 py-3 text-sm text-green-400">
+                      <CheckCircle className="h-4 w-4" />
+                      Deposit confirmed!
+                    </div>
+                    {txHash && (
+                      <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 text-xs text-blue-400 hover:underline">
+                        View on BaseScan <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                    <Button className="w-full" onClick={handleDepositDone}>Go to Bot</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Amount (USDT)</Label>
+                      <Input type="number" min={0} step={1} value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)} placeholder="e.g. 100"
+                        className="mt-1" disabled={isSending || isConfirming} />
+                    </div>
+                    {!depositBot?.agent_wallet_address && (
+                      <p className="rounded-lg bg-yellow-500/10 px-3 py-2 text-xs text-yellow-400">
+                        Agent wallet not ready yet. You can deposit later from the bot detail page.
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={handleDepositDone}
+                        disabled={isSending || isConfirming}>
+                        Skip
+                      </Button>
+                      <Button className="flex-1 gap-1.5" onClick={handleDeposit}
+                        disabled={!depositAmount || !depositBot?.agent_wallet_address || isSending || isConfirming}>
+                        {isSending ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Sending...</>
+                        ) : isConfirming ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Confirming...</>
+                        ) : (
+                          "Deposit"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           </>

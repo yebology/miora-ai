@@ -62,12 +62,12 @@ Kamu capek bangun pagi dan telat terus. Mau otomatis:
 1. Buka halaman **Agent**
 2. Klik **Wallet Bot**
 3. Pilih wallet 0xABC dari watchlist
-4. Set budget: $500, max per trade: $50
+4. Set budget: 500 USDT, max per trade: 50 USDT
 5. Conditions auto-filled dari hasil analyze
-6. Klik **Create Bot** → lalu **Start**
+6. Klik **Create Bot** → MetaMask popup → deposit 500 USDT ke bot wallet → bot auto-start
 
 Sekarang bot jalan 24/7:
-- Wallet 0xABC beli LINK (liquidity $95M) → bot ikut beli $50 ✅
+- Wallet 0xABC beli LINK (liquidity $95M) → bot ikut beli 50 USDT ✅
 - Wallet 0xABC beli SCAMTOKEN (liquidity $5k) → bot skip ❌ (di bawah condition)
 - Wallet 0xABC jual LINK → bot ikut jual ✅
 
@@ -81,7 +81,7 @@ Kamu mau lebih yakin sebelum trade — bukan cuma ikut 1 wallet, tapi tunggu sam
 
 1. Buka halaman **Agent**
 2. Klik **Consensus Bot** (Premium)
-3. Set: budget $300, max per trade $30
+3. Set: budget 300 USDT, max per trade 30 USDT
 4. Min wallet score: 75
 5. Threshold: 3 wallet harus beli token yang sama
 6. Time window: 1 jam
@@ -90,7 +90,7 @@ Kamu mau lebih yakin sebelum trade — bukan cuma ikut 1 wallet, tapi tunggu sam
 Bot scan semua wallet yang pernah di-analyze di Miora:
 - Wallet A (score 85) beli PEPE → catat
 - Wallet B (score 90) beli PEPE → catat
-- Wallet C (score 78) beli PEPE → **3 wallet! Consensus!** → bot beli $30 PEPE ✅
+- Wallet C (score 78) beli PEPE → **3 wallet! Consensus!** → bot beli 30 USDT PEPE ✅
 
 Lebih aman karena bukan cuma 1 orang yang beli — 3 trader bagus setuju.
 

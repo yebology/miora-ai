@@ -12,6 +12,7 @@
 package services
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -137,6 +138,15 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 		)
 	}
 
+	// Freeze conditions and traded tokens to DB
+	if condJSON, err := json.Marshal(result.Conditions); err == nil {
+		metric.Conditions = condJSON
+	}
+	if tokJSON, err := json.Marshal(result.TradedTokens); err == nil {
+		metric.TradedTokens = tokJSON
+	}
+	s.repo.SaveMetric(metric)
+
 	// Generate AI insight (non-blocking — if it fails, return without insight)
 	if insight, err := s.ai.GenerateInsight(result, "simple"); err == nil {
 		result.AiInsight = insight
@@ -148,29 +158,25 @@ func (s *WalletService) AnalyzeWallet(address, chain string, limit int) (*respon
 		log.Printf("AI insight failed: %v", err)
 	}
 
-	// Publish EAS attestation on Base Sepolia (non-blocking — if it fails, continue without attestation)
+	// Publish EAS attestation on Base Sepolia (synchronous — wait for on-chain confirmation so badge shows immediately)
 	if s.eas != nil {
-		go func() {
-			uid, txHash, err := s.eas.Attest(
-				address,
-				uint8(metric.FinalScore),
-				metric.Recommendation,
-				uint32(metric.TotalTransactions),
-				chain,
-			)
-			if err != nil {
-				log.Printf("[EAS] Attestation failed for %s: %v", address, err)
-				return
-			}
+		uid, txHash, err := s.eas.Attest(
+			address,
+			uint8(metric.FinalScore),
+			metric.Recommendation,
+			uint32(metric.TotalTransactions),
+			chain,
+		)
+		if err != nil {
+			log.Printf("[EAS] Attestation failed for %s: %v", address, err)
+		} else {
 			log.Printf("[EAS] Attestation published for %s — UID: %s, TxHash: %s", address, uid, txHash)
-
-			// Update metric with attestation data
 			metric.AttestationUID = uid
 			metric.AttestationTxHash = txHash
 			if saveErr := s.repo.SaveMetric(metric); saveErr != nil {
 				log.Printf("[EAS] Failed to save attestation UID for %s: %v", address, saveErr)
 			}
-		}()
+		}
 	}
 
 	return result, nil
@@ -208,20 +214,12 @@ func (s *WalletService) GetWallet(address string) (*responses.WalletAnalysis, *p
 		AiInsightPrompt:   metric.AiInsightPrompt,
 	}
 
-	// Rebuild traded tokens and conditions from stored transactions
-	txEntities, txErr := s.repo.GetTransactions(wallet.ID)
-	if txErr == nil && len(txEntities) > 0 {
-		tokenData := s.fetchTokenData(wallet.Chain, txEntities)
-		trades := s.calculateTrades(wallet.Chain, txEntities)
-		result.TradedTokens = buildTradedTokens(wallet.Chain, trades, txEntities)
-
-		if metric.Recommendation == "conditional_follow" {
-			result.Conditions = buildConditions(
-				tokenData,
-				metric.RiskExposure, metric.EntryTiming, metric.TokenQuality,
-				s.scoring,
-			)
-		}
+	// Load frozen conditions and traded tokens from DB
+	if metric.Conditions != nil {
+		json.Unmarshal(metric.Conditions, &result.Conditions)
+	}
+	if metric.TradedTokens != nil {
+		json.Unmarshal(metric.TradedTokens, &result.TradedTokens)
 	}
 
 	return result, nil

@@ -1,20 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { WatchlistItem } from "@/types/watchlist";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Bot, ChevronDown } from "lucide-react";
+import { Check, Bot, ChevronDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const CONDITIONS = [
-  { id: "min_liquidity", label: "Min liquidity > $100k" },
-  { id: "min_mcap", label: "Min market cap > $500k" },
-  { id: "min_pair_age", label: "Min pair age > 6 hours" },
-  { id: "min_volume", label: "Min 24h volume > $50k" },
-];
+import { getWallet } from "@/api/wallet/connector";
+import type { WatchlistItem } from "@/api/watchlist/validation";
+import type { Condition } from "@/types/wallet";
 
 function shortenAddress(addr: string) {
   if (addr.length <= 12) return addr;
@@ -41,14 +36,37 @@ export function CreateBotForm({ watchlist, onCreate, creating, onCancel }: Props
   const [budget, setBudget] = useState("");
   const [maxPerTrade, setMaxPerTrade] = useState("");
   const [selectedConditions, setSelectedConditions] = useState<Set<string>>(new Set());
+  const [conditions, setConditions] = useState<Condition[]>([]);
+  const [loadingConditions, setLoadingConditions] = useState(false);
 
   const isFullFollow = selectedWallet?.recommendation === "full_follow";
 
-  const handleSelectWallet = (address: string) => {
+  const handleSelectWallet = async (address: string) => {
     const item = watchlist.find((w) => w.wallet_address === address);
-    if (item) {
-      setSelectedWallet(item);
-      setSelectedConditions(new Set(item.conditions || []));
+    if (!item) return;
+
+    setSelectedWallet(item);
+    setConditions([]);
+    setSelectedConditions(new Set());
+
+    if (item.recommendation === "full_follow") return;
+
+    // Fetch conditions from analyze result
+    setLoadingConditions(true);
+    try {
+      const analysis = await getWallet(item.wallet_address);
+      if (analysis.conditions && analysis.conditions.length > 0) {
+        setConditions(analysis.conditions);
+        // Pre-select conditions that were saved in watchlist
+        const preSelected = new Set(item.conditions.filter((c) =>
+          analysis.conditions!.some((ac) => ac.id === c)
+        ));
+        setSelectedConditions(preSelected.size > 0 ? preSelected : new Set(analysis.conditions.map((c) => c.id)));
+      }
+    } catch {
+      // No conditions available — that's fine
+    } finally {
+      setLoadingConditions(false);
     }
   };
 
@@ -107,13 +125,13 @@ export function CreateBotForm({ watchlist, onCreate, creating, onCancel }: Props
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Budget (USD)</Label>
-                  <Input type="number" min={0} step={10} value={budget}
+                  <Label className="text-xs text-muted-foreground">Budget (USDT)</Label>
+                  <Input type="number" min={0} step={1} value={budget}
                     onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 500" className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Max Per Trade (USD)</Label>
-                  <Input type="number" min={0} step={5} value={maxPerTrade}
+                  <Label className="text-xs text-muted-foreground">Max Per Trade (USDT)</Label>
+                  <Input type="number" min={0} step={1} value={maxPerTrade}
                     onChange={(e) => setMaxPerTrade(e.target.value)} placeholder="e.g. 50" className="mt-1" />
                 </div>
               </div>
@@ -121,19 +139,28 @@ export function CreateBotForm({ watchlist, onCreate, creating, onCancel }: Props
               {!isFullFollow && (
                 <div>
                   <Label className="mb-2 block text-xs text-muted-foreground">Trade Conditions</Label>
-                  <div className="space-y-2">
-                    {CONDITIONS.map((c) => (
-                      <button key={c.id} type="button" onClick={() => toggleCondition(c.id)}
-                        className={cn("flex w-full items-center gap-3 rounded-lg border px-4 py-2.5 text-left text-sm transition-all",
-                          selectedConditions.has(c.id) ? "border-purple-500/40 bg-purple-500/10" : "border-border hover:border-muted-foreground/20")}>
-                        <div className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-                          selectedConditions.has(c.id) ? "border-purple-500 bg-purple-500 text-white" : "border-muted-foreground/30")}>
-                          {selectedConditions.has(c.id) && <Check className="h-3 w-3" />}
-                        </div>
-                        <span>{c.label}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {loadingConditions ? (
+                    <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading conditions...
+                    </div>
+                  ) : conditions.length > 0 ? (
+                    <div className="space-y-2">
+                      {conditions.map((c) => (
+                        <button key={c.id} type="button" onClick={() => toggleCondition(c.id)}
+                          className={cn("flex w-full items-center gap-3 rounded-lg border px-4 py-2.5 text-left text-sm transition-all",
+                            selectedConditions.has(c.id) ? "border-purple-500/40 bg-purple-500/10" : "border-border hover:border-muted-foreground/20")}>
+                          <div className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                            selectedConditions.has(c.id) ? "border-purple-500 bg-purple-500 text-white" : "border-muted-foreground/30")}>
+                            {selectedConditions.has(c.id) && <Check className="h-3 w-3" />}
+                          </div>
+                          <span>{c.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-2 text-xs text-muted-foreground">No conditions available for this wallet.</p>
+                  )}
                 </div>
               )}
 

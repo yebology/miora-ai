@@ -39,7 +39,7 @@ export function AgentStatusCard({ config, onStart, onPause, loading }: Props) {
         <div className="mb-4 grid grid-cols-3 gap-3">
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <DollarSign className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className="text-lg font-semibold">${remaining.toFixed(0)}</p>
+            <p className="text-lg font-semibold">{remaining.toFixed(0)} USDT</p>
             <p className="text-xs text-muted-foreground">Remaining</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
@@ -49,7 +49,7 @@ export function AgentStatusCard({ config, onStart, onPause, loading }: Props) {
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <Wallet className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className="text-lg font-semibold">${config.total_spent.toFixed(0)}</p>
+            <p className="text-lg font-semibold">{config.total_spent.toFixed(0)} USDT</p>
             <p className="text-xs text-muted-foreground">Spent</p>
           </div>
         </div>

@@ -27,6 +27,11 @@ db-seed:
 register-schema:
 	cd backend && go run cmd/register-schema/main.go
 
+# --- MockUSDT ---
+
+deploy-musdt:
+	cd contracts && source .env && forge script script/DeployMockUSDT.s.sol --rpc-url $$BASE_SEPOLIA_RPC_URL --broadcast
+
 # --- Agent setup ---
 
 setup-agent:
@@ -35,6 +40,7 @@ setup-agent:
 # --- Docker (all services) ---
 
 docker-up:
+	docker compose build --no-cache
 	docker compose up -d --build
 
 docker-down:

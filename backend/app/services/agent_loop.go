@@ -30,15 +30,16 @@ import (
 
 // AgentLoopService runs the background agent trading loop.
 type AgentLoopService struct {
-	agentRepo   interfaces.IAgentRepository
-	walletRepo  interfaces.IWalletRepository
-	userRepo    interfaces.IUserRepository
-	evmClient   interfaces.BlockchainClient
-	dexScreener interfaces.IDexScreener
-	ai          *AIService
-	agentKit    *clients.AgentKitClient
-	interval    time.Duration
-	lastTxCount map[string]int
+	agentRepo    interfaces.IAgentRepository
+	walletRepo   interfaces.IWalletRepository
+	userRepo     interfaces.IUserRepository
+	evmClient    interfaces.BlockchainClient
+	dexScreener  interfaces.IDexScreener
+	ai           *AIService
+	agentKit     *clients.AgentKitClient
+	interval     time.Duration
+	lastTxCount  map[string]int
+	musdtAddress string // MockUSDT contract address
 }
 
 // NewAgentLoopService creates a new AgentLoopService.
@@ -50,17 +51,19 @@ func NewAgentLoopService(
 	dexScreener interfaces.IDexScreener,
 	ai *AIService,
 	agentKit *clients.AgentKitClient,
+	musdtAddress string,
 ) *AgentLoopService {
 	return &AgentLoopService{
-		agentRepo:   agentRepo,
-		walletRepo:  walletRepo,
-		userRepo:    userRepo,
-		evmClient:   evmClient,
-		dexScreener: dexScreener,
-		ai:          ai,
-		agentKit:    agentKit,
-		interval:    30 * time.Second,
-		lastTxCount: make(map[string]int),
+		agentRepo:    agentRepo,
+		walletRepo:   walletRepo,
+		userRepo:     userRepo,
+		evmClient:    evmClient,
+		dexScreener:  dexScreener,
+		ai:           ai,
+		agentKit:     agentKit,
+		interval:     30 * time.Second,
+		lastTxCount:  make(map[string]int),
+		musdtAddress: musdtAddress,
 	}
 }
 
@@ -235,8 +238,8 @@ func (s *AgentLoopService) evaluateAndExecuteConsensus(config *entities.AgentCon
 		return
 	}
 
-	amountETH := fmt.Sprintf("%.6f", config.MaxPerTrade/2000)
-	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountETH, "buy")
+	amountUSDT := fmt.Sprintf("%.2f", config.MaxPerTrade)
+	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountUSDT, "buy", s.musdtAddress)
 	if err != nil {
 		s.recordTrade(config, source, tx, "buy", "failed", fmt.Sprintf("swap failed: %v", err), "")
 		return
@@ -334,8 +337,8 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 		return
 	}
 
-	amountETH := fmt.Sprintf("%.6f", config.MaxPerTrade/2000)
-	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountETH, direction)
+	amountUSDT := fmt.Sprintf("%.2f", config.MaxPerTrade)
+	result, err := s.agentKit.ExecuteSwap(tx.ContractAddress, tx.TokenSymbol, amountUSDT, direction, s.musdtAddress)
 	if err != nil {
 		s.recordTrade(config, wallet, tx, direction, "failed", fmt.Sprintf("swap failed: %v", err), riskAssessment)
 		return
@@ -347,14 +350,14 @@ func (s *AgentLoopService) evaluateAndExecute(config *entities.AgentConfig, wall
 	if direction == "buy" {
 		config.TotalSpent += config.MaxPerTrade
 	} else {
-		// Auto-transfer sell proceeds to user's connected wallet
+		// Auto-transfer sell proceeds (USDT) to user's connected wallet
 		user, err := s.userRepo.FindByID(config.UserID)
 		if err == nil && user.WalletAddress != "" {
-			amountToTransfer := fmt.Sprintf("%.6f", config.MaxPerTrade/2000)
+			amountToTransfer := fmt.Sprintf("%.2f", config.MaxPerTrade)
 			if _, transferErr := s.agentKit.ExecuteTransfer(user.WalletAddress, amountToTransfer); transferErr != nil {
 				log.Printf("[AgentLoop] Auto-transfer to %s failed: %v", user.WalletAddress, transferErr)
 			} else {
-				log.Printf("[AgentLoop] Auto-transferred %s ETH to user %s", amountToTransfer, user.WalletAddress)
+				log.Printf("[AgentLoop] Auto-transferred %s USDT to user %s", amountToTransfer, user.WalletAddress)
 			}
 		}
 	}

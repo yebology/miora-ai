@@ -116,9 +116,6 @@ export function AnalysisResult({ data }: Props) {
             <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
               <div className="flex flex-col items-center gap-2 sm:flex-row">
                 <RecommendationBadge recommendation={data.recommendation} />
-                <span className="text-sm text-muted-foreground">
-                  {data.total_transactions} transactions on {data.chain}
-                </span>
               </div>
               {data.recommendation === "full_follow" && (
                 followed ? (

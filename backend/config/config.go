@@ -41,6 +41,8 @@ type EASConfig struct {
 type AgentConfig struct {
 	CDPAPIKeyID     string // Coinbase Developer Platform API key ID (CDP_API_KEY_ID)
 	CDPAPIKeySecret string // CDP API key secret (CDP_API_KEY_SECRET)
+	MockUSDTAddress string // MockUSDT contract address on Base Sepolia (MOCK_USDT_ADDRESS)
+	SidecarURL      string // AgentKit sidecar URL (AGENT_SIDECAR_URL, default http://agent:8090)
 }
 
 // ScoringConfig holds configurable thresholds for wallet scoring.
@@ -97,6 +99,8 @@ func LoadConfig() (*Config, error) {
 		Agent: AgentConfig{
 			CDPAPIKeyID:     os.Getenv("CDP_API_KEY_ID"),
 			CDPAPIKeySecret: os.Getenv("CDP_API_KEY_SECRET"),
+			MockUSDTAddress: os.Getenv("MOCK_USDT_ADDRESS"),
+			SidecarURL:      getEnvDefault("AGENT_SIDECAR_URL", "http://agent:8090"),
 		},
 	}, nil
 
