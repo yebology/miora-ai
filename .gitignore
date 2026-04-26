@@ -18,9 +18,6 @@ backend/tmp/
 contracts/evm/out/
 contracts/evm/cache/
 
-# Anchor / Solana
-contracts/svm/target/
-
 # IDE
 .vscode/
 .idea/

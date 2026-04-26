@@ -1,1 +1,100 @@
+// Package router handles dependency injection and route registration.
+//
+// container.go is the central DI container. It wires all application
+// dependencies in the correct order:
+//
+//	Clients → Repositories → Services → Handlers
+//
+// Each layer only depends on the layer below it.
+// Services depend on repositories via interfaces.
+// Handlers depend on services via interfaces.
+//
+// To add a new domain (e.g. "dashboard"):
+//  1. Create repository: dashboardRepo := repositories.NewDashboardRepository(db)
+//  2. Create service:    dashboardService := services.NewDashboardService(dashboardRepo)
+//  3. Create handler:    dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+//  4. Add to Container struct and return
 package router
+
+import (
+	"log"
+	"miora-ai/app/clients"
+	"miora-ai/app/handlers"
+	"miora-ai/app/repositories"
+	"miora-ai/app/services"
+	"miora-ai/app/ws"
+	"miora-ai/config"
+
+	"gorm.io/gorm"
+)
+
+// Container holds all handler instances, ready to be used by route registration.
+type Container struct {
+	WalletHandler     *handlers.WalletHandler
+	AuthHandler       *handlers.AuthHandler
+	WatchlistHandler  *handlers.WatchlistHandler
+	ReputationHandler *handlers.ReputationHandler
+	AgentHandler      *handlers.AgentHandler
+	Monitor           *services.MonitorService
+	AgentLoop         *services.AgentLoopService
+}
+
+// NewContainer creates all dependencies and returns a fully wired Container.
+// Initialization order: clients → repositories → services → handlers.
+func NewContainer(db *gorm.DB, alchemyAPIKey, moralisAPIKey, geminiAPIKey string, scoring config.ScoringConfig, easCfg config.EASConfig, agentCfg config.AgentConfig, hub *ws.Hub) *Container {
+
+	// Clients
+	evmClient := clients.NewAlchemyEVM(alchemyAPIKey)
+	dexScreener := clients.NewDexScreener()
+	moralis := clients.NewMoralis(moralisAPIKey)
+	gemini := clients.NewGemini(geminiAPIKey)
+
+	// EAS Client (Base Sepolia)
+	easClient, err := clients.NewEASClient(easCfg.RPCURL, easCfg.EASContractAddress, easCfg.SchemaUID, easCfg.AttesterPrivateKey)
+	if err != nil {
+		log.Printf("[WARN] EAS client initialization failed: %v — attestations will be disabled", err)
+		easClient = &clients.EASClient{}
+	}
+
+	// Repositories
+	walletRepo := repositories.NewWalletRepository(db)
+	userRepo := repositories.NewUserRepository(db)
+	watchlistRepo := repositories.NewWatchlistRepository(db)
+	notifRepo := repositories.NewNotificationRepository(db)
+	agentRepo := repositories.NewAgentRepository(db)
+
+	// Services
+	aiService := services.NewAIService(gemini)
+	walletService := services.NewWalletService(walletRepo, evmClient, dexScreener, moralis, aiService, scoring, easClient)
+	userService := services.NewUserService(userRepo)
+	watchlistService := services.NewWatchlistService(watchlistRepo)
+
+	// Agent Kit client (shared between agent service and agent loop)
+	agentKitClient := clients.NewAgentKitClient(agentCfg.SidecarURL)
+
+	agentService := services.NewAgentService(agentRepo, agentKitClient)
+
+	// Monitor
+	monitorService := services.NewMonitorService(watchlistRepo, notifRepo, userRepo, evmClient, dexScreener, aiService, hub)
+
+	// Agent Loop (background trading)
+	agentLoop := services.NewAgentLoopService(agentRepo, walletRepo, userRepo, evmClient, dexScreener, aiService, agentKitClient, agentCfg.MockUSDTAddress)
+
+	// Handlers
+	walletHandler := handlers.NewWalletHandler(walletService)
+	authHandler := handlers.NewAuthHandler(userService)
+	watchlistHandler := handlers.NewWatchlistHandler(watchlistService, userService)
+	reputationHandler := handlers.NewReputationHandler(walletRepo, easClient)
+	agentHandler := handlers.NewAgentHandler(agentService, userService)
+
+	return &Container{
+		WalletHandler:     walletHandler,
+		AuthHandler:       authHandler,
+		WatchlistHandler:  watchlistHandler,
+		ReputationHandler: reputationHandler,
+		AgentHandler:      agentHandler,
+		Monitor:           monitorService,
+		AgentLoop:         agentLoop,
+	}
+
+}
