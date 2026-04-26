@@ -192,8 +192,7 @@ Both bot types:
 ├── README.md               # Project overview
 ├── USER_STORIES.md          # User stories with scenarios
 ├── USER_NONTECHNICAL_FLOW.md # Non-technical user flow
-├── USER_TECHNICAL_FLOW.md   # Technical architecture flow
-└── PROGRESS.md              # Development progress tracker
+└── USER_TECHNICAL_FLOW.md   # Technical architecture flow
 ```
 
 ---
